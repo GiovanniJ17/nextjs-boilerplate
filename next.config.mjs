@@ -1,10 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
-  reactStrictMode: true,
-  experimental: {
-    appDir: true
-  }
+  output: 'export',
+  distDir: 'out', // <-- Cloudflare Pages serve questa cartella
+  experimental: {},
 };
 
 export default nextConfig;
