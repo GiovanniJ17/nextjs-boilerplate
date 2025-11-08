@@ -8,28 +8,78 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 
 // Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+interface ExerciseForm {
+  name: string;
+  distance_m: string;
+  sets: string;
+  repetitions: string;
+  rest_between_reps_s: string;
+  rest_between_sets_s: string;
+  intensity: string;
+  effort_type: string;
+  notes: string;
+}
+
 export default function RegistroPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     date: '',
     type: '',
-    meteo: '',
     location: '',
-    rpe: 5,
     notes: '',
-    exercises: '',
-    isolated: '',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const [exercises, setExercises] = useState<ExerciseForm[]>([
+    {
+      name: '',
+      distance_m: '',
+      sets: '',
+      repetitions: '',
+      rest_between_reps_s: '',
+      rest_between_sets_s: '',
+      intensity: '',
+      effort_type: '',
+      notes: '',
+    },
+  ]);
+
+  const handleFormChange = (e: any) =>
     setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleExerciseChange = (i: number, e: any) => {
+    const newEx = [...exercises];
+    newEx[i][e.target.name] = e.target.value;
+    setExercises(newEx);
+  };
+
+  const addExercise = () => {
+    setExercises([
+      ...exercises,
+      {
+        name: '',
+        distance_m: '',
+        sets: '',
+        repetitions: '',
+        rest_between_reps_s: '',
+        rest_between_sets_s: '',
+        intensity: '',
+        effort_type: '',
+        notes: '',
+      },
+    ]);
+  };
+
+  const removeExercise = (i: number) => {
+    const arr = [...exercises];
+    arr.splice(i, 1);
+    setExercises(arr);
   };
 
   const handleSubmit = async () => {
@@ -41,7 +91,7 @@ export default function RegistroPage() {
     setLoading(true);
 
     try {
-      // 1️⃣ Inserisci sessione
+      // Inserisci sessione
       const { data: session, error: sessionErr } = await supabase
         .from('training_sessions')
         .insert([
@@ -58,17 +108,24 @@ export default function RegistroPage() {
 
       if (sessionErr) throw sessionErr;
 
-      // 2️⃣ Inserisci esercizi (serie e lavori isolati)
-      const allExercises = [
-        { name: 'Serie principali', notes: form.exercises },
-        { name: 'Lavori isolati', notes: form.isolated },
-      ].filter(e => e.notes.trim() !== '');
-
-      for (const ex of allExercises) {
+      // Inserisci esercizi
+      for (const ex of exercises) {
+        if (!ex.name.trim()) continue;
         const { error: exErr } = await supabase.from('exercises').insert([
           {
             session_id: session.id,
             name: ex.name,
+            distance_m: ex.distance_m ? parseInt(ex.distance_m) : null,
+            sets: ex.sets ? parseInt(ex.sets) : null,
+            repetitions: ex.repetitions ? parseInt(ex.repetitions) : null,
+            rest_between_reps_s: ex.rest_between_reps_s
+              ? parseInt(ex.rest_between_reps_s)
+              : null,
+            rest_between_sets_s: ex.rest_between_sets_s
+              ? parseInt(ex.rest_between_sets_s)
+              : null,
+            intensity: ex.intensity ? parseFloat(ex.intensity) : null,
+            effort_type: ex.effort_type,
             notes: ex.notes,
             created_at: new Date().toISOString(),
           },
@@ -76,17 +133,21 @@ export default function RegistroPage() {
         if (exErr) throw exErr;
       }
 
-      toast.success('Allenamento salvato con successo!');
-      setForm({
-        date: '',
-        type: '',
-        meteo: '',
-        location: '',
-        rpe: 5,
-        notes: '',
-        exercises: '',
-        isolated: '',
-      });
+      toast.success('Allenamento registrato con successo!');
+      setForm({ date: '', type: '', location: '', notes: '' });
+      setExercises([
+        {
+          name: '',
+          distance_m: '',
+          sets: '',
+          repetitions: '',
+          rest_between_reps_s: '',
+          rest_between_sets_s: '',
+          intensity: '',
+          effort_type: '',
+          notes: '',
+        },
+      ]);
     } catch (err: any) {
       console.error(err);
       toast.error('Errore durante il salvataggio');
@@ -96,23 +157,22 @@ export default function RegistroPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-10 px-4">
+    <div className="max-w-4xl mx-auto py-10 px-4">
       <h1 className="text-2xl font-semibold mb-6 flex items-center gap-2">
         📝 Registra Allenamento
       </h1>
 
       <Card className="shadow-sm">
         <CardContent className="space-y-6 p-6">
-          {/* Data / Tipo / Meteo */}
+          {/* --- Info base --- */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label>Data</Label>
-              <Input type="date" name="date" value={form.date} onChange={handleChange} />
+              <Input type="date" name="date" value={form.date} onChange={handleFormChange} />
             </div>
-
             <div>
               <Label>Tipo</Label>
-              <select name="type" value={form.type} onChange={handleChange} className="w-full border rounded-md p-2">
+              <select name="type" value={form.type} onChange={handleFormChange} className="w-full border rounded-md p-2">
                 <option value="">Seleziona tipo...</option>
                 <option value="test">Test</option>
                 <option value="palestra">Palestra</option>
@@ -120,65 +180,81 @@ export default function RegistroPage() {
                 <option value="resistenza">Resistenza</option>
               </select>
             </div>
-
             <div>
-              <Label>Meteo</Label>
-              <select name="meteo" value={form.meteo} onChange={handleChange} className="w-full border rounded-md p-2">
-                <option value="">Seleziona meteo...</option>
-                <option value="soleggiato">Soleggiato</option>
-                <option value="nuvoloso">Nuvoloso</option>
-                <option value="pioggia">Pioggia</option>
-              </select>
+              <Label>Luogo</Label>
+              <Input name="location" value={form.location} onChange={handleFormChange} placeholder="Pista, palestra..." />
             </div>
           </div>
 
-          {/* Luogo */}
-          <div>
-            <Label>Luogo</Label>
-            <Input name="location" placeholder="Es. pista, palestra, strada..." value={form.location} onChange={handleChange} />
-          </div>
-
-          {/* Note */}
           <div>
             <Label>Note</Label>
-            <Textarea
-              name="notes"
-              placeholder="Descrivi sensazioni, variabili, obiettivi della seduta..."
-              value={form.notes}
-              onChange={handleChange}
-            />
+            <Textarea name="notes" value={form.notes} onChange={handleFormChange} placeholder="Sensazioni, variabili, obiettivi..." />
           </div>
 
-          {/* Serie principali */}
-          <Card className="bg-blue-50">
-            <CardHeader>
-              <CardTitle className="text-blue-800 flex items-center gap-2">⚡ Serie e Ripetizioni</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                name="exercises"
-                placeholder="Es. 5x60m, 3x150m, partenze dai blocchi..."
-                value={form.exercises}
-                onChange={handleChange}
-              />
-            </CardContent>
-          </Card>
+          {/* --- Esercizi --- */}
+          <div className="space-y-4">
+            {exercises.map((ex, i) => (
+              <Card key={i} className="bg-blue-50">
+                <CardHeader className="flex justify-between items-center">
+                  <CardTitle className="text-blue-800 flex items-center gap-2">
+                    ⚡ Esercizio {i + 1}
+                  </CardTitle>
+                  {exercises.length > 1 && (
+                    <button
+                      onClick={() => removeExercise(i)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Nome</Label>
+                    <Input name="name" value={ex.name} onChange={(e) => handleExerciseChange(i, e)} placeholder="Es. 3x150m, squat..." />
+                  </div>
+                  <div>
+                    <Label>Distanza (m)</Label>
+                    <Input name="distance_m" type="number" value={ex.distance_m} onChange={(e) => handleExerciseChange(i, e)} />
+                  </div>
+                  <div>
+                    <Label>Serie</Label>
+                    <Input name="sets" type="number" value={ex.sets} onChange={(e) => handleExerciseChange(i, e)} />
+                  </div>
+                  <div>
+                    <Label>Ripetizioni</Label>
+                    <Input name="repetitions" type="number" value={ex.repetitions} onChange={(e) => handleExerciseChange(i, e)} />
+                  </div>
+                  <div>
+                    <Label>Recupero tra ripetizioni (s)</Label>
+                    <Input name="rest_between_reps_s" type="number" value={ex.rest_between_reps_s} onChange={(e) => handleExerciseChange(i, e)} />
+                  </div>
+                  <div>
+                    <Label>Recupero tra serie (s)</Label>
+                    <Input name="rest_between_sets_s" type="number" value={ex.rest_between_sets_s} onChange={(e) => handleExerciseChange(i, e)} />
+                  </div>
+                  <div>
+                    <Label>Intensità (1–10)</Label>
+                    <Input name="intensity" type="number" value={ex.intensity} onChange={(e) => handleExerciseChange(i, e)} />
+                  </div>
+                  <div>
+                    <Label>Tipo sforzo</Label>
+                    <Input name="effort_type" value={ex.effort_type} onChange={(e) => handleExerciseChange(i, e)} placeholder="Massimo, medio..." />
+                  </div>
+                  <div className="md:col-span-3">
+                    <Label>Note esercizio</Label>
+                    <Textarea name="notes" value={ex.notes} onChange={(e) => handleExerciseChange(i, e)} placeholder="Dettagli, condizioni, risultati..." />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
 
-          {/* Lavori isolati */}
-          <Card className="bg-amber-50">
-            <CardHeader>
-              <CardTitle className="text-amber-800 flex items-center gap-2">🔥 Lavori isolati</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                name="isolated"
-                placeholder="Es. squat, core, esercizi tecnici..."
-                value={form.isolated}
-                onChange={handleChange}
-              />
-            </CardContent>
-          </Card>
+            <Button type="button" variant="outline" onClick={addExercise} className="flex items-center gap-2">
+              <PlusCircle size={16} /> Aggiungi esercizio
+            </Button>
+          </div>
 
+          {/* --- Salva --- */}
           <div className="pt-4 flex justify-end">
             <Button onClick={handleSubmit} disabled={loading}>
               {loading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : 'Salva Allenamento'}
