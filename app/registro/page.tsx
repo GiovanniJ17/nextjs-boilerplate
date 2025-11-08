@@ -22,6 +22,7 @@ import {
   Activity,
   Info,
   Dumbbell,
+  Flame,
 } from 'lucide-react';
 
 // Supabase client
