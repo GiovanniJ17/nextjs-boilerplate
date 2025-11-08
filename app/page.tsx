@@ -1,24 +1,15 @@
+import Link from 'next/link'
+
 export default function Home() {
   return (
-    <main
-      style={{
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        fontFamily: "sans-serif",
-        flexDirection: "column",
-        gap: "10px",
-      }}
-    >
-      <h1 style={{ fontSize: "2rem" }}>🚀 Next.js su Cloudflare Pages</h1>
-      <p>Il deploy è avvenuto con successo!</p>
-      <a
-        href="https://github.com/GiovanniJ17/nextjs-boilerplate"
-        style={{ color: "#0070f3", textDecoration: "none" }}
+    <main className="flex flex-col items-center justify-center h-screen space-y-4">
+      <h1 className="text-3xl font-bold">Piattaforma Sessioni</h1>
+      <Link
+        href="/inserimento"
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
       >
-        Vai al repository →
-      </a>
+        Vai a Inserimento Sessione
+      </Link>
     </main>
-  );
+  )
 }
