@@ -20,8 +20,7 @@ const config: OpenNextConfig = {
   },
   dangerous: {
     enableCacheInterception: false
-  },
-  outputDir: ".open-next" // cartella dove Cloudflare troverà il build
+  }
 };
 
 export default config;
