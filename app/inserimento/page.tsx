@@ -1,80 +1,58 @@
-'use client'
+// app/page.tsx
+import Link from 'next/link';
 
-import { useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
-
-export default function InserimentoSessione() {
-  const [form, setForm] = useState({ data: '', tipo: '', durata: '', note: '' })
-  const [status, setStatus] = useState<string | null>(null)
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setStatus('Invio in corso...')
-
-    const { error } = await supabase.from('sessioni').insert([form])
-    if (error) {
-      console.error(error)
-      setStatus('Errore durante il salvataggio ❌')
-    } else {
-      setStatus('Sessione salvata ✅')
-      setForm({ data: '', tipo: '', durata: '', note: '' })
-    }
-  }
-
+export default function HomePage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md space-y-4"
-      >
-        <h1 className="text-2xl font-semibold text-center mb-4">Inserisci Sessione</h1>
+    <div className="space-y-8">
+      <section className="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 p-6 shadow-lg">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Benvenuto in <span className="text-sky-400">Tracker Velocista</span>
+        </h1>
+        <p className="mt-3 text-sm text-slate-300">
+          Qui puoi registrare le tue sessioni di allenamento, rivedere lo
+          storico e analizzare le statistiche in un unico posto, connesso al
+          tuo database Supabase.
+        </p>
+      </section>
 
-        <input
-          name="data"
-          type="date"
-          value={form.data}
-          onChange={handleChange}
-          required
-          className="w-full p-2 border rounded"
+      <section className="grid gap-4 md:grid-cols-3">
+        <HomeCard
+          title="Inserimento sessione"
+          description="Crea un nuovo blocco, aggiungi una sessione e definisci gli esercizi con i relativi risultati."
+          href="/inserimento"
         />
-        <input
-          name="tipo"
-          placeholder="Tipo di sessione"
-          value={form.tipo}
-          onChange={handleChange}
-          required
-          className="w-full p-2 border rounded"
+        <HomeCard
+          title="Storico sessioni"
+          description="Rivedi le ultime sessioni eseguite con i dettagli principali."
+          href="/storico"
         />
-        <input
-          name="durata"
-          placeholder="Durata (minuti)"
-          type="number"
-          value={form.durata}
-          onChange={handleChange}
-          required
-          className="w-full p-2 border rounded"
+        <HomeCard
+          title="Statistiche"
+          description="Analizza le prestazioni per esercizio e consulta le metriche generali."
+          href="/statistiche"
         />
-        <textarea
-          name="note"
-          placeholder="Note opzionali"
-          value={form.note}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-        />
+      </section>
+    </div>
+  );
+}
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-        >
-          Salva sessione
-        </button>
+type HomeCardProps = {
+  title: string;
+  description: string;
+  href: string;
+};
 
-        {status && <p className="text-center text-sm text-gray-600">{status}</p>}
-      </form>
-    </main>
-  )
+function HomeCard({ title, description, href }: HomeCardProps) {
+  return (
+    <Link
+      href={href}
+      className="flex flex-col rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-200 shadow hover:border-sky-500 hover:text-slate-50 hover:shadow-sky-500/20"
+    >
+      <h2 className="mb-2 text-base font-semibold">{title}</h2>
+      <p className="flex-1 text-xs text-slate-300">{description}</p>
+      <span className="mt-4 text-xs font-semibold text-sky-400">
+        Apri →
+      </span>
+    </Link>
+  );
 }
