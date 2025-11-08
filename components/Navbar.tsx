@@ -1,47 +1,37 @@
-// components/Navbar.tsx
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-
-const links = [
-  { href: '/', label: 'Home' },
-  { href: '/inserimento', label: 'Inserimento sessione' },
-  { href: '/storico', label: 'Storico sessioni' },
-  { href: '/statistiche', label: 'Statistiche' },
-];
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export default function Navbar() {
   const pathname = usePathname();
 
+  const navItems = [
+    { label: "Registro", href: "/inserimento" },
+    { label: "Storico", href: "/storico" },
+    { label: "Statistiche", href: "/statistiche" },
+  ];
+
   return (
-    <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <Link href="/" className="font-semibold tracking-tight">
-          🚀 Tracker Velocista
-        </Link>
-        <nav className="flex gap-3 text-sm">
-          {links.map((link) => {
-            const active =
-              link.href === '/'
-                ? pathname === '/'
-                : pathname?.startsWith(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`rounded-full px-3 py-1 transition ${
-                  active
-                    ? 'bg-sky-500 text-slate-950'
-                    : 'text-slate-300 hover:bg-slate-800'
-                }`}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
+    <header className="w-full bg-white shadow-sm py-3 px-6 flex items-center justify-between">
+      <h1 className="text-xl font-semibold text-blue-600">🏃‍♂️ Tracker Velocista</h1>
+      <nav className="flex gap-4">
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              "px-4 py-2 rounded-md font-medium transition-all",
+              pathname === item.href
+                ? "bg-blue-100 text-blue-700 border border-blue-300"
+                : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+            )}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
     </header>
   );
 }
