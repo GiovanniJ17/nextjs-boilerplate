@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "^3.2.3",
+    "@opennextjs/cloudflare": "^3.1.2",
     "next": "16.0.1",
     "react": "18.3.1",
     "react-dom": "18.3.1"
