@@ -1,199 +1,170 @@
-// app/storico/page.tsx
-'use client';
+"use client";
 
-import type React from 'react';
-import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 type TrainingSession = {
   id: string;
-  block_id: string | null;
-  date: string;
+  date: string | null;
   type: string | null;
   location: string | null;
   notes: string | null;
 };
 
-type TrainingBlock = {
-  id: string;
-  name: string;
-};
-
-type SessionWithExtra = TrainingSession & {
-  blockName?: string | null;
-  exerciseCount?: number;
-};
-
 export default function StoricoPage() {
-  const [sessions, setSessions] = useState<SessionWithExtra[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void loadSessions();
-  }, []);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [sessions, setSessions] = useState<TrainingSession[]>([]);
+  const [loading, setLoading] = useState(true);
 
   async function loadSessions() {
-    try {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
 
-      const { data: sessionsData, error: sessionsError } = await supabase
-        .from('training_sessions')
-        .select('*')
-        .order('date', { ascending: false })
-        .limit(50);
+    let query = supabase
+      .from("training_sessions")
+      .select("*")
+      .order("date", { ascending: false });
 
-      if (sessionsError) throw sessionsError;
-
-      const sessions = (sessionsData ?? []) as TrainingSession[];
-      if (sessions.length === 0) {
-        setSessions([]);
-        return;
-      }
-
-      const blockIds = Array.from(
-        new Set(
-          sessions
-            .map((s) => s.block_id)
-            .filter((id): id is string => Boolean(id))
-        )
-      );
-
-      let blocksById: Record<string, TrainingBlock> = {};
-      if (blockIds.length > 0) {
-        const { data: blocksData, error: blocksError } = await supabase
-          .from('training_blocks')
-          .select('id, name')
-          .in('id', blockIds);
-
-        if (blocksError) throw blocksError;
-        (blocksData ?? []).forEach((b) => {
-          blocksById[b.id] = b as TrainingBlock;
-        });
-      }
-
-      const sessionIds = sessions.map((s) => s.id);
-      const { data: exercisesData, error: exercisesError } = await supabase
-        .from('exercises')
-        .select('id, session_id')
-        .in('session_id', sessionIds);
-
-      if (exercisesError) throw exercisesError;
-
-      const exerciseCountBySession: Record<string, number> = {};
-      (exercisesData ?? []).forEach((ex: any) => {
-        if (!exerciseCountBySession[ex.session_id]) {
-          exerciseCountBySession[ex.session_id] = 0;
-        }
-        exerciseCountBySession[ex.session_id]++;
-      });
-
-      const enriched: SessionWithExtra[] = sessions.map((s) => ({
-        ...s,
-        blockName: s.block_id ? blocksById[s.block_id]?.name ?? null : null,
-        exerciseCount: exerciseCountBySession[s.id] ?? 0,
-      }));
-
-      setSessions(enriched);
-    } catch (err: any) {
-      console.error(err);
-      setError('Errore nel caricamento dello storico delle sessioni.');
-    } finally {
-      setLoading(false);
+    if (fromDate) {
+      query = query.gte("date", fromDate);
     }
+    if (toDate) {
+      query = query.lte("date", toDate);
+    }
+    if (typeFilter) {
+      query = query.eq("type", typeFilter);
+    }
+
+    const { data, error } = await query;
+
+    if (!error && data) {
+      setSessions(data as TrainingSession[]);
+    }
+
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadSessions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function resetFilters() {
+    setFromDate("");
+    setToDate("");
+    setTypeFilter("");
+    loadSessions();
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold tracking-tight">
-          Storico sessioni
-        </h1>
-        <button
-          type="button"
-          onClick={() => loadSessions()}
-          className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800"
-        >
-          Aggiorna
-        </button>
+      <h1 className="flex items-center gap-2 text-2xl font-semibold text-slate-800">
+        <span className="text-3xl">📚</span>
+        <span>Storico Allenamenti</span>
+      </h1>
+
+      {/* Card filtri */}
+      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+        <div className="border-b border-slate-100 px-6 py-4">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+            <span>🔎</span>
+            <span>Filtri di ricerca</span>
+          </h2>
+        </div>
+
+        <div className="space-y-4 px-6 py-5">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-600">
+                Da
+              </label>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none ring-sky-100 transition focus:bg-white focus:ring"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-600">A</label>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none ring-sky-100 transition focus:bg-white focus:ring"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-600">
+                Tipo
+              </label>
+              <input
+                type="text"
+                placeholder="Filtra per tipo..."
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none ring-sky-100 transition focus:bg-white focus:ring"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+            >
+              Reset
+            </button>
+            <button
+              type="button"
+              onClick={loadSessions}
+              className="rounded-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-sky-700"
+            >
+              Applica filtri
+            </button>
+          </div>
+        </div>
       </div>
 
-      {loading && (
-        <p className="text-sm text-slate-300">Caricamento in corso...</p>
-      )}
-
-      {error && <p className="text-sm text-red-400">{error}</p>}
-
-      {!loading && sessions.length === 0 && !error && (
-        <p className="text-sm text-slate-300">
-          Non ci sono ancora sessioni registrate.
-        </p>
-      )}
-
-      <div className="space-y-3">
-        {sessions.map((s) => (
-          <article
-            key={s.id}
-            className="rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-200"
-          >
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <div>
-                <p className="font-semibold text-slate-50">
-                  {formatDate(s.date)}{' '}
-                  {s.type && (
-                    <span className="text-slate-300">· {s.type}</span>
-                  )}
-                </p>
-                {s.blockName && (
-                  <p className="text-[11px] text-sky-300">{s.blockName}</p>
-                )}
-              </div>
-              <div className="text-[11px] text-slate-400">
-                {s.exerciseCount ?? 0} esercizi
-              </div>
-            </div>
-
-            <div className="mt-2 grid gap-2 md:grid-cols-3">
-              <InfoRow label="Luogo" value={s.location} />
-              <InfoRow label="Note" value={s.notes} className="md:col-span-2" />
-            </div>
-          </article>
-        ))}
+      {/* Card risultati */}
+      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+        <div className="px-6 py-4">
+          {loading ? (
+            <p className="text-sm text-slate-500">Caricamento allenamenti…</p>
+          ) : sessions.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              Nessun allenamento trovato 📭
+            </p>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {sessions.map((s) => (
+                <li key={s.id} className="py-4 first:pt-0 last:pb-0">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">
+                        {s.type || "Allenamento"}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {s.date || "Data non impostata"}
+                        {s.location ? ` • ${s.location}` : ""}
+                      </p>
+                    </div>
+                    {s.notes && (
+                      <p className="max-w-xl text-xs text-slate-600">
+                        {s.notes.length > 160
+                          ? s.notes.slice(0, 160) + "…"
+                          : s.notes}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
-}
-
-type InfoRowProps = {
-  label: string;
-  value: string | null;
-  className?: string;
-};
-
-function InfoRow({ label, value, className }: InfoRowProps) {
-  if (!value) return null;
-  return (
-    <p
-      className={['text-[11px] text-slate-300', className]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <span className="font-semibold text-slate-200">{label}: </span>
-      {value}
-    </p>
-  );
-}
-
-function formatDate(value: string) {
-  try {
-    const d = new Date(value);
-    return d.toLocaleDateString('it-IT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: '2-digit',
-    });
-  } catch {
-    return value;
-  }
 }
