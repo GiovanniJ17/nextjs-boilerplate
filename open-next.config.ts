@@ -1,26 +1,10 @@
-import type { OpenNextConfig } from "@opennextjs/cloudflare";
+import { OpenNextConfig } from "@opennextjs/cloudflare";
 
 const config: OpenNextConfig = {
   default: {
-    override: {
-      wrapper: "cloudflare-node",
-      converter: "edge",
-      incrementalCache: "dummy",
-      tagCache: "dummy",
-      queue: "dummy"
-    }
+    compatibilityDate: "2025-11-08",
+    compatibilityFlags: ["nodejs_compat"],
   },
-  middleware: {
-    external: true,
-    override: {
-      wrapper: "cloudflare-edge",
-      converter: "edge",
-      proxyExternalRequest: "fetch"
-    }
-  },
-  dangerous: {
-    enableCacheInterception: false
-  }
 };
 
 export default config;
