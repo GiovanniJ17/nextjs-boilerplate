@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
+type DistanceFilter = "all" | "short" | "mid" | "long";
+
 type Exercise = {
+  id: string;
   session_id: string | null;
   distance_m: number | null;
   sets: number | null;
@@ -12,12 +15,16 @@ type Exercise = {
 
 type ExerciseResult = {
   time_s: number | null;
+  exercise?: {
+    session_id: string | null;
+    distance_m: number | null;
+  } | null;
 };
 
 export default function StatistichePage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [distanceFilter, setDistanceFilter] = useState<"all" | "short" | "mid" | "long">("all");
+  const [distanceFilter, setDistanceFilter] = useState<DistanceFilter>("all");
 
   const [totalSessions, setTotalSessions] = useState(0);
   const [totalDistance, setTotalDistance] = useState<number | null>(null);
@@ -25,57 +32,109 @@ export default function StatistichePage() {
   const [avgTime, setAvgTime] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
-  async function loadStats() {
+  function matchesDistance(distance: number | null, filter: DistanceFilter) {
+    if (filter === "all") return true;
+    if (distance == null) return false;
+    if (filter === "short") return distance < 80;
+    if (filter === "mid") return distance >= 80 && distance <= 200;
+    return distance > 200;
+  }
+
+  async function loadStats(
+    overrides?: Partial<{
+      fromDate: string;
+      toDate: string;
+      distance: DistanceFilter;
+    }>
+  ) {
     setLoading(true);
 
-    // Numero sessioni
-    let sessionsQuery = supabase.from("training_sessions").select("id", {
-      count: "exact",
-    });
+    const activeFromDate = overrides?.fromDate ?? fromDate;
+    const activeToDate = overrides?.toDate ?? toDate;
+    const activeDistance = overrides?.distance ?? distanceFilter;
 
-    if (fromDate) sessionsQuery = sessionsQuery.gte("date", fromDate);
-    if (toDate) sessionsQuery = sessionsQuery.lte("date", toDate);
+    try {
+      // Numero sessioni
+      let sessionsQuery = supabase
+        .from("training_sessions")
+        .select("id", { count: "exact" })
+        .order("date", { ascending: false });
 
-    const { count: sessionCount } = await sessionsQuery;
-    setTotalSessions(sessionCount || 0);
+      if (activeFromDate) sessionsQuery = sessionsQuery.gte("date", activeFromDate);
+      if (activeToDate) sessionsQuery = sessionsQuery.lte("date", activeToDate);
 
-    // Esercizi (per distanza totale)
-    let exercisesQuery = supabase
-      .from("exercises")
-      .select("session_id, distance_m, sets, repetitions");
+      const { data: sessionsData, count: sessionCount, error: sessionsError } =
+        await sessionsQuery;
 
-    const { data: exercisesData } = await exercisesQuery;
-    const exercises = (exercisesData || []) as Exercise[];
+      if (sessionsError) {
+        throw sessionsError;
+      }
 
-    const distanceSum = exercises.reduce((sum, ex) => {
-      const d = ex.distance_m || 0;
-      const s = ex.sets || 1;
-      const r = ex.repetitions || 1;
-      return sum + d * s * r;
-    }, 0);
+      const sessionIds = (sessionsData || []).map((session) => session.id);
+      setTotalSessions(sessionCount ?? sessionIds.length);
 
-    setTotalDistance(distanceSum || null);
+      // Esercizi (per distanza totale)
+      let exercises: Exercise[] = [];
+      if (sessionIds.length > 0) {
+        const { data: exercisesData, error: exercisesError } = await supabase
+          .from("exercises")
+          .select("id, session_id, distance_m, sets, repetitions")
+          .in("session_id", sessionIds);
 
-    // Risultati (tempi)
-    const { data: resultsData } = await supabase
-      .from("exercise_results")
-      .select("time_s");
+        if (exercisesError) throw exercisesError;
+        exercises = (exercisesData || []) as Exercise[];
+      }
 
-    const times = ((resultsData || []) as ExerciseResult[])
-      .map((r) => r.time_s)
-      .filter((t): t is number => typeof t === "number" && !isNaN(t));
-
-    if (times.length > 0) {
-      setBestTime(Math.min(...times));
-      setAvgTime(
-        times.reduce((sum, t) => sum + t, 0) / (times.length || 1)
+      const filteredExercises = exercises.filter((ex) =>
+        matchesDistance(ex.distance_m, activeDistance)
       );
-    } else {
+
+      const distanceSum = filteredExercises.reduce((sum, ex) => {
+        const distance = ex.distance_m ?? 0;
+        const sets = ex.sets ?? 1;
+        const repetitions = ex.repetitions ?? 1;
+        return sum + distance * sets * repetitions;
+      }, 0);
+
+      setTotalDistance(distanceSum);
+
+      // Risultati (tempi)
+      let results: ExerciseResult[] = [];
+      if (sessionIds.length > 0) {
+        const { data: resultsData, error: resultsError } = await supabase
+          .from("exercise_results")
+          .select(
+            "time_s, exercise:exercises!inner(session_id, distance_m)"
+          )
+          .in("exercise.session_id", sessionIds);
+
+        if (resultsError) throw resultsError;
+        results = (resultsData || []) as ExerciseResult[];
+      }
+
+      const times = results
+        .filter((result) =>
+          matchesDistance(result.exercise?.distance_m ?? null, activeDistance)
+        )
+        .map((result) => result.time_s)
+        .filter((time): time is number => typeof time === "number" && !isNaN(time));
+
+      if (times.length > 0) {
+        setBestTime(Math.min(...times));
+        setAvgTime(times.reduce((sum, t) => sum + t, 0) / times.length);
+      } else {
+        setBestTime(null);
+        setAvgTime(null);
+      }
+    } catch (error) {
+      console.error("Errore durante il caricamento delle statistiche", error);
+      setTotalSessions(0);
+      setTotalDistance(0);
       setBestTime(null);
       setAvgTime(null);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   useEffect(() => {
@@ -87,7 +146,7 @@ export default function StatistichePage() {
     setFromDate("");
     setToDate("");
     setDistanceFilter("all");
-    loadStats();
+    loadStats({ fromDate: "", toDate: "", distance: "all" });
   }
 
   return (
@@ -135,7 +194,7 @@ export default function StatistichePage() {
               <select
                 value={distanceFilter}
                 onChange={(e) =>
-                  setDistanceFilter(e.target.value as typeof distanceFilter)
+                  setDistanceFilter(e.target.value as DistanceFilter)
                 }
                 className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none ring-sky-100 transition focus:bg-white focus:ring"
               >

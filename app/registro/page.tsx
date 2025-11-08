@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabaseClient';
+import { TRAINING_TYPES } from '@/lib/training';
 import {
   Loader2,
   PlusCircle,
@@ -25,10 +26,10 @@ import {
   Flame,
 } from 'lucide-react';
 
-// Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+interface TrainingBlockOption {
+  id: string;
+  name: string;
+}
 
 interface ExerciseForm {
   name: string;
@@ -37,7 +38,7 @@ interface ExerciseForm {
   repetitions: string;
   rest_between_reps_s: string;
   rest_between_sets_s: string;
-  intensity: string; // 1–10
+  intensity: string; // 0–10
   notes: string;
   [key: string]: string; // per gestire l'update dinamico via name
 }
@@ -53,17 +54,30 @@ const defaultExercise: ExerciseForm = {
   notes: '',
 };
 
-function getEffortType(intensity: number | null): string | null {
+type EffortType = 'basso' | 'medio' | 'alto' | 'massimo';
+
+function getEffortType(intensity: number | null): EffortType | null {
   if (intensity == null || Number.isNaN(intensity)) return null;
-  if (intensity <= 3) return 'Molto leggero';
-  if (intensity <= 5) return 'Leggero';
-  if (intensity <= 7) return 'Medio';
-  if (intensity <= 8) return 'Alto';
-  return 'Massimo';
+  if (intensity <= 3) return 'basso';
+  if (intensity <= 6) return 'medio';
+  if (intensity <= 8) return 'alto';
+  return 'massimo';
 }
 
 function getIntensityLabel(intensity: number | null): string {
-  return getEffortType(intensity) ?? 'Non impostato';
+  const effort = getEffortType(intensity);
+  switch (effort) {
+    case 'basso':
+      return 'Sforzo basso';
+    case 'medio':
+      return 'Sforzo medio';
+    case 'alto':
+      return 'Sforzo alto';
+    case 'massimo':
+      return 'Sforzo massimo';
+    default:
+      return 'Non impostato';
+  }
 }
 
 export default function RegistroPage() {
@@ -73,12 +87,33 @@ export default function RegistroPage() {
     type: '',
     location: '',
     notes: '',
+    block_id: '',
   });
 
   const [exercises, setExercises] = useState<ExerciseForm[]>([defaultExercise]);
   const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
+  const [blocks, setBlocks] = useState<TrainingBlockOption[]>([]);
 
-  const isGym = form.location === 'palestra';
+  const isGym = form.type === 'palestra';
+
+  useEffect(() => {
+    const loadBlocks = async () => {
+      const { data, error } = await supabase
+        .from('training_blocks')
+        .select('id, name')
+        .order('start_date', { ascending: false });
+
+      if (error) {
+        console.error(error);
+        toast.error('Impossibile caricare i blocchi di allenamento');
+        return;
+      }
+
+      setBlocks((data || []) as TrainingBlockOption[]);
+    };
+
+    loadBlocks();
+  }, []);
 
   // Gestione campi form principali
   const handleFormChange = (
@@ -101,7 +136,7 @@ export default function RegistroPage() {
       // se cambia l'intensità, non salviamo effort_type nello stato,
       // ma lo calcoliamo a runtime; qui potremmo solo normalizzare il valore
       if (name === 'intensity') {
-        const num = Math.min(10, Math.max(1, Number(value) || 0));
+        const num = Math.min(10, Math.max(0, Number(value) || 0));
         ex.intensity = String(num);
       }
 
@@ -124,7 +159,9 @@ export default function RegistroPage() {
   const validate = () => {
     const newErrors: { [key: string]: boolean } = {};
     if (!form.date) newErrors.date = true;
-    if (!form.type) newErrors.type = true;
+    if (!form.type || !TRAINING_TYPES.some(t => t.value === form.type)) {
+      newErrors.type = true;
+    }
     if (!form.location) newErrors.location = true;
 
     exercises.forEach((ex, i) => {
@@ -156,7 +193,7 @@ export default function RegistroPage() {
             type: form.type,
             location: form.location,
             notes: form.notes,
-            created_at: new Date().toISOString(),
+            block_id: form.block_id || null,
           },
         ])
         .select()
@@ -168,37 +205,58 @@ export default function RegistroPage() {
       for (const ex of exercises) {
         if (!ex.name.trim()) continue;
 
-        const intensityNum = ex.intensity ? parseFloat(ex.intensity) : null;
+        const rawIntensity = Number.parseFloat(ex.intensity);
+        const intensityNum = Number.isFinite(rawIntensity)
+          ? Math.min(10, Math.max(0, rawIntensity))
+          : null;
         const effortType = getEffortType(intensityNum);
+        const setsValue = Number.parseInt(ex.sets, 10);
+        const repetitionsValue = Number.parseInt(ex.repetitions, 10);
+        const restRepsValue = Number.parseInt(ex.rest_between_reps_s, 10);
+        const restSetsValue = Number.parseInt(ex.rest_between_sets_s, 10);
+        const distanceValue = Number.parseInt(ex.distance_m, 10);
 
-        const { error: exErr } = await supabase.from('exercises').insert([
-          {
-            session_id: session.id,
-            name: ex.name,
-            distance_m: isGym
-              ? null
-              : ex.distance_m
-              ? parseInt(ex.distance_m)
-              : null,
-            sets: ex.sets ? parseInt(ex.sets) : null,
-            repetitions: ex.repetitions ? parseInt(ex.repetitions) : null,
-            rest_between_reps_s: ex.rest_between_reps_s
-              ? parseInt(ex.rest_between_reps_s)
-              : null,
-            rest_between_sets_s: ex.rest_between_sets_s
-              ? parseInt(ex.rest_between_sets_s)
-              : null,
-            intensity: intensityNum,
-            effort_type: effortType,
-            notes: ex.notes,
-            created_at: new Date().toISOString(),
-          },
-        ]);
+        const exercisePayload: Record<string, unknown> = {
+          session_id: session.id,
+          name: ex.name.trim(),
+          notes: ex.notes?.trim() || null,
+        };
+
+        if (!isGym && !Number.isNaN(distanceValue)) {
+          exercisePayload.distance_m = Math.max(0, distanceValue);
+        }
+
+        if (!Number.isNaN(setsValue)) {
+          exercisePayload.sets = Math.max(1, setsValue);
+        }
+
+        if (!Number.isNaN(repetitionsValue)) {
+          exercisePayload.repetitions = Math.max(1, repetitionsValue);
+        }
+
+        if (!Number.isNaN(restRepsValue)) {
+          exercisePayload.rest_between_reps_s = Math.max(0, restRepsValue);
+        }
+
+        if (!Number.isNaN(restSetsValue)) {
+          exercisePayload.rest_between_sets_s = Math.max(0, restSetsValue);
+        }
+
+        if (intensityNum !== null) {
+          exercisePayload.intensity = intensityNum;
+          if (effortType) {
+            exercisePayload.effort_type = effortType;
+          }
+        }
+
+        const { error: exErr } = await supabase
+          .from('exercises')
+          .insert([exercisePayload]);
         if (exErr) throw exErr;
       }
 
       toast.success('Allenamento registrato con successo!');
-      setForm({ date: '', type: '', location: '', notes: '' });
+      setForm({ date: '', type: '', location: '', notes: '', block_id: '' });
       setExercises([{ ...defaultExercise }]);
       setErrors({});
     } catch (err) {
@@ -248,10 +306,11 @@ export default function RegistroPage() {
                 }`}
               >
                 <option value="">Seleziona tipo...</option>
-                <option value="test">Test</option>
-                <option value="palestra">Palestra</option>
-                <option value="velocità">Velocità</option>
-                <option value="resistenza">Resistenza</option>
+                {TRAINING_TYPES.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -288,6 +347,26 @@ export default function RegistroPage() {
               onChange={handleFormChange}
               placeholder="Sensazioni, variabili, obiettivi..."
             />
+          </div>
+
+          <div className="space-y-1">
+            <Label className="flex items-center gap-1 text-sm font-medium text-slate-700">
+              <Info className="h-4 w-4 text-slate-400" />
+              Blocco di allenamento (opzionale)
+            </Label>
+            <select
+              name="block_id"
+              value={form.block_id}
+              onChange={handleFormChange}
+              className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+            >
+              <option value="">Nessun blocco</option>
+              {blocks.map(block => (
+                <option key={block.id} value={block.id}>
+                  {block.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* --- Esercizi --- */}
@@ -414,20 +493,20 @@ export default function RegistroPage() {
                     <div className="space-y-1 md:col-span-1">
                       <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
                         <Flame className="h-3 w-3 text-slate-400" />
-                        Intensità (1–10)
+                        Intensità (0–10)
                       </Label>
                       <div className="space-y-1">
                         <input
                           type="range"
                           name="intensity"
-                          min={1}
+                          min={0}
                           max={10}
                           value={ex.intensity}
                           onChange={e => handleExerciseChange(i, e)}
                           className="w-full"
                         />
                         <div className="text-xs flex items-center justify-between text-slate-600">
-                          <span>1</span>
+                          <span>0</span>
                           <span className="font-semibold">
                             {ex.intensity || '–'}/10
                           </span>

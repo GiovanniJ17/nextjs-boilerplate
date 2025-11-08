@@ -1,6 +1,6 @@
 import { createRequestHandler } from '@cloudflare/next-on-pages'
 
-export default {
+const worker = {
   async fetch(request, env, ctx) {
     return createRequestHandler({
       buildOutputDir: './.next',
@@ -8,3 +8,5 @@ export default {
     })(request, env, ctx)
   },
 }
+
+export default worker
