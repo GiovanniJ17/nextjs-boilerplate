@@ -3,13 +3,23 @@ import type { OpenNextConfig } from "@opennextjs/cloudflare";
 const config: OpenNextConfig = {
   default: {
     override: {
-      routes: [
-        {
-          src: "/(.*)",
-          dest: "/index.html",
-        },
-      ],
+      wrapper: "cloudflare-node",
+      converter: "edge",
+      incrementalCache: "dummy",
+      tagCache: "dummy",
+      queue: "dummy",
     },
+  },
+  middleware: {
+    external: true,
+    override: {
+      wrapper: "cloudflare-edge",
+      converter: "edge",
+      proxyExternalRequest: "fetch",
+    },
+  },
+  dangerous: {
+    enableCacheInterception: false,
   },
 };
 
