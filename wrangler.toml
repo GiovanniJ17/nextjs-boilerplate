@@ -2,5 +2,8 @@ name = "nextjs-boilerplate"
 compatibility_date = "2025-11-08"
 compatibility_flags = ["nodejs_compat"]
 
-# ✅ questa riga è fondamentale per Pages
-pages_build_output_dir = ".vercel/output/static"
+[build]
+command = "npx @opennextjs/cloudflare build"
+
+[pages]
+build_output_dir = ".vercel/output/static"
