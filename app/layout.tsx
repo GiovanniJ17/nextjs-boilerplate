@@ -1,20 +1,22 @@
-import './globals.css';
-import Navbar from '@/components/Navbar';
+import type { Metadata } from "next";
+import "./globals.css";
+import { MainNav } from "@/components/MainNav";
 
-export const metadata = {
-  title: 'Tracker Velocista',
-  description: 'Gestisci sessioni di allenamento e statistiche',
+export const metadata: Metadata = {
+  title: "Tracker Velocista",
+  description: "Registro allenamenti per velocisti",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="it">
-      <body className="min-h-screen bg-[#f1f5f9] text-gray-800">
-        <Navbar />
-        <main className="max-w-5xl mx-auto mt-8 p-6">{children}</main>
-        <footer className="text-center text-sm text-gray-400 py-6">
-          © {new Date().getFullYear()} Tracker Velocista — Tutti i diritti riservati.
-        </footer>
+      <body className="min-h-screen bg-slate-100 text-slate-900">
+        <MainNav />
+        <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
       </body>
     </html>
   );
