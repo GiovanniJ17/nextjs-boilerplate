@@ -7,20 +7,21 @@ const config: OpenNextConfig = {
       converter: "edge",
       incrementalCache: "dummy",
       tagCache: "dummy",
-      queue: "dummy",
-    },
+      queue: "dummy"
+    }
   },
   middleware: {
     external: true,
     override: {
       wrapper: "cloudflare-edge",
       converter: "edge",
-      proxyExternalRequest: "fetch",
-    },
+      proxyExternalRequest: "fetch"
+    }
   },
   dangerous: {
-    enableCacheInterception: false,
+    enableCacheInterception: false
   },
+  outputDir: ".open-next" // cartella dove Cloudflare troverà il build
 };
 
 export default config;
