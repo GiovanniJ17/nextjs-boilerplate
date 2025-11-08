@@ -1,9 +1,0 @@
-name = "nextjs-boilerplate"
-compatibility_date = "2025-11-08"
-compatibility_flags = ["nodejs_compat"]
-
-[build]
-command = "npm run build"
-
-[pages]
-pages_build_output_dir = "out"
