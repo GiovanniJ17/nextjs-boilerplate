@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  distDir: 'out', // <-- Cloudflare Pages serve questa cartella
+  output: "export",
+  distDir: "out",
   experimental: {},
 };
 
