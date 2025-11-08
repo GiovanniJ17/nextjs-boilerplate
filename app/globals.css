@@ -2,18 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
-  height: 100%;
-  margin: 0;
-  background-color: #0f172a;
-  color: #f1f5f9;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+/* 🌤️ Tema chiaro di default */
+html,
+body {
+  @apply bg-slate-50 text-slate-800 antialiased;
+  font-family: 'Inter', sans-serif;
+  min-height: 100%;
 }
 
-a {
-  color: #38bdf8;
-  text-decoration: none;
+/* Navbar elegante */
+header {
+  @apply bg-white border-b border-slate-200 shadow-sm;
 }
-a:hover {
-  text-decoration: underline;
+
+/* Pulsanti base */
+button {
+  @apply transition-colors duration-150;
+}
+
+/* Input e select uniformati */
+input,
+select,
+textarea {
+  @apply border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none 
+         bg-white text-slate-800 placeholder-slate-400
+         focus:border-sky-400 focus:ring-2 focus:ring-sky-100;
+}
+
+/* Card */
+.card {
+  @apply rounded-2xl border border-slate-200 bg-white shadow-sm p-6;
+}
+
+/* Sezione titolo */
+.section-title {
+  @apply flex items-center gap-2 text-lg font-semibold text-slate-700 mb-2;
+}
+
+/* Navbar attiva/inattiva */
+.nav-active {
+  @apply bg-sky-600 text-white shadow-sm;
+}
+
+.nav-inactive {
+  @apply text-slate-600 hover:bg-slate-100;
 }
