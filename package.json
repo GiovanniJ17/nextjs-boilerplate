@@ -6,14 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "preview": "npx @cloudflare/next-on-pages preview"
+    "lint": "eslint"
   },
   "dependencies": {
-  "next": "15.1.6",
-  "react": "19.0.0-rc-66855b96-20241106",
-  "react-dom": "19.0.0-rc-66855b96-20241106",
-  "@cloudflare/next-on-pages": "^1.13.16"
+    "next": "15.1.6",
+    "react": "19.0.0-rc-de68d2f4-20241204",
+    "react-dom": "19.0.0-rc-de68d2f4-20241204",
+    "@cloudflare/next-on-pages": "^1.13.16"
   },
   "devDependencies": {
     "typescript": "^5",
@@ -23,6 +22,6 @@
     "@tailwindcss/postcss": "^4",
     "tailwindcss": "^4",
     "eslint": "^9",
-    "eslint-config-next": "16.0.1"
+    "eslint-config-next": "15.1.6"
   }
 }
