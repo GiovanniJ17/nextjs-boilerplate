@@ -50,15 +50,24 @@ export default function RegistroPage() {
     },
   ]);
 
-  const handleFormChange = (e: any) =>
+  const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
+
+  // Gestione campi form principali
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleExerciseChange = (i: number, e: any) => {
+  // Gestione campi esercizi
+  const handleExerciseChange = (
+    i: number,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
     const newEx = [...exercises];
-    newEx[i][e.target.name] = e.target.value;
+    (newEx[i] as any)[name as keyof ExerciseForm] = value;
     setExercises(newEx);
   };
 
+  // Aggiungi esercizio
   const addExercise = () => {
     setExercises([
       ...exercises,
@@ -76,22 +85,38 @@ export default function RegistroPage() {
     ]);
   };
 
+  // Rimuovi esercizio
   const removeExercise = (i: number) => {
     const arr = [...exercises];
     arr.splice(i, 1);
     setExercises(arr);
   };
 
+  // Validazione base
+  const validate = () => {
+    const newErrors: { [key: string]: boolean } = {};
+    if (!form.date) newErrors.date = true;
+    if (!form.type) newErrors.type = true;
+    exercises.forEach((ex, i) => {
+      if (!ex.name.trim()) newErrors[`name-${i}`] = true;
+      if (!ex.sets.trim()) newErrors[`sets-${i}`] = true;
+      if (!ex.repetitions.trim()) newErrors[`repetitions-${i}`] = true;
+    });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Salvataggio su Supabase
   const handleSubmit = async () => {
-    if (!form.date || !form.type) {
-      toast.error('Inserisci almeno data e tipo allenamento');
+    if (!validate()) {
+      toast.error('Compila tutti i campi obbligatori');
       return;
     }
 
     setLoading(true);
 
     try {
-      // Inserisci sessione
+      // 1️⃣ Inserisci sessione
       const { data: session, error: sessionErr } = await supabase
         .from('training_sessions')
         .insert([
@@ -108,9 +133,10 @@ export default function RegistroPage() {
 
       if (sessionErr) throw sessionErr;
 
-      // Inserisci esercizi
+      // 2️⃣ Inserisci esercizi
       for (const ex of exercises) {
         if (!ex.name.trim()) continue;
+
         const { error: exErr } = await supabase.from('exercises').insert([
           {
             session_id: session.id,
@@ -168,11 +194,22 @@ export default function RegistroPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label>Data</Label>
-              <Input type="date" name="date" value={form.date} onChange={handleFormChange} />
+              <Input
+                type="date"
+                name="date"
+                value={form.date}
+                onChange={handleFormChange}
+                className={errors.date ? 'border-red-500' : ''}
+              />
             </div>
             <div>
               <Label>Tipo</Label>
-              <select name="type" value={form.type} onChange={handleFormChange} className="w-full border rounded-md p-2">
+              <select
+                name="type"
+                value={form.type}
+                onChange={handleFormChange}
+                className={`w-full border rounded-md p-2 ${errors.type ? 'border-red-500' : ''}`}
+              >
                 <option value="">Seleziona tipo...</option>
                 <option value="test">Test</option>
                 <option value="palestra">Palestra</option>
@@ -182,19 +219,29 @@ export default function RegistroPage() {
             </div>
             <div>
               <Label>Luogo</Label>
-              <Input name="location" value={form.location} onChange={handleFormChange} placeholder="Pista, palestra..." />
+              <Input
+                name="location"
+                value={form.location}
+                onChange={handleFormChange}
+                placeholder="Pista, palestra..."
+              />
             </div>
           </div>
 
           <div>
             <Label>Note</Label>
-            <Textarea name="notes" value={form.notes} onChange={handleFormChange} placeholder="Sensazioni, variabili, obiettivi..." />
+            <Textarea
+              name="notes"
+              value={form.notes}
+              onChange={handleFormChange}
+              placeholder="Sensazioni, variabili, obiettivi..."
+            />
           </div>
 
           {/* --- Esercizi --- */}
           <div className="space-y-4">
             {exercises.map((ex, i) => (
-              <Card key={i} className="bg-blue-50">
+              <Card key={i} className="bg-blue-50 border border-blue-100">
                 <CardHeader className="flex justify-between items-center">
                   <CardTitle className="text-blue-800 flex items-center gap-2">
                     ⚡ Esercizio {i + 1}
@@ -208,42 +255,96 @@ export default function RegistroPage() {
                     </button>
                   )}
                 </CardHeader>
+
                 <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Nome</Label>
-                    <Input name="name" value={ex.name} onChange={(e) => handleExerciseChange(i, e)} placeholder="Es. 3x150m, squat..." />
+                    <Input
+                      name="name"
+                      value={ex.name}
+                      onChange={(e) => handleExerciseChange(i, e)}
+                      placeholder="Es. 3x150m, squat..."
+                      className={errors[`name-${i}`] ? 'border-red-500' : ''}
+                    />
                   </div>
                   <div>
                     <Label>Distanza (m)</Label>
-                    <Input name="distance_m" type="number" value={ex.distance_m} onChange={(e) => handleExerciseChange(i, e)} />
+                    <Input
+                      name="distance_m"
+                      type="number"
+                      value={ex.distance_m}
+                      onChange={(e) => handleExerciseChange(i, e)}
+                      placeholder="150"
+                    />
                   </div>
                   <div>
                     <Label>Serie</Label>
-                    <Input name="sets" type="number" value={ex.sets} onChange={(e) => handleExerciseChange(i, e)} />
+                    <Input
+                      name="sets"
+                      type="number"
+                      value={ex.sets}
+                      onChange={(e) => handleExerciseChange(i, e)}
+                      className={errors[`sets-${i}`] ? 'border-red-500' : ''}
+                    />
                   </div>
                   <div>
                     <Label>Ripetizioni</Label>
-                    <Input name="repetitions" type="number" value={ex.repetitions} onChange={(e) => handleExerciseChange(i, e)} />
+                    <Input
+                      name="repetitions"
+                      type="number"
+                      value={ex.repetitions}
+                      onChange={(e) => handleExerciseChange(i, e)}
+                      className={errors[`repetitions-${i}`] ? 'border-red-500' : ''}
+                    />
                   </div>
                   <div>
                     <Label>Recupero tra ripetizioni (s)</Label>
-                    <Input name="rest_between_reps_s" type="number" value={ex.rest_between_reps_s} onChange={(e) => handleExerciseChange(i, e)} />
+                    <Input
+                      name="rest_between_reps_s"
+                      type="number"
+                      value={ex.rest_between_reps_s}
+                      onChange={(e) => handleExerciseChange(i, e)}
+                      placeholder="es. 60"
+                    />
                   </div>
                   <div>
                     <Label>Recupero tra serie (s)</Label>
-                    <Input name="rest_between_sets_s" type="number" value={ex.rest_between_sets_s} onChange={(e) => handleExerciseChange(i, e)} />
+                    <Input
+                      name="rest_between_sets_s"
+                      type="number"
+                      value={ex.rest_between_sets_s}
+                      onChange={(e) => handleExerciseChange(i, e)}
+                      placeholder="es. 180"
+                    />
                   </div>
                   <div>
                     <Label>Intensità (1–10)</Label>
-                    <Input name="intensity" type="number" value={ex.intensity} onChange={(e) => handleExerciseChange(i, e)} />
+                    <Input
+                      name="intensity"
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={ex.intensity}
+                      onChange={(e) => handleExerciseChange(i, e)}
+                    />
                   </div>
                   <div>
                     <Label>Tipo sforzo</Label>
-                    <Input name="effort_type" value={ex.effort_type} onChange={(e) => handleExerciseChange(i, e)} placeholder="Massimo, medio..." />
+                    <Input
+                      name="effort_type"
+                      value={ex.effort_type}
+                      onChange={(e) => handleExerciseChange(i, e)}
+                      placeholder="Massimo, medio..."
+                    />
                   </div>
                   <div className="md:col-span-3">
                     <Label>Note esercizio</Label>
-                    <Textarea name="notes" value={ex.notes} onChange={(e) => handleExerciseChange(i, e)} placeholder="Dettagli, condizioni, risultati..." />
+                    <Textarea
+                      name="notes"
+                      value={ex.notes}
+                      onChange={(e) => handleExerciseChange(i, e)}
+                      placeholder="Dettagli, condizioni, risultati..."
+                    />
                   </div>
                 </CardContent>
               </Card>
