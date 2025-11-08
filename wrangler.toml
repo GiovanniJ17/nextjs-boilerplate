@@ -6,4 +6,4 @@ compatibility_flags = ["nodejs_compat"]
 command = "npm run build"
 
 [pages]
-pages_build_output_dir = ".next"
+pages_build_output_dir = "out"
