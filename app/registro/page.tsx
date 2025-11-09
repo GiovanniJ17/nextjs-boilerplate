@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +30,15 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+interface ExerciseResultForm {
+  attempt_number: string;
+  time_s: string;
+  weight_kg: string;
+  rpe: string;
+  notes: string;
+  [key: string]: string;
+}
+
 interface ExerciseForm {
   name: string;
   distance_m: string;
@@ -39,10 +48,12 @@ interface ExerciseForm {
   rest_between_sets_s: string;
   intensity: string; // 1–10
   notes: string;
-  [key: string]: string; // per gestire l'update dinamico via name
+  results: ExerciseResultForm[];
 }
 
-const defaultExercise: ExerciseForm = {
+type ExerciseEditableField = keyof Omit<ExerciseForm, 'results'>;
+
+const createDefaultExercise = (): ExerciseForm => ({
   name: '',
   distance_m: '',
   sets: '',
@@ -51,34 +62,69 @@ const defaultExercise: ExerciseForm = {
   rest_between_sets_s: '',
   intensity: '5',
   notes: '',
-};
+  results: [
+    {
+      attempt_number: '1',
+      time_s: '',
+      weight_kg: '',
+      rpe: '',
+      notes: '',
+    },
+  ],
+});
 
 function getEffortType(intensity: number | null): string | null {
   if (intensity == null || Number.isNaN(intensity)) return null;
-  if (intensity <= 3) return 'Molto leggero';
-  if (intensity <= 5) return 'Leggero';
-  if (intensity <= 7) return 'Medio';
-  if (intensity <= 8) return 'Alto';
-  return 'Massimo';
+  if (intensity <= 3) return 'basso';
+  if (intensity <= 6) return 'medio';
+  if (intensity <= 8) return 'alto';
+  return 'massimo';
 }
 
 function getIntensityLabel(intensity: number | null): string {
-  return getEffortType(intensity) ?? 'Non impostato';
+  const effort = getEffortType(intensity);
+  if (!effort) return 'Non impostato';
+  return effort.charAt(0).toUpperCase() + effort.slice(1);
 }
 
 export default function RegistroPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
+    block_id: '',
     date: '',
     type: '',
     location: '',
     notes: '',
   });
 
-  const [exercises, setExercises] = useState<ExerciseForm[]>([defaultExercise]);
+  const [exercises, setExercises] = useState<ExerciseForm[]>([
+    createDefaultExercise(),
+  ]);
   const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
+  const [blocks, setBlocks] = useState<{ id: string; name: string }[]>([]);
+  const [loadingBlocks, setLoadingBlocks] = useState(false);
 
-  const isGym = form.location === 'palestra';
+  const isGym = form.type === 'palestra';
+
+  useEffect(() => {
+    const fetchBlocks = async () => {
+      setLoadingBlocks(true);
+      const { data, error } = await supabase
+        .from('training_blocks')
+        .select('id, name')
+        .order('start_date', { ascending: false });
+
+      if (error) {
+        console.error(error);
+        toast.error('Impossibile recuperare i blocchi di allenamento');
+      } else {
+        setBlocks(data ?? []);
+      }
+      setLoadingBlocks(false);
+    };
+
+    fetchBlocks();
+  }, []);
 
   // Gestione campi form principali
   const handleFormChange = (
@@ -93,15 +139,16 @@ export default function RegistroPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+    const fieldName = name as ExerciseEditableField;
     setExercises(prev => {
       const next = [...prev];
       const ex = { ...next[i] };
-      ex[name] = value;
+      ex[fieldName] = value;
 
       // se cambia l'intensità, non salviamo effort_type nello stato,
       // ma lo calcoliamo a runtime; qui potremmo solo normalizzare il valore
-      if (name === 'intensity') {
-        const num = Math.min(10, Math.max(1, Number(value) || 0));
+      if (fieldName === 'intensity') {
+        const num = Math.min(10, Math.max(0, Number(value) || 0));
         ex.intensity = String(num);
       }
 
@@ -110,9 +157,27 @@ export default function RegistroPage() {
     });
   };
 
+  const handleResultChange = (
+    exerciseIndex: number,
+    resultIndex: number,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+
+    setExercises(prev => {
+      const next = [...prev];
+      const exercise = { ...next[exerciseIndex] };
+      const updatedResults = [...exercise.results];
+      updatedResults[resultIndex] = { ...updatedResults[resultIndex], [name]: value };
+      exercise.results = updatedResults;
+      next[exerciseIndex] = exercise;
+      return next;
+    });
+  };
+
   // Aggiungi esercizio
   const addExercise = () => {
-    setExercises(prev => [...prev, { ...defaultExercise }]);
+    setExercises(prev => [...prev, createDefaultExercise()]);
   };
 
   // Rimuovi esercizio
@@ -152,6 +217,7 @@ export default function RegistroPage() {
         .from('training_sessions')
         .insert([
           {
+            block_id: form.block_id || null,
             date: form.date,
             type: form.type,
             location: form.location,
@@ -171,35 +237,61 @@ export default function RegistroPage() {
         const intensityNum = ex.intensity ? parseFloat(ex.intensity) : null;
         const effortType = getEffortType(intensityNum);
 
-        const { error: exErr } = await supabase.from('exercises').insert([
-          {
-            session_id: session.id,
-            name: ex.name,
-            distance_m: isGym
-              ? null
-              : ex.distance_m
-              ? parseInt(ex.distance_m)
-              : null,
-            sets: ex.sets ? parseInt(ex.sets) : null,
-            repetitions: ex.repetitions ? parseInt(ex.repetitions) : null,
-            rest_between_reps_s: ex.rest_between_reps_s
-              ? parseInt(ex.rest_between_reps_s)
-              : null,
-            rest_between_sets_s: ex.rest_between_sets_s
-              ? parseInt(ex.rest_between_sets_s)
-              : null,
-            intensity: intensityNum,
-            effort_type: effortType,
-            notes: ex.notes,
-            created_at: new Date().toISOString(),
-          },
-        ]);
+        const { data: insertedExercise, error: exErr } = await supabase
+          .from('exercises')
+          .insert([
+            {
+              session_id: session.id,
+              name: ex.name,
+              distance_m: isGym
+                ? null
+                : ex.distance_m
+                ? parseInt(ex.distance_m)
+                : null,
+              sets: ex.sets ? parseInt(ex.sets) : null,
+              repetitions: ex.repetitions ? parseInt(ex.repetitions) : null,
+              rest_between_reps_s: ex.rest_between_reps_s
+                ? parseInt(ex.rest_between_reps_s)
+                : null,
+              rest_between_sets_s: ex.rest_between_sets_s
+                ? parseInt(ex.rest_between_sets_s)
+                : null,
+              intensity: intensityNum,
+              effort_type: effortType,
+              notes: ex.notes,
+              created_at: new Date().toISOString(),
+            },
+          ])
+          .select()
+          .single();
+
         if (exErr) throw exErr;
+
+        for (const result of ex.results) {
+          const hasContent =
+            result.time_s || result.weight_kg || result.rpe || result.notes;
+          if (!hasContent) continue;
+
+          const { error: resultErr } = await supabase.from('exercise_results').insert([
+            {
+              exercise_id: insertedExercise.id,
+              attempt_number: result.attempt_number
+                ? parseInt(result.attempt_number)
+                : null,
+              time_s: result.time_s ? parseFloat(result.time_s) : null,
+              weight_kg: result.weight_kg ? parseFloat(result.weight_kg) : null,
+              rpe: result.rpe ? parseFloat(result.rpe) : null,
+              notes: result.notes,
+              created_at: new Date().toISOString(),
+            },
+          ]);
+          if (resultErr) throw resultErr;
+        }
       }
 
       toast.success('Allenamento registrato con successo!');
-      setForm({ date: '', type: '', location: '', notes: '' });
-      setExercises([{ ...defaultExercise }]);
+      setForm({ block_id: '', date: '', type: '', location: '', notes: '' });
+      setExercises([createDefaultExercise()]);
       setErrors({});
     } catch (err) {
       console.error(err);
@@ -219,7 +311,35 @@ export default function RegistroPage() {
       <Card className="shadow-sm">
         <CardContent className="space-y-6 p-6">
           {/* --- Info base --- */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <Label className="flex items-center gap-1 text-sm font-medium text-slate-700">
+                <Tag className="h-4 w-4 text-slate-400" />
+                Blocco allenamento
+              </Label>
+              <select
+                name="block_id"
+                value={form.block_id}
+                onChange={handleFormChange}
+                className={`w-full border rounded-md px-3 py-2 text-sm bg-white ${
+                  errors.block_id ? 'border-red-500' : ''
+                }`}
+              >
+                <option value="">Seleziona blocco...</option>
+                {loadingBlocks ? (
+                  <option value="" disabled>
+                    Caricamento...
+                  </option>
+                ) : (
+                  blocks.map(block => (
+                    <option key={block.id} value={block.id}>
+                      {block.name}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
             <div className="space-y-1">
               <Label className="flex items-center gap-1 text-sm font-medium text-slate-700">
                 <Calendar className="h-4 w-4 text-slate-400" />
@@ -248,10 +368,12 @@ export default function RegistroPage() {
                 }`}
               >
                 <option value="">Seleziona tipo...</option>
-                <option value="test">Test</option>
+                <option value="pista">Pista</option>
                 <option value="palestra">Palestra</option>
-                <option value="velocità">Velocità</option>
-                <option value="resistenza">Resistenza</option>
+                <option value="test">Test</option>
+                <option value="scarico">Scarico</option>
+                <option value="recupero">Recupero</option>
+                <option value="altro">Altro</option>
               </select>
             </div>
 
@@ -414,25 +536,29 @@ export default function RegistroPage() {
                     <div className="space-y-1 md:col-span-1">
                       <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
                         <Flame className="h-3 w-3 text-slate-400" />
-                        Intensità (1–10)
+                        Intensità (0–10)
                       </Label>
-                      <div className="space-y-1">
+                      <div className="flex items-center gap-2">
                         <input
                           type="range"
                           name="intensity"
-                          min={1}
+                          min={0}
                           max={10}
+                          step={0.5}
                           value={ex.intensity}
                           onChange={e => handleExerciseChange(i, e)}
                           className="w-full"
                         />
-                        <div className="text-xs flex items-center justify-between text-slate-600">
-                          <span>1</span>
-                          <span className="font-semibold">
-                            {ex.intensity || '–'}/10
-                          </span>
-                          <span>10</span>
-                        </div>
+                        <Input
+                          name="intensity"
+                          type="number"
+                          min={0}
+                          max={10}
+                          step={0.5}
+                          value={ex.intensity}
+                          onChange={e => handleExerciseChange(i, e)}
+                          className="w-20"
+                        />
                       </div>
                     </div>
 
@@ -462,6 +588,134 @@ export default function RegistroPage() {
                             : 'Dettagli su tempi, vento, sensazioni...'
                         }
                       />
+                    </div>
+
+                    <div className="md:col-span-3 space-y-3 border-t pt-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                          Risultati / Moduli
+                        </h3>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setExercises(prev => {
+                              const next = [...prev];
+                              const exercise = { ...next[i] };
+                              exercise.results = [
+                                ...exercise.results,
+                                {
+                                  attempt_number: String(exercise.results.length + 1),
+                                  time_s: '',
+                                  weight_kg: '',
+                                  rpe: '',
+                                  notes: '',
+                                },
+                              ];
+                              next[i] = exercise;
+                              return next;
+                            });
+                          }}
+                          className="text-xs"
+                        >
+                          <PlusCircle className="h-3 w-3 mr-1" /> Aggiungi modulo
+                        </Button>
+                      </div>
+
+                      <div className="space-y-4">
+                        {ex.results.map((result, rIndex) => (
+                          <div
+                            key={rIndex}
+                            className="grid grid-cols-1 md:grid-cols-5 gap-3 rounded-md border p-3 bg-white"
+                          >
+                            <div className="space-y-1">
+                              <Label className="text-[11px] font-medium text-slate-600">
+                                Modulo #
+                              </Label>
+                              <Input
+                                name="attempt_number"
+                                type="number"
+                                min={1}
+                                value={result.attempt_number}
+                                onChange={e => handleResultChange(i, rIndex, e)}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[11px] font-medium text-slate-600">
+                                Tempo (s)
+                              </Label>
+                              <Input
+                                name="time_s"
+                                type="number"
+                                step="0.01"
+                                value={result.time_s}
+                                onChange={e => handleResultChange(i, rIndex, e)}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[11px] font-medium text-slate-600">
+                                Carico (kg)
+                              </Label>
+                              <Input
+                                name="weight_kg"
+                                type="number"
+                                step="0.5"
+                                value={result.weight_kg}
+                                onChange={e => handleResultChange(i, rIndex, e)}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[11px] font-medium text-slate-600">
+                                RPE
+                              </Label>
+                              <Input
+                                name="rpe"
+                                type="number"
+                                min={0}
+                                max={10}
+                                step={0.5}
+                                value={result.rpe}
+                                onChange={e => handleResultChange(i, rIndex, e)}
+                              />
+                            </div>
+                            <div className="space-y-1 md:col-span-2">
+                              <Label className="text-[11px] font-medium text-slate-600">
+                                Note modulo
+                              </Label>
+                              <Textarea
+                                name="notes"
+                                value={result.notes}
+                                onChange={e => handleResultChange(i, rIndex, e)}
+                                placeholder="Dettagli su recuperi, sensazioni, varianti..."
+                              />
+                            </div>
+                            {ex.results.length > 1 && (
+                              <div className="md:col-span-3 flex justify-end">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setExercises(prev => {
+                                      const next = [...prev];
+                                      const exercise = { ...next[i] };
+                                      exercise.results = exercise.results.filter(
+                                        (_, idx) => idx !== rIndex
+                                      );
+                                      next[i] = exercise;
+                                      return next;
+                                    });
+                                  }}
+                                  className="text-xs text-red-500 hover:text-red-600"
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" /> Rimuovi modulo
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
