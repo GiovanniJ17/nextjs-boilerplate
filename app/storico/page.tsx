@@ -23,6 +23,10 @@ type TrainingSession = {
   training_blocks?: TrainingBlock | null;
 };
 
+type RawTrainingSession = Omit<TrainingSession, "training_blocks"> & {
+  training_blocks: TrainingBlock[] | TrainingBlock | null;
+};
+
 type ExerciseSummary = {
   id: string;
   session_id: string;
@@ -89,10 +93,15 @@ export default function StoricoPage() {
     const { data, error } = await query;
 
     if (!error && data) {
-      const casted = data as TrainingSession[];
-      setSessions(casted);
+      const normalized: TrainingSession[] = (data as RawTrainingSession[]).map((session) => ({
+        ...session,
+        training_blocks: Array.isArray(session.training_blocks)
+          ? session.training_blocks[0] ?? null
+          : session.training_blocks ?? null,
+      }));
+      setSessions(normalized);
 
-      const sessionIds = casted.map((session) => session.id);
+      const sessionIds = normalized.map((session) => session.id);
 
       if (sessionIds.length > 0) {
         const { data: exercisesData } = await supabase

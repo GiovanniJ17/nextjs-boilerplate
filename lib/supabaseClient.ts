@@ -1,15 +1,25 @@
-// lib/supabaseClient.ts
-'use client';
+"use client";
 
-import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.'
-  );
+let supabaseClient: SupabaseClient | null = null;
+
+if (supabaseUrl && supabaseAnonKey) {
+  supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+} else if (typeof window !== "undefined") {
+  console.warn("Supabase environment variables are missing. Data features are disabled.");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const fallbackClient = {
+  from() {
+    throw new Error(
+      "Supabase environment variables are missing. Provide NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to enable data features."
+    );
+  },
+} as unknown as SupabaseClient;
+
+export const supabase = supabaseClient ?? fallbackClient;

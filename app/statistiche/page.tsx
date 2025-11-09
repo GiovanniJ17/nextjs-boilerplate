@@ -4,9 +4,9 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivitySquare,
+  AreaChart,
   BarChart4,
   CalendarDays,
-  ChartArea,
   Compass,
   Info,
   Lightbulb,
@@ -475,7 +475,7 @@ export default function StatistichePage() {
               <StatPill
                 title="Volume distanza (m)"
                 value={totalDistance.toFixed(0)}
-                icon={<ChartArea className="h-5 w-5 text-sky-600" />}
+                icon={<AreaChart className="h-5 w-5 text-sky-600" />}
               />
               <StatPill
                 title="Miglior tempo (s)"
