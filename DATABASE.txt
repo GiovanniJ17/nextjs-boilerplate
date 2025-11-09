@@ -1,0 +1,73 @@
+-- Estensione per UUID se non già attiva
+create extension if not exists "uuid-ossp";
+
+-- ======================
+-- 1. Blocchi di allenamento
+-- ======================
+create table training_blocks (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null,
+  start_date date not null,
+  end_date date not null,
+  goal text,
+  notes text,
+  created_at timestamp with time zone default now()
+);
+
+-- ======================
+-- 2. Sessioni di allenamento
+-- ======================
+create table training_sessions (
+  id uuid primary key default uuid_generate_v4(),
+  block_id uuid references training_blocks(id) on delete set null,
+  date date not null,
+  type text check (type in ('pista', 'palestra', 'test', 'scarico', 'recupero', 'altro')),
+  location text,
+  notes text,
+  created_at timestamp with time zone default now()
+);
+
+-- ======================
+-- 3. Esercizi
+-- ======================
+create table exercises (
+  id uuid primary key default uuid_generate_v4(),
+  session_id uuid references training_sessions(id) on delete cascade,
+  name text not null,
+  distance_m int,
+  sets int default 1,
+  repetitions int default 1,
+  rest_between_reps_s int,
+  rest_between_sets_s int,
+  intensity numeric(3,1) check (intensity >= 0 and intensity <= 10),
+  effort_type text check (effort_type in ('basso', 'medio', 'alto', 'massimo')),
+  notes text,
+  created_at timestamp with time zone default now()
+);
+
+-- ======================
+-- 4. Risultati esercizi (tempi, carichi, ecc.)
+-- ======================
+create table exercise_results (
+  id uuid primary key default uuid_generate_v4(),
+  exercise_id uuid references exercises(id) on delete cascade,
+  attempt_number int default 1,
+  time_s numeric(5,2),
+  weight_kg numeric(5,2),
+  rpe numeric(3,1) check (rpe >= 0 and rpe <= 10),
+  notes text,
+  created_at timestamp with time zone default now()
+);
+
+-- ======================
+-- 5. Metriche generali (test, progressi, peso, ecc.)
+-- ======================
+create table metrics (
+  id uuid primary key default uuid_generate_v4(),
+  date date not null,
+  metric_name text not null,
+  value numeric(6,2) not null,
+  unit text,
+  notes text,
+  created_at timestamp with time zone default now()
+);
