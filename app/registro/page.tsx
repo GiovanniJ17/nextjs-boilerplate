@@ -8,19 +8,24 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Droplets,
   Dumbbell,
   Flame,
   FolderPlus,
+  Gauge,
   ListPlus,
   Loader2,
   MapPin,
+  MoveRight,
   NotebookPen,
   PenSquare,
   PlusCircle,
   Ruler,
+  Sparkles,
   StickyNote,
   Target,
   Trash2,
+  Trophy,
   Weight,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
@@ -81,12 +86,36 @@ type MetricForm = {
 };
 
 const sessionTypes = [
-  { value: 'pista', label: 'Allenamento in pista' },
-  { value: 'palestra', label: 'Palestra / forza' },
-  { value: 'test', label: 'Test' },
-  { value: 'scarico', label: 'Scarico attivo' },
-  { value: 'recupero', label: 'Recupero' },
-  { value: 'altro', label: 'Altro' },
+  {
+    value: 'pista',
+    label: 'Allenamento in pista',
+    hint: 'Ripetute, lavori di velocità e sessioni tecniche su pista',
+  },
+  {
+    value: 'palestra',
+    label: 'Palestra / forza',
+    hint: 'Sessioni di potenziamento muscolare e forza',
+  },
+  {
+    value: 'test',
+    label: 'Test',
+    hint: 'Test di valutazione e prove specifiche',
+  },
+  {
+    value: 'scarico',
+    label: 'Scarico attivo',
+    hint: 'Sessioni leggere di recupero con movimento controllato',
+  },
+  {
+    value: 'recupero',
+    label: 'Recupero',
+    hint: 'Riposo guidato, mobilità e rigenerazione',
+  },
+  {
+    value: 'altro',
+    label: 'Altro',
+    hint: 'Qualsiasi altro allenamento particolare',
+  },
 ];
 
 const disciplineTypes = [
@@ -98,11 +127,11 @@ const disciplineTypes = [
 ];
 
 const metricCategories = [
-  { value: 'prestazione', label: 'Prestazione' },
-  { value: 'fisico', label: 'Fisico' },
-  { value: 'recupero', label: 'Recupero' },
-  { value: 'test', label: 'Test' },
-  { value: 'altro', label: 'Altro' },
+  { value: 'prestazione', label: 'Prestazione', description: 'Tempi, carichi, misurazioni gara' },
+  { value: 'fisico', label: 'Fisico', description: 'Peso, misure corporee, stato muscolare' },
+  { value: 'recupero', label: 'Recupero', description: 'Qualità del sonno, HRV, percezione' },
+  { value: 'test', label: 'Test', description: 'Valutazioni periodiche e benchmark' },
+  { value: 'altro', label: 'Altro', description: 'Note e misurazioni extra' },
 ];
 
 const sessionTypeIcons: Record<string, LucideIcon> = {
@@ -114,7 +143,39 @@ const sessionTypeIcons: Record<string, LucideIcon> = {
   altro: PlusCircle,
 };
 
-const locationSuggestions = ['Pista indoor', 'Palazzetto', 'Stadio', 'Palestra', 'Outdoor'];
+const locationOptions = [
+  { value: 'pista-indoor', label: 'Pista indoor' },
+  { value: 'palazzetto', label: 'Palazzetto' },
+  { value: 'stadio', label: 'Stadio' },
+  { value: 'palestra', label: 'Palestra' },
+  { value: 'outdoor', label: 'Outdoor' },
+  { value: 'custom', label: 'Altro luogo' },
+];
+
+const locationIcons: Record<string, LucideIcon> = {
+  'pista-indoor': Activity,
+  palazzetto: Target,
+  stadio: Trophy,
+  palestra: Dumbbell,
+  outdoor: MapPin,
+  custom: PenSquare,
+};
+
+const disciplineIcons: Record<string, LucideIcon> = {
+  sprint: Activity,
+  forza: Dumbbell,
+  mobilità: MoveRight,
+  tecnica: Target,
+  altro: PenSquare,
+};
+
+const metricCategoryIcons: Record<string, LucideIcon> = {
+  prestazione: Trophy,
+  fisico: Weight,
+  recupero: Droplets,
+  test: Target,
+  altro: NotebookPen,
+};
 
 const defaultExerciseResult: ExerciseResultForm = {
   attempt_number: '1',
@@ -158,6 +219,133 @@ const defaultMetric: MetricForm = {
   notes: '',
 };
 
+type MetricSuggestion = {
+  metric_name: string;
+  category: string;
+  metric_target?: string;
+  unit?: string;
+  notes?: string;
+  hint: string;
+};
+
+const metricPlaybook: Record<string, MetricSuggestion[]> = {
+  pista: [
+    {
+      metric_name: 'Tempo 30m',
+      category: 'prestazione',
+      metric_target: 'Sprint breve',
+      unit: 's',
+      hint: 'Registra i riferimenti sui tratti esplosivi',
+    },
+    {
+      metric_name: 'Lattato post sessione',
+      category: 'recupero',
+      unit: 'mmol',
+      hint: 'Aiuta a monitorare la fatica metabolica',
+    },
+  ],
+  palestra: [
+    {
+      metric_name: 'Carico massimo',
+      category: 'prestazione',
+      metric_target: 'Esercizi forza',
+      unit: 'kg',
+      hint: 'Traccia il peso migliore eseguito in giornata',
+    },
+    {
+      metric_name: 'RPE sessione',
+      category: 'recupero',
+      unit: 'scala 1-10',
+      hint: 'Valuta la percezione globale di fatica',
+    },
+  ],
+  test: [
+    {
+      metric_name: 'Test CMJ',
+      category: 'prestazione',
+      unit: 'cm',
+      hint: 'Collega il salto verticale al periodo di test',
+    },
+    {
+      metric_name: 'HRV mattutina',
+      category: 'recupero',
+      unit: 'ms',
+      hint: 'Controlla lo stato di recupero nei giorni dei test',
+    },
+  ],
+  scarico: [
+    {
+      metric_name: 'Qualità sonno',
+      category: 'recupero',
+      unit: '1-5',
+      notes: 'Nota eventuali sveglie notturne',
+      hint: 'Associa la percezione di recupero ai giorni leggeri',
+    },
+  ],
+  recupero: [
+    {
+      metric_name: 'Dolore muscolare',
+      category: 'fisico',
+      unit: '1-10',
+      hint: 'Traccia il DOMS dopo lavori intensi',
+    },
+  ],
+  altro: [
+    {
+      metric_name: 'Feeling generale',
+      category: 'recupero',
+      unit: '1-10',
+      hint: 'Segna velocemente come ti senti a fine giornata',
+    },
+  ],
+};
+
+const disciplineMetricPlaybook: Record<string, MetricSuggestion[]> = {
+  sprint: [
+    {
+      metric_name: 'Tempo medio ripetute',
+      category: 'prestazione',
+      metric_target: 'Serie sprint',
+      unit: 's',
+      hint: 'Confronta le prove interne alla seduta',
+    },
+  ],
+  forza: [
+    {
+      metric_name: 'Peak Power',
+      category: 'prestazione',
+      metric_target: 'Lift principale',
+      unit: 'W',
+      hint: 'Inserisci il valore migliore rilevato',
+    },
+  ],
+  mobilità: [
+    {
+      metric_name: 'Range articolare',
+      category: 'fisico',
+      metric_target: 'Angolo o profondità',
+      unit: '°',
+      hint: 'Annota i progressi sulla mobilità specifica',
+    },
+  ],
+  tecnica: [
+    {
+      metric_name: 'Valutazione coach',
+      category: 'altro',
+      unit: '1-5',
+      notes: 'Riporta feedback qualitativi',
+      hint: 'Inserisci la nota tecnica ricevuta',
+    },
+  ],
+  altro: [
+    {
+      metric_name: 'Nota chiave',
+      category: 'altro',
+      hint: 'Qualsiasi informazione extra collegata al focus',
+    },
+  ],
+};
+
 type StepKey = 'details' | 'exercises' | 'metrics';
 
 type StepDefinition = {
@@ -199,6 +387,7 @@ export default function RegistroPage() {
   const [loading, setLoading] = useState(false);
   const [loadingBlocks, setLoadingBlocks] = useState(false);
   const [showBlockForm, setShowBlockForm] = useState(false);
+  const [blockActionLoading, setBlockActionLoading] = useState<string | null>(null);
   const [blockForm, setBlockForm] = useState({
     name: '',
     start_date: '',
@@ -207,6 +396,8 @@ export default function RegistroPage() {
     notes: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [usingCustomLocation, setUsingCustomLocation] = useState(false);
+  const [customLocation, setCustomLocation] = useState('');
 
   const sectionRefs = {
     details: useRef<HTMLDivElement | null>(null),
@@ -245,6 +436,47 @@ export default function RegistroPage() {
   const totalResults = useMemo(() => {
     return exercises.reduce((acc, ex) => acc + ex.results.length, 0);
   }, [exercises]);
+
+  const disciplineDistribution = useMemo(() => {
+    const counter = new Map<string, number>();
+    for (const exercise of exercises) {
+      const key = exercise.discipline_type || 'altro';
+      counter.set(key, (counter.get(key) ?? 0) + 1);
+    }
+
+    const total = exercises.length || 1;
+    return Array.from(counter.entries()).map(([key, value]) => ({
+      key,
+      label: disciplineTypes.find(type => type.value === key)?.label ?? key,
+      value,
+      percentage: Math.round((value / total) * 100),
+    }));
+  }, [exercises]);
+
+  const metricSuggestions = useMemo(() => {
+    const collected = new Map<string, MetricSuggestion>();
+
+    if (sessionForm.type && metricPlaybook[sessionForm.type]) {
+      for (const suggestion of metricPlaybook[sessionForm.type]) {
+        const key = `${suggestion.metric_name}-${suggestion.category}`;
+        if (!collected.has(key)) {
+          collected.set(key, suggestion);
+        }
+      }
+    }
+
+    for (const exercise of exercises) {
+      const library = disciplineMetricPlaybook[exercise.discipline_type] ?? [];
+      for (const suggestion of library) {
+        const key = `${suggestion.metric_name}-${suggestion.category}`;
+        if (!collected.has(key)) {
+          collected.set(key, suggestion);
+        }
+      }
+    }
+
+    return Array.from(collected.values());
+  }, [exercises, sessionForm.type]);
 
   const stepProgress = useMemo<StepDefinition[]>(() => {
     const detailsComplete = Boolean(sessionForm.date && sessionForm.type && sessionForm.location);
@@ -327,9 +559,57 @@ export default function RegistroPage() {
     clearError('type');
   }
 
-  function handleLocationSuggestion(value: string) {
-    setSessionForm(prev => ({ ...prev, location: value }));
+  function handleLocationSelect(optionValue: string) {
+    if (optionValue === 'custom') {
+      setUsingCustomLocation(true);
+      setSessionForm(prev => ({ ...prev, location: customLocation }));
+      if (customLocation) {
+        clearError('location');
+      }
+      return;
+    }
+
+    const selected = locationOptions.find(option => option.value === optionValue);
+    const valueToAssign = selected ? selected.label : '';
+    setUsingCustomLocation(false);
+    setCustomLocation('');
+    setSessionForm(prev => ({ ...prev, location: valueToAssign }));
     clearError('location');
+  }
+
+  function handleCustomLocationChange(value: string) {
+    setCustomLocation(value);
+    setSessionForm(prev => ({ ...prev, location: value }));
+    if (value.trim()) {
+      clearError('location');
+    }
+  }
+
+  function handleBlockSelect(blockId: string | null) {
+    setSessionForm(prev => ({ ...prev, block_id: blockId ?? '' }));
+  }
+
+  async function handleDeleteBlock(blockId: string) {
+    const block = trainingBlocks.find(item => item.id === blockId);
+    const confirmationLabel = block?.name ? ` il blocco "${block.name}"` : ' questo blocco';
+    const shouldDelete = window.confirm(`Eliminare${confirmationLabel}? Verrà rimosso solo il collegamento.`);
+    if (!shouldDelete) return;
+
+    setBlockActionLoading(blockId);
+    const { error } = await supabase.from('training_blocks').delete().eq('id', blockId);
+
+    if (error) {
+      toast.error('Errore durante l\'eliminazione del blocco');
+      setBlockActionLoading(null);
+      return;
+    }
+
+    toast.success('Blocco eliminato');
+    setTrainingBlocks(prev => prev.filter(item => item.id !== blockId));
+    setBlockActionLoading(null);
+    if (sessionForm.block_id === blockId) {
+      handleBlockSelect(null);
+    }
   }
 
   function handleCreateBlockShortcut() {
@@ -373,6 +653,16 @@ export default function RegistroPage() {
     if (targetKey) {
       clearError(targetKey);
     }
+  }
+
+  function handleDisciplineSelect(index: number, value: string) {
+    setExercises(prev => {
+      const copy = [...prev];
+      const next = { ...copy[index], discipline_type: value };
+      copy[index] = next;
+      return copy;
+    });
+    clearError(`exercise-${index}-discipline`);
   }
 
   function handleResultChange(
@@ -429,6 +719,46 @@ export default function RegistroPage() {
     setMetrics(prev => [...prev, { ...defaultMetric }]);
   }
 
+  function handleMetricCategorySelect(index: number, category: string) {
+    setMetrics(prev => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], category };
+      return copy;
+    });
+  }
+
+  function handleAddMetricFromSuggestion(suggestion: MetricSuggestion) {
+    setMetrics(prev => {
+      const existingIndex = prev.findIndex(metric =>
+        metric.metric_name.trim().toLowerCase() === suggestion.metric_name.toLowerCase()
+      );
+
+      if (existingIndex !== -1) {
+        const copy = [...prev];
+        copy[existingIndex] = {
+          ...copy[existingIndex],
+          category: suggestion.category,
+          metric_target: suggestion.metric_target ?? copy[existingIndex].metric_target,
+          unit: suggestion.unit ?? copy[existingIndex].unit,
+          notes: suggestion.notes ?? copy[existingIndex].notes,
+        };
+        return copy;
+      }
+
+      return [
+        ...prev,
+        {
+          ...defaultMetric,
+          metric_name: suggestion.metric_name,
+          category: suggestion.category,
+          metric_target: suggestion.metric_target ?? '',
+          unit: suggestion.unit ?? '',
+          notes: suggestion.notes ?? '',
+        },
+      ];
+    });
+  }
+
   function updateMetric(
     index: number,
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -447,6 +777,22 @@ export default function RegistroPage() {
 
   function removeMetric(index: number) {
     setMetrics(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function duplicateLastResult(exerciseIndex: number) {
+    setExercises(prev => {
+      const copy = [...prev];
+      const ex = { ...copy[exerciseIndex] };
+      if (ex.results.length === 0) return prev;
+      const lastResult = ex.results[ex.results.length - 1];
+      const duplicated: ExerciseResultForm = {
+        ...lastResult,
+        attempt_number: String((Number(lastResult.attempt_number) || ex.results.length) + 1),
+      };
+      ex.results = [...ex.results, duplicated];
+      copy[exerciseIndex] = ex;
+      return copy;
+    });
   }
 
   function validateForms() {
@@ -615,6 +961,9 @@ export default function RegistroPage() {
       setExercises([{ ...defaultExercise, results: [{ ...defaultExerciseResult }] }]);
       setMetrics([]);
       setErrors({});
+      setUsingCustomLocation(false);
+      setCustomLocation('');
+      setShowBlockForm(false);
     } catch (error) {
       console.error(error);
       toast.error('Si è verificato un errore durante il salvataggio');
@@ -697,7 +1046,7 @@ export default function RegistroPage() {
               const formattedValue =
                 typeof stat.value === 'number' ? numberFormatter.format(stat.value) : stat.value;
 
-              return (
+                return (
                 <div key={stat.label} className="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 text-sm">
                   <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/20">
                     <Icon className="h-5 w-5 text-white" />
@@ -788,28 +1137,84 @@ export default function RegistroPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1">
                 <Label className="text-xs font-semibold text-slate-600">Blocco di allenamento</Label>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <select
-                    name="block_id"
-                    value={sessionForm.block_id}
-                    onChange={handleSessionChange}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-sky-400 focus:bg-white focus:outline-none"
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleBlockSelect(null)}
+                    className={cn(
+                      'inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold transition',
+                      sessionForm.block_id
+                        ? 'border-slate-200 text-slate-500 hover:border-slate-300'
+                        : 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                    )}
+                    aria-pressed={!sessionForm.block_id}
                   >
-                    <option value="">Nessun blocco</option>
-                    {trainingBlocks.map(block => (
-                      <option key={block.id} value={block.id}>
-                        {block.name}
-                      </option>
-                    ))}
-                  </select>
+                    Nessun blocco
+                  </button>
+                  {trainingBlocks.length === 0 && (
+                    <span className="inline-flex items-center rounded-2xl bg-slate-100 px-3 py-2 text-[11px] text-slate-500">
+                      Nessun blocco salvato
+                    </span>
+                  )}
+                  {trainingBlocks.map(block => {
+                    const isSelected = sessionForm.block_id === block.id;
+                    return (
+                      <div
+                        key={block.id}
+                        className={cn(
+                          'relative flex items-center gap-3 rounded-2xl border px-3 py-2 pr-10 text-left transition',
+                          isSelected
+                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
+                        )}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => handleBlockSelect(block.id)}
+                          className="flex flex-col text-left"
+                          aria-pressed={isSelected}
+                        >
+                          <span className="text-xs font-semibold">{block.name}</span>
+                          <span className="text-[11px] text-slate-500">
+                            {formatDateHuman(block.start_date)} → {formatDateHuman(block.end_date)}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          className="absolute right-1 top-1 inline-flex items-center gap-1 rounded-full border border-transparent bg-white/80 px-2 py-1 text-[10px] font-semibold text-slate-400 transition hover:border-red-200 hover:text-red-500"
+                          onClick={() => handleDeleteBlock(block.id)}
+                          disabled={blockActionLoading === block.id}
+                          aria-label={`Elimina ${block.name}`}
+                          title="Rimuovi definitivamente il blocco"
+                        >
+                          {blockActionLoading === block.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3 w-3" />
+                          )}
+                          <span>Elimina</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex flex-wrap gap-2 pt-2">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowBlockForm(prev => !prev)}
-                    className="gap-2 rounded-xl border-slate-200"
+                    className="gap-2 rounded-full border-slate-200"
                   >
                     <PenSquare className="h-4 w-4" />
-                    {showBlockForm ? 'Chiudi' : 'Nuovo blocco'}
+                    {showBlockForm ? 'Nascondi editor' : 'Nuovo blocco'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => void fetchBlocks()}
+                    className="gap-2 text-xs text-slate-500 hover:text-sky-600"
+                  >
+                    <Loader2 className={cn('h-3.5 w-3.5', loadingBlocks ? 'animate-spin' : '')} /> Aggiorna elenco
                   </Button>
                 </div>
               </div>
@@ -888,7 +1293,7 @@ export default function RegistroPage() {
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label className="text-xs font-semibold text-slate-600">Tipo di sessione</Label>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                   {sessionTypes.map(type => {
                     const Icon = sessionTypeIcons[type.value] ?? Activity;
                     const isSelected = sessionForm.type === type.value;
@@ -898,35 +1303,24 @@ export default function RegistroPage() {
                         type="button"
                         onClick={() => handleQuickTypeSelect(type.value)}
                         className={cn(
-                          'inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition',
+                          'flex h-full flex-col items-start gap-1 rounded-2xl border px-3 py-2 text-left transition',
                           isSelected
                             ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:text-sky-600'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
                         )}
                         aria-pressed={isSelected}
                       >
-                        <Icon className="h-3.5 w-3.5" />
-                        {type.label}
+                        <span className="inline-flex items-center gap-2 text-xs font-semibold">
+                          <span className={cn('flex h-6 w-6 items-center justify-center rounded-xl', isSelected ? 'bg-sky-100 text-sky-600' : 'bg-slate-100 text-slate-500')}>
+                            <Icon className="h-3.5 w-3.5" />
+                          </span>
+                          {type.label}
+                        </span>
+                        <span className="text-[11px] text-slate-500">{type.hint}</span>
                       </button>
                     );
                   })}
                 </div>
-                <select
-                  name="type"
-                  value={sessionForm.type}
-                  onChange={handleSessionChange}
-                  className={cn(
-                    'rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-sky-400 focus:bg-white',
-                    errors.type && 'border-red-500'
-                  )}
-                >
-                  <option value="">Seleziona il tipo...</option>
-                  {sessionTypes.map(type => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
                 {errors.type && <p className="text-xs text-red-500">{errors.type}</p>}
               </div>
 
@@ -942,36 +1336,47 @@ export default function RegistroPage() {
 
               <div className="space-y-2">
                 <Label className="text-xs font-semibold text-slate-600">Luogo</Label>
-                <Input
-                  name="location"
-                  value={sessionForm.location}
-                  onChange={handleSessionChange}
-                  placeholder="Pista indoor, palasport, stadio..."
-                  className={cn(errors.location && 'border-red-500')}
-                />
-                {errors.location && <p className="text-xs text-red-500">{errors.location}</p>}
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {locationSuggestions.map(suggestion => {
-                    const isActive = sessionForm.location === suggestion;
+                <div className="flex flex-wrap gap-2">
+                  {locationOptions.map(option => {
+                    const isSelected =
+                      option.value === 'custom'
+                        ? usingCustomLocation
+                        : sessionForm.location === option.label;
+                    const Icon = locationIcons[option.value] ?? MapPin;
                     return (
                       <button
-                        key={suggestion}
+                        key={option.value}
                         type="button"
-                        onClick={() => handleLocationSuggestion(suggestion)}
+                        onClick={() => handleLocationSelect(option.value)}
                         className={cn(
-                          'inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-medium transition',
-                          isActive
+                          'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition',
+                          isSelected
                             ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
                             : 'border-slate-200 bg-white text-slate-500 hover:border-sky-200 hover:text-sky-600'
                         )}
-                        aria-pressed={isActive}
+                        aria-pressed={isSelected}
+                        title={option.value === 'custom' ? 'Personalizza luogo' : option.label}
                       >
-                        <MapPin className="h-3 w-3" />
-                        {suggestion}
+                        <Icon className="h-3.5 w-3.5" /> {option.label}
                       </button>
                     );
                   })}
                 </div>
+                {usingCustomLocation && (
+                  <div className="space-y-1">
+                    <Input
+                      value={customLocation}
+                      onChange={event => handleCustomLocationChange(event.target.value)}
+                      placeholder="Specificare luogo..."
+                      className={cn('mt-1', errors.location && 'border-red-500')}
+                    />
+                    <p className="text-[11px] text-slate-500">Personalizza il luogo quando non rientra tra le proposte rapide.</p>
+                  </div>
+                )}
+                {!usingCustomLocation && sessionForm.location && (
+                  <p className="text-[11px] text-slate-500">Selezionato: {sessionForm.location}</p>
+                )}
+                {errors.location && <p className="text-xs text-red-500">{errors.location}</p>}
               </div>
             </div>
 
@@ -997,9 +1402,99 @@ export default function RegistroPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              {disciplineDistribution.length > 0 && (
+                <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-slate-700">
+                    <span className="inline-flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-sky-600" /> Focus della sessione
+                    </span>
+                    <span className="text-xs font-medium text-slate-500">
+                      Gli esercizi aggiunti guidano i suggerimenti dei risultati e delle metriche
+                    </span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {disciplineDistribution.map(item => {
+                      const Icon = disciplineIcons[item.key] ?? Activity;
+                      return (
+                        <span
+                          key={item.key}
+                          className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-medium text-slate-600 shadow-sm"
+                        >
+                          <Icon className="h-3.5 w-3.5 text-sky-500" /> {item.label} · {item.value}
+                          <span className="text-slate-400">({item.percentage}%)</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {exercises.map((exercise, index) => {
                 const intensityNumber = Number(exercise.intensity) || null;
                 const effortType = mapIntensityToEffort(intensityNumber);
+                const attemptCount = exercise.results.length;
+                const timeValues = exercise.results
+                  .map(result => Number(result.time_s))
+                  .filter(value => Number.isFinite(value) && value > 0);
+                const weightValues = exercise.results
+                  .map(result => Number(result.weight_kg))
+                  .filter(value => Number.isFinite(value) && value > 0);
+                const rpeValues = exercise.results
+                  .map(result => Number(result.rpe))
+                  .filter(value => Number.isFinite(value) && value > 0);
+                const bestTime = timeValues.length > 0 ? Math.min(...timeValues) : null;
+                const bestWeight = weightValues.length > 0 ? Math.max(...weightValues) : null;
+                const averageRpe =
+                  rpeValues.length > 0
+                    ? Math.round((rpeValues.reduce((acc, curr) => acc + curr, 0) / rpeValues.length) * 10) / 10
+                    : null;
+                const averageTime =
+                  timeValues.length > 0
+                    ? Math.round((timeValues.reduce((acc, value) => acc + value, 0) / timeValues.length) * 100) / 100
+                    : null;
+                const easiestRpe = rpeValues.length > 0 ? Math.min(...rpeValues) : null;
+                const highlightCards = (
+                  [
+                    {
+                      key: 'attempts',
+                      label: 'Tentativi',
+                      value: attemptCount,
+                      description:
+                        attemptCount > 1
+                          ? 'Confronta le prove per valutare la costanza'
+                          : 'Singolo tentativo registrato',
+                    },
+                    bestTime != null && {
+                      key: 'best-time',
+                      label: 'Miglior tempo',
+                      value: `${bestTime.toFixed(2)}s`,
+                      description:
+                        averageTime != null
+                          ? `Media sessione ${averageTime.toFixed(2)}s`
+                          : 'Aggiungi tempi per calcolare la media',
+                    },
+                    bestWeight != null && {
+                      key: 'best-weight',
+                      label: 'Carico massimo',
+                      value: `${bestWeight.toFixed(1)}kg`,
+                      description:
+                        averageRpe != null
+                          ? `RPE medio ${averageRpe.toFixed(1)}`
+                          : 'Registra RPE per confrontare la fatica',
+                    },
+                    easiestRpe != null && {
+                      key: 'min-rpe',
+                      label: 'RPE minimo',
+                      value: `RPE ${easiestRpe.toFixed(1)}`,
+                      description: 'Tieni traccia della percezione più bassa',
+                    },
+                  ].filter(Boolean) as {
+                    key: string;
+                    label: string;
+                    value: string | number;
+                    description: string;
+                  }[]
+                ).slice(0, 4);
 
               return (
                 <div key={index} className="rounded-3xl border border-slate-200 bg-white/70 p-4 shadow-sm">
@@ -1046,21 +1541,32 @@ export default function RegistroPage() {
 
                     <div className="space-y-1">
                       <Label className="text-xs font-semibold text-slate-600">Disciplina</Label>
-                      <select
-                        name="discipline_type"
-                        value={exercise.discipline_type}
-                        onChange={event => handleExerciseChange(index, event)}
-                        className={cn(
-                          'rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-sky-400 focus:bg-white',
-                          errors[`exercise-${index}-discipline`] && 'border-red-500'
-                        )}
-                      >
-                        {disciplineTypes.map(type => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="flex flex-wrap gap-2">
+                        {disciplineTypes.map(type => {
+                          const Icon = disciplineIcons[type.value] ?? Activity;
+                          const isActive = exercise.discipline_type === type.value;
+                          return (
+                            <button
+                              key={type.value}
+                              type="button"
+                              onClick={() => handleDisciplineSelect(index, type.value)}
+                              className={cn(
+                                'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition',
+                                isActive
+                                  ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                                  : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
+                              )}
+                              aria-pressed={isActive}
+                            >
+                              <Icon className="h-3.5 w-3.5" />
+                              {type.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {errors[`exercise-${index}-discipline`] && (
+                        <p className="text-[11px] text-red-500">{errors[`exercise-${index}-discipline`]}</p>
+                      )}
                     </div>
 
                     <div className="space-y-1">
@@ -1173,40 +1679,131 @@ export default function RegistroPage() {
                     />
                   </div>
 
-                  <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-4">
-                    <div className="flex items-center justify-between">
+                    <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                         <Weight className="h-4 w-4 text-slate-500" /> Risultati registrati
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => addResult(index)}
-                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
-                      >
-                        <PlusCircle className="h-3 w-3" /> Aggiungi risultato
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => duplicateLastResult(index)}
+                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100"
+                          disabled={exercise.results.length === 0}
+                        >
+                          <PlusCircle className="h-3 w-3" /> Duplica ultimo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => addResult(index)}
+                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+                        >
+                          <PlusCircle className="h-3 w-3" /> Aggiungi risultato
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="mt-3 space-y-3">
-                      {exercise.results.map((result, resultIndex) => (
-                        <div
-                          key={resultIndex}
-                          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs shadow-sm"
-                        >
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <span className="font-semibold text-slate-700">Tentativo #{resultIndex + 1}</span>
-                            {exercise.results.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeResult(index, resultIndex)}
-                                className="flex items-center gap-1 text-[11px] font-medium text-red-500 hover:text-red-600"
-                              >
-                                <Trash2 className="h-3 w-3" /> Rimuovi
-                              </button>
-                            )}
+                    {highlightCards.length > 0 && (
+                      <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                        {highlightCards.map(card => (
+                          <div key={card.key} className="rounded-2xl bg-white px-3 py-2 text-[11px] text-slate-500">
+                            <p className="text-xs font-semibold text-slate-600">{card.label}</p>
+                            <p className="text-lg font-semibold text-slate-800">{card.value}</p>
+                            <p className="text-[10px] text-slate-400">{card.description}</p>
                           </div>
+                        ))}
+                      </div>
+                    )}
 
-                          <div className="mt-3 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+                    <div className="mt-3 space-y-3">
+                      {exercise.results.map((result, resultIndex) => {
+                        const numericTime = result.time_s ? Number(result.time_s) : null;
+                        const numericWeight = result.weight_kg ? Number(result.weight_kg) : null;
+                        const numericRpe = result.rpe ? Number(result.rpe) : null;
+                        const highlightBadges = [] as { key: string; label: string; icon: LucideIcon; accent: string }[];
+                        if (numericTime != null && bestTime != null && Math.abs(numericTime - bestTime) < 0.001) {
+                          highlightBadges.push({
+                            key: 'best-time',
+                            label: 'PB di giornata',
+                            icon: Trophy,
+                            accent: 'bg-amber-100 text-amber-700',
+                          });
+                        }
+                        if (numericWeight != null && bestWeight != null && Math.abs(numericWeight - bestWeight) < 0.001) {
+                          highlightBadges.push({
+                            key: 'best-weight',
+                            label: 'Carico top',
+                            icon: Weight,
+                            accent: 'bg-emerald-100 text-emerald-700',
+                          });
+                        }
+                        if (numericRpe != null && easiestRpe != null && Math.abs(numericRpe - easiestRpe) < 0.001) {
+                          highlightBadges.push({
+                            key: 'min-rpe',
+                            label: 'RPE più basso',
+                            icon: Gauge,
+                            accent: 'bg-sky-100 text-sky-700',
+                          });
+                        }
+
+                        return (
+                          <div
+                            key={resultIndex}
+                            className={cn(
+                              'rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs shadow-sm',
+                              highlightBadges.length > 0 && 'border-sky-200 bg-sky-50/60'
+                            )}
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <span className="font-semibold text-slate-700">Tentativo #{resultIndex + 1}</span>
+                              <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                                {numericTime != null && (
+                                  <span className="inline-flex items-center gap-1">
+                                    <Clock className="h-3 w-3" /> {numericTime.toFixed(2)}s
+                                  </span>
+                                )}
+                                {numericWeight != null && (
+                                  <span className="inline-flex items-center gap-1">
+                                    <Weight className="h-3 w-3" /> {numericWeight.toFixed(1)}kg
+                                  </span>
+                                )}
+                                {numericRpe != null && (
+                                  <span className="inline-flex items-center gap-1">
+                                    <Gauge className="h-3 w-3" /> RPE {numericRpe.toFixed(1)}
+                                  </span>
+                                )}
+                              </div>
+                              {exercise.results.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeResult(index, resultIndex)}
+                                  className="flex items-center gap-1 text-[11px] font-medium text-red-500 hover:text-red-600"
+                                >
+                                  <Trash2 className="h-3 w-3" /> Rimuovi
+                                </button>
+                              )}
+                            </div>
+
+                            {highlightBadges.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {highlightBadges.map(badge => {
+                                  const Icon = badge.icon;
+                                  return (
+                                    <span
+                                      key={badge.key}
+                                      className={cn(
+                                        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold',
+                                        badge.accent
+                                      )}
+                                    >
+                                      <Icon className="h-3 w-3" /> {badge.label}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            <div className="mt-3 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
                             <div className="space-y-1">
                               <Label className="text-[11px] text-slate-500">Tentativo</Label>
                               <Input
@@ -1300,20 +1897,50 @@ export default function RegistroPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {metricSuggestions.length > 0 && (
+                <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                      <Sparkles className="h-4 w-4 text-sky-600" /> Suggerimenti rapidi
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Usa i preset per legare subito le metriche al tipo di allenamento o disciplina.
+                    </p>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {metricSuggestions.map(suggestion => (
+                      <button
+                        key={`${suggestion.metric_name}-${suggestion.category}`}
+                        type="button"
+                        onClick={() => handleAddMetricFromSuggestion(suggestion)}
+                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600 transition hover:border-sky-200 hover:text-sky-600"
+                        title={suggestion.hint}
+                      >
+                        <PlusCircle className="h-3 w-3" />
+                        <span>{suggestion.metric_name}</span>
+                        <span className="text-slate-400">
+                          · {metricCategories.find(cat => cat.value === suggestion.category)?.label ?? suggestion.category}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {metrics.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-6 text-center text-sm text-slate-500">
-                <p>Collega metriche come peso, tempi test o dati di recupero alla sessione.</p>
-                <Button
-                  type="button"
-                  onClick={addMetric}
-                  variant="outline"
-                  className="mt-3 gap-2 rounded-full border-slate-300"
-                >
-                  <PlusCircle className="h-4 w-4" /> Aggiungi metrica
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
+                <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-6 text-center text-sm text-slate-500">
+                  <p>Collega metriche come peso, tempi test o dati di recupero alla sessione.</p>
+                  <Button
+                    type="button"
+                    onClick={addMetric}
+                    variant="outline"
+                    className="mt-3 gap-2 rounded-full border-slate-300"
+                  >
+                    <PlusCircle className="h-4 w-4" /> Aggiungi metrica
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
                 {metrics.map((metric, index) => (
                   <div key={index} className="rounded-3xl border border-slate-200 bg-white/70 p-4 shadow-sm">
                     <div className="flex items-center justify-between">
@@ -1350,18 +1977,33 @@ export default function RegistroPage() {
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs font-semibold text-slate-600">Categoria</Label>
-                        <select
-                          name="category"
-                          value={metric.category}
-                          onChange={event => updateMetric(index, event)}
-                          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-sky-400 focus:bg-white"
-                        >
-                          {metricCategories.map(category => (
-                            <option key={category.value} value={category.value}>
-                              {category.label}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="flex flex-wrap gap-2">
+                          {metricCategories.map(category => {
+                            const Icon = metricCategoryIcons[category.value] ?? Activity;
+                            const isActive = metric.category === category.value;
+                            return (
+                              <button
+                                key={category.value}
+                                type="button"
+                                onClick={() => handleMetricCategorySelect(index, category.value)}
+                                className={cn(
+                                  'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium transition',
+                                  isActive
+                                    ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                                    : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
+                                )}
+                                aria-pressed={isActive}
+                              >
+                                <Icon className="h-3.5 w-3.5" />
+                                {category.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p className="text-[11px] text-slate-500">
+                          {metricCategories.find(cat => cat.value === metric.category)?.description ??
+                            'Abbina rapidamente la metrica all\'allenamento'}
+                        </p>
                       </div>
                     </div>
 

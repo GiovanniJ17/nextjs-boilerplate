@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { cn } from '@/lib/utils';
 import {
   Activity,
   BarChart,
@@ -25,6 +27,22 @@ const distanceOptions = [
   { value: 'short', label: 'Sprint corti (< 80m)' },
   { value: 'mid', label: 'Sprint medi (80-200m)' },
   { value: 'long', label: 'Sprint lunghi (> 200m)' },
+];
+
+const sessionTypeFilters = [
+  { value: '', label: 'Tutti' },
+  { value: 'pista', label: 'Pista' },
+  { value: 'palestra', label: 'Palestra' },
+  { value: 'test', label: 'Test' },
+  { value: 'scarico', label: 'Scarico' },
+  { value: 'recupero', label: 'Recupero' },
+  { value: 'altro', label: 'Altro' },
+];
+
+const rangePresets = [
+  { key: '30', label: 'Ultimi 30 giorni', days: 30 },
+  { key: '90', label: 'Ultimi 90 giorni', days: 90 },
+  { key: 'season', label: 'Stagione in corso', monthsBack: 6 },
 ];
 
 type TrainingBlock = {
@@ -93,6 +111,10 @@ function formatNumber(value: number, options: Intl.NumberFormatOptions = {}) {
   return value.toLocaleString('it-IT', options);
 }
 
+function formatDateInput(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
 export default function StatistichePage() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -103,6 +125,7 @@ export default function StatistichePage() {
   const [stats, setStats] = useState<StatsSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'base' | 'advanced' | 'insights'>('base');
+  const [rangePreset, setRangePreset] = useState<string>('');
 
   useEffect(() => {
     void Promise.all([loadStats(), loadBlocks()]);
@@ -307,12 +330,41 @@ export default function StatistichePage() {
     setLoading(false);
   }
 
+  function applyRangePreset(key: string) {
+    const today = new Date();
+    let start: Date | null = null;
+
+    const preset = rangePresets.find(item => item.key === key);
+    if (preset?.days) {
+      start = new Date(today);
+      start.setDate(today.getDate() - preset.days);
+    } else if (preset?.monthsBack) {
+      start = new Date(today);
+      start.setMonth(today.getMonth() - preset.monthsBack, 1);
+    }
+
+    setRangePreset(key);
+    setToDate(formatDateInput(today));
+    setFromDate(start ? formatDateInput(start) : '');
+  }
+
+  function handleFromDateChange(value: string) {
+    setRangePreset('');
+    setFromDate(value);
+  }
+
+  function handleToDateChange(value: string) {
+    setRangePreset('');
+    setToDate(value);
+  }
+
   function resetFilters() {
     setFromDate('');
     setToDate('');
     setDistanceFilter('all');
     setTypeFilter('');
     setBlockFilter('');
+    setRangePreset('');
     void loadStats();
   }
 
@@ -323,6 +375,51 @@ export default function StatistichePage() {
       { key: 'insights', label: 'Curiosità & Insights' },
     ],
     []
+  );
+
+  const topType = useMemo(() => {
+    if (!stats || stats.typeBreakdown.length === 0) return null;
+    return stats.typeBreakdown[0];
+  }, [stats]);
+
+  const headlinePb = useMemo(() => {
+    if (!stats) return null;
+    if (stats.bestTime && stats.bestTimeDistance) {
+      return { distance: stats.bestTimeDistance, time: stats.bestTime };
+    }
+    if (stats.pbByDistance.length > 0) {
+      const first = stats.pbByDistance[0];
+      return { distance: first.distance, time: first.time };
+    }
+    return null;
+  }, [stats]);
+
+  const heroStats = useMemo(
+    () => [
+      {
+        label: 'Sessioni filtrate',
+        value: stats ? formatNumber(stats.totalSessions) : '—',
+        icon: Activity,
+      },
+      {
+        label: 'Volume medio',
+        value: stats?.avgDistancePerSession
+          ? `${Math.round(stats.avgDistancePerSession)} m`
+          : '—',
+        icon: BarChart3,
+      },
+      {
+        label: 'Intensità media',
+        value: stats?.avgIntensity ? `${stats.avgIntensity.toFixed(1)}/10` : '—',
+        icon: Sparkles,
+      },
+      {
+        label: 'Metriche monitorate',
+        value: stats ? formatNumber(stats.metricsCount) : '—',
+        icon: Brain,
+      },
+    ],
+    [stats]
   );
 
   return (
@@ -348,6 +445,53 @@ export default function StatistichePage() {
             <p className="text-xs text-white/60">metri registrati</p>
           </div>
         </div>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {heroStats.map(stat => {
+            const Icon = stat.icon;
+            return (
+              <div key={stat.label} className="rounded-2xl bg-white/10 px-4 py-3 text-sm">
+                <div className="flex items-center justify-between text-white/75">
+                  <span className="text-xs uppercase tracking-widest text-white/60">{stat.label}</span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                </div>
+                <p className="mt-2 text-2xl font-semibold text-white">{stat.value}</p>
+              </div>
+            );
+          })}
+        </div>
+        {(topType || headlinePb) && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {topType && (
+              <div className="rounded-3xl bg-white/15 px-4 py-3 text-sm text-white">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-2 font-semibold">
+                    <Target className="h-4 w-4" /> Focus tipologia
+                  </span>
+                  <span className="text-xs text-white/70">{formatNumber(topType.value)} sessioni</span>
+                </div>
+                <p className="mt-2 text-xs text-white/80">Prevalenza: {topType.label}</p>
+                <button
+                  type="button"
+                  onClick={() => setTypeFilter(prev => (prev === topType.label ? '' : topType.label))}
+                  className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/30 px-3 py-1 text-[11px] font-medium text-white transition hover:border-white/60 hover:bg-white/10"
+                >
+                  <Filter className="h-3 w-3" /> Filtra su {topType.label}
+                </button>
+              </div>
+            )}
+            {headlinePb && (
+              <div className="rounded-3xl bg-white/15 px-4 py-3 text-sm text-white">
+                <div className="inline-flex items-center gap-2 font-semibold">
+                  <Medal className="h-4 w-4" /> Ultimo PB rilevante
+                </div>
+                <p className="mt-2 text-2xl font-semibold">{headlinePb.time.toFixed(2)} s</p>
+                <p className="text-xs text-white/80">Sui {headlinePb.distance} m</p>
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       <Card className="border-none shadow-lg">
@@ -357,62 +501,134 @@ export default function StatistichePage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs">
+            <span className="font-semibold text-slate-600">Intervallo rapido</span>
+            {rangePresets.map(preset => {
+              const isActive = rangePreset === preset.key;
+              return (
+                <button
+                  key={preset.key}
+                  type="button"
+                  onClick={() => applyRangePreset(preset.key)}
+                  className={cn(
+                    'rounded-full border px-3 py-1 font-medium transition',
+                    isActive
+                      ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                      : 'border-transparent bg-white text-slate-600 hover:border-sky-200'
+                  )}
+                  aria-pressed={isActive}
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => {
+                setRangePreset('');
+                setFromDate('');
+                setToDate('');
+              }}
+              className="rounded-full border border-transparent px-3 py-1 font-medium text-slate-500 transition hover:border-slate-200 hover:bg-white"
+            >
+              Rimuovi preset
+            </button>
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1">
               <Label className="text-xs font-semibold text-slate-600">Da</Label>
-              <Input type="date" value={fromDate} onChange={event => setFromDate(event.target.value)} />
+              <Input type="date" value={fromDate} onChange={event => handleFromDateChange(event.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs font-semibold text-slate-600">A</Label>
-              <Input type="date" value={toDate} onChange={event => setToDate(event.target.value)} />
+              <Input type="date" value={toDate} onChange={event => handleToDateChange(event.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs font-semibold text-slate-600">Tipo</Label>
-              <select
-                value={typeFilter}
-                onChange={event => setTypeFilter(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-sky-400 focus:bg-white"
-              >
-                <option value="">Tutti</option>
-                <option value="pista">Pista</option>
-                <option value="palestra">Palestra</option>
-                <option value="test">Test</option>
-                <option value="scarico">Scarico</option>
-                <option value="recupero">Recupero</option>
-                <option value="altro">Altro</option>
-              </select>
+              <div className="flex flex-wrap gap-2">
+                {sessionTypeFilters.map(option => {
+                  const isActive = typeFilter === option.value;
+                  return (
+                    <button
+                      key={option.value || 'all'}
+                      type="button"
+                      onClick={() => setTypeFilter(prev => (prev === option.value ? '' : option.value))}
+                      className={cn(
+                        'rounded-full border px-3 py-1 text-[11px] font-medium transition',
+                        isActive
+                          ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
+                      )}
+                      aria-pressed={isActive}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div className="space-y-1">
               <Label className="text-xs font-semibold text-slate-600">Blocco</Label>
-              <select
-                value={blockFilter}
-                onChange={event => setBlockFilter(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-sky-400 focus:bg-white"
-              >
-                <option value="">Tutti</option>
-                {blocks.map(block => (
-                  <option key={block.id} value={block.id}>
-                    {block.name ?? 'Blocco senza nome'}
-                  </option>
-                ))}
-              </select>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBlockFilter('')}
+                  className={cn(
+                    'rounded-full border px-3 py-1 text-[11px] font-medium transition',
+                    blockFilter
+                      ? 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200'
+                      : 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                  )}
+                  aria-pressed={!blockFilter}
+                >
+                  Tutti
+                </button>
+                {blocks.map(block => {
+                  const isActive = blockFilter === block.id;
+                  return (
+                    <button
+                      key={block.id}
+                      type="button"
+                      onClick={() => setBlockFilter(prev => (prev === block.id ? '' : block.id ?? ''))}
+                      className={cn(
+                        'rounded-full border px-3 py-1 text-[11px] font-medium transition',
+                        isActive
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200'
+                      )}
+                      aria-pressed={isActive}
+                    >
+                      {block.name ?? 'Blocco senza nome'}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-600">Distanza</Label>
-              <select
-                value={distanceFilter}
-                onChange={event => setDistanceFilter(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-sky-400 focus:bg-white"
-              >
-                {distanceOptions.map(option => (
-                  <option key={option.value} value={option.value}>
+          <div className="space-y-1">
+            <Label className="text-xs font-semibold text-slate-600">Distanza</Label>
+            <div className="flex flex-wrap gap-2">
+              {distanceOptions.map(option => {
+                const isActive = distanceFilter === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setDistanceFilter(option.value)}
+                    className={cn(
+                      'rounded-full border px-3 py-1 text-[11px] font-medium transition',
+                      isActive
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200'
+                    )}
+                    aria-pressed={isActive}
+                  >
                     {option.label}
-                  </option>
-                ))}
-              </select>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -462,39 +678,108 @@ export default function StatistichePage() {
           ) : (
             <div>
               {activeTab === 'base' && (
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  <SummaryCard
-                    title="Totale sessioni"
-                    value={formatNumber(stats.totalSessions)}
-                    subtitle="Allenamenti registrati"
-                    icon={<Activity className="h-5 w-5" />}
-                    accent="bg-sky-100 text-sky-600"
-                  />
-                  <SummaryCard
-                    title="Distanza totale"
-                    value={`${formatNumber(stats.totalDistance)} m`}
-                    subtitle="Somma di tutte le ripetute"
-                    icon={<BarChart3 className="h-5 w-5" />}
-                    accent="bg-blue-100 text-blue-600"
-                  />
-                  <SummaryCard
-                    title="Tempo migliore"
-                    value={stats.bestTime ? `${stats.bestTime.toFixed(2)} s` : 'N/D'}
-                    subtitle={
-                      stats.bestTimeDistance
-                        ? `Sui ${stats.bestTimeDistance} m`
-                        : 'Registra tempi per visualizzare il PB'
-                    }
-                    icon={<Medal className="h-5 w-5" />}
-                    accent="bg-amber-100 text-amber-600"
-                  />
-                  <SummaryCard
-                    title="Tempo medio"
-                    value={stats.avgTime ? `${stats.avgTime.toFixed(2)} s` : 'N/D'}
-                    subtitle="Media delle prove cronometrate"
-                    icon={<Target className="h-5 w-5" />}
-                    accent="bg-indigo-100 text-indigo-600"
-                  />
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <SummaryCard
+                      title="Totale sessioni"
+                      value={formatNumber(stats.totalSessions)}
+                      subtitle="Allenamenti registrati"
+                      icon={<Activity className="h-5 w-5" />}
+                      accent="bg-sky-100 text-sky-600"
+                    />
+                    <SummaryCard
+                      title="Distanza totale"
+                      value={`${formatNumber(stats.totalDistance)} m`}
+                      subtitle="Somma di tutte le ripetute"
+                      icon={<BarChart3 className="h-5 w-5" />}
+                      accent="bg-blue-100 text-blue-600"
+                    />
+                    <SummaryCard
+                      title="Tempo migliore"
+                      value={stats.bestTime ? `${stats.bestTime.toFixed(2)} s` : 'N/D'}
+                      subtitle={
+                        stats.bestTimeDistance
+                          ? `Sui ${stats.bestTimeDistance} m`
+                          : 'Registra tempi per visualizzare il PB'
+                      }
+                      icon={<Medal className="h-5 w-5" />}
+                      accent="bg-amber-100 text-amber-600"
+                    />
+                    <SummaryCard
+                      title="Tempo medio"
+                      value={stats.avgTime ? `${stats.avgTime.toFixed(2)} s` : 'N/D'}
+                      subtitle="Media delle prove cronometrate"
+                      icon={<Target className="h-5 w-5" />}
+                      accent="bg-indigo-100 text-indigo-600"
+                    />
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
+                        <span>Distribuzione per tipologia</span>
+                        <button
+                          type="button"
+                          onClick={() => setTypeFilter('')}
+                          className="text-xs font-medium text-slate-400 transition hover:text-slate-600"
+                        >
+                          Azzera filtro
+                        </button>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {stats.typeBreakdown.length === 0 ? (
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] text-slate-500">
+                            Nessuna sessione registrata
+                          </span>
+                        ) : (
+                          stats.typeBreakdown.map(item => {
+                            const isActive = typeFilter === item.label;
+                            return (
+                              <button
+                                key={item.label}
+                                type="button"
+                                onClick={() => setTypeFilter(prev => (prev === item.label ? '' : item.label))}
+                                className={cn(
+                                  'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium transition',
+                                  isActive
+                                    ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                                    : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-sky-200'
+                                )}
+                                aria-pressed={isActive}
+                              >
+                                <span className="capitalize">{item.label}</span>
+                                <span className="text-slate-400">{formatNumber(item.value)}</span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                      <p className="mt-3 text-[11px] text-slate-500">
+                        Tocca una tipologia per aggiornare le statistiche in tempo reale.
+                      </p>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                        <Medal className="h-4 w-4 text-amber-500" /> Personal Best per distanza
+                      </h3>
+                      <div className="mt-3 space-y-2 text-xs text-slate-600">
+                        {stats.pbByDistance.length === 0 ? (
+                          <p className="rounded-2xl bg-slate-50 px-3 py-2">Registra nuovi tempi per popolare la tabella.</p>
+                        ) : (
+                          stats.pbByDistance.map(item => (
+                            <div
+                              key={item.distance}
+                              className="flex items-center justify-between rounded-2xl bg-amber-50/70 px-3 py-2"
+                            >
+                              <span>{item.distance} m</span>
+                              <span className="font-semibold text-amber-700">{item.time.toFixed(2)} s</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -612,7 +897,7 @@ type SummaryCardProps = {
   title: string;
   value: string;
   subtitle: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   accent: string;
 };
 
