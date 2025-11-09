@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
 type DistanceFilter = "all" | "short" | "mid" | "long";
 
@@ -13,12 +13,20 @@ type Exercise = {
   repetitions: number | null;
 };
 
+type ExerciseRelation = {
+  session_id: string | null;
+  distance_m: number | null;
+};
+
+type RawExerciseRelation =
+  | ExerciseRelation
+  | ExerciseRelation[]
+  | null
+  | undefined;
+
 type ExerciseResult = {
   time_s: number | null;
-  exercise?: {
-    session_id: string | null;
-    distance_m: number | null;
-  } | null;
+  exercise: ExerciseRelation | null;
 };
 
 export default function StatistichePage() {
@@ -47,6 +55,7 @@ export default function StatistichePage() {
       distance: DistanceFilter;
     }>
   ) {
+    const supabase = getSupabaseClient();
     setLoading(true);
 
     const activeFromDate = overrides?.fromDate ?? fromDate;
@@ -109,7 +118,35 @@ export default function StatistichePage() {
           .in("exercise.session_id", sessionIds);
 
         if (resultsError) throw resultsError;
-        results = (resultsData || []) as ExerciseResult[];
+        const rawResults = (resultsData || []) as {
+          time_s: number | null;
+          exercise?: RawExerciseRelation;
+        }[];
+
+        results = rawResults.map((result) => {
+          const relation = result.exercise;
+          let exercise: ExerciseRelation | null = null;
+
+          if (Array.isArray(relation)) {
+            const [first] = relation;
+            if (first) {
+              exercise = {
+                session_id: first.session_id ?? null,
+                distance_m: first.distance_m ?? null,
+              };
+            }
+          } else if (relation) {
+            exercise = {
+              session_id: relation.session_id ?? null,
+              distance_m: relation.distance_m ?? null,
+            };
+          }
+
+          return {
+            time_s: result.time_s ?? null,
+            exercise,
+          } satisfies ExerciseResult;
+        });
       }
 
       const times = results
@@ -216,7 +253,7 @@ export default function StatistichePage() {
             </button>
             <button
               type="button"
-              onClick={loadStats}
+              onClick={() => loadStats()}
               className="rounded-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-sky-700"
             >
               Applica filtri

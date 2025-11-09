@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 import { TRAINING_TYPES } from '@/lib/training';
 import {
   Loader2,
@@ -98,6 +98,7 @@ export default function RegistroPage() {
 
   useEffect(() => {
     const loadBlocks = async () => {
+      const supabase = getSupabaseClient();
       const { data, error } = await supabase
         .from('training_blocks')
         .select('id, name')
@@ -184,6 +185,7 @@ export default function RegistroPage() {
     setLoading(true);
 
     try {
+      const supabase = getSupabaseClient();
       // 1️⃣ Inserisci sessione
       const { data: session, error: sessionErr } = await supabase
         .from('training_sessions')

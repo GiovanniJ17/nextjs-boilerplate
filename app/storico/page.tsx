@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import {
   TRAINING_TYPES,
   TrainingTypeValue,
@@ -17,6 +17,21 @@ type TrainingSession = {
   training_blocks?: {
     name: string | null;
   } | null;
+};
+
+type RawTrainingBlock =
+  | { name: string | null }
+  | { name: string | null }[]
+  | null
+  | undefined;
+
+type RawTrainingSession = {
+  id: string;
+  date: string | null;
+  type: string | null;
+  location: string | null;
+  notes: string | null;
+  training_blocks?: RawTrainingBlock;
 };
 
 export default function StoricoPage() {
@@ -39,6 +54,7 @@ export default function StoricoPage() {
     const activeToDate = overrides?.toDate ?? toDate;
     const activeType = overrides?.type ?? typeFilter;
 
+    const supabase = getSupabaseClient();
     let query = supabase
       .from("training_sessions")
       .select("id, date, type, location, notes, training_blocks(name)")
@@ -57,7 +73,36 @@ export default function StoricoPage() {
     const { data, error } = await query;
 
     if (!error && data) {
-      setSessions(data as TrainingSession[]);
+      const rawSessions = data as RawTrainingSession[];
+
+      const normalizedSessions = rawSessions.map((session) => {
+        const relation = session.training_blocks;
+        let block: TrainingSession["training_blocks"] = null;
+
+        if (Array.isArray(relation)) {
+          const [first] = relation;
+          if (first) {
+            block = {
+              name: first.name ?? null,
+            };
+          }
+        } else if (relation) {
+          block = {
+            name: relation.name ?? null,
+          };
+        }
+
+        return {
+          id: session.id,
+          date: session.date ?? null,
+          type: session.type ?? null,
+          location: session.location ?? null,
+          notes: session.notes ?? null,
+          training_blocks: block,
+        } satisfies TrainingSession;
+      });
+
+      setSessions(normalizedSessions);
     }
 
     setLoading(false);
@@ -155,7 +200,7 @@ export default function StoricoPage() {
             </button>
             <button
               type="button"
-              onClick={loadSessions}
+              onClick={() => loadSessions()}
               className="rounded-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-sky-700"
             >
               Applica filtri
