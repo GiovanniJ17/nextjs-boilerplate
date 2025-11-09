@@ -6,23 +6,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
-  Loader2,
-  PlusCircle,
-  Trash2,
-  Calendar,
-  MapPin,
-  Tag,
-  StickyNote,
-  Ruler,
-  Repeat,
-  Timer,
   Activity,
-  Info,
+  Calendar,
+  Database,
   Dumbbell,
   Flame,
+  Info,
+  Loader2,
+  MapPin,
+  PlusCircle,
+  Repeat,
+  Ruler,
+  StickyNote,
+  Table as TableIcon,
+  Tag,
+  Timer,
+  Trash2,
 } from 'lucide-react';
 
 // Supabase client
@@ -210,288 +211,335 @@ export default function RegistroPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-4">
-      <h1 className="text-2xl font-semibold mb-6 flex items-center gap-2">
-        <Activity className="h-6 w-6 text-blue-500" />
-        Registra Allenamento
-      </h1>
+    <div className="max-w-6xl mx-auto py-10 px-4 space-y-8">
+      <div className="flex flex-col gap-2 border-b border-slate-200 pb-6">
+        <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+          Registro Allenamenti
+        </span>
+        <h1 className="text-3xl font-semibold text-slate-900 flex items-center gap-3">
+          <Activity className="h-7 w-7 text-blue-500" /> Inserimento dati strutturato
+        </h1>
+        <p className="text-sm text-slate-600 max-w-2xl">
+          Compila i campi facendo riferimento ai nomi delle tabelle del database. Ogni
+          colonna è allineata per replicare la struttura di <code>training_sessions</code> e
+          <code>exercises</code>.
+        </p>
+      </div>
 
-      <Card className="shadow-sm">
-        <CardContent className="space-y-6 p-6">
-          {/* --- Info base --- */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <Label className="flex items-center gap-1 text-sm font-medium text-slate-700">
-                <Calendar className="h-4 w-4 text-slate-400" />
-                Data
-              </Label>
-              <Input
-                type="date"
-                name="date"
-                value={form.date}
-                onChange={handleFormChange}
-                className={errors.date ? 'border-red-500' : ''}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label className="flex items-center gap-1 text-sm font-medium text-slate-700">
-                <Tag className="h-4 w-4 text-slate-400" />
-                Tipo allenamento
-              </Label>
-              <select
-                name="type"
-                value={form.type}
-                onChange={handleFormChange}
-                className={`w-full border rounded-md px-3 py-2 text-sm bg-white ${
-                  errors.type ? 'border-red-500' : ''
-                }`}
-              >
-                <option value="">Seleziona tipo...</option>
-                <option value="test">Test</option>
-                <option value="palestra">Palestra</option>
-                <option value="velocità">Velocità</option>
-                <option value="resistenza">Resistenza</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="flex items-center gap-1 text-sm font-medium text-slate-700">
-                <MapPin className="h-4 w-4 text-slate-400" />
-                Luogo
-              </Label>
-              <select
-                name="location"
-                value={form.location}
-                onChange={handleFormChange}
-                className={`w-full border rounded-md px-3 py-2 text-sm bg-white ${
-                  errors.location ? 'border-red-500' : ''
-                }`}
-              >
-                <option value="">Seleziona luogo...</option>
-                <option value="outdoor">Outdoor (pista/strada)</option>
-                <option value="indoor">Indoor (palestra indoor)</option>
-                <option value="palestra">Palestra (pesi)</option>
-                <option value="erba">Erba</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <Label className="flex items-center gap-1 text-sm font-medium text-slate-700">
-              <StickyNote className="h-4 w-4 text-slate-400" />
-              Note sessione
-            </Label>
-            <Textarea
-              name="notes"
-              value={form.notes}
-              onChange={handleFormChange}
-              placeholder="Sensazioni, variabili, obiettivi..."
-            />
-          </div>
-
-          {/* --- Esercizi --- */}
-          <div className="space-y-4">
-            {exercises.map((ex, i) => {
-              const intensityNum = ex.intensity ? Number(ex.intensity) : null;
-              const effortLabel = getIntensityLabel(intensityNum);
-
-              return (
-                <Card
-                  key={i}
-                  className={`border ${
-                    isGym ? 'bg-amber-50 border-amber-100' : 'bg-blue-50 border-blue-100'
-                  }`}
-                >
-                  <CardHeader className="flex justify-between items-center pb-3">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                      {isGym ? (
-                        <Dumbbell className="h-4 w-4 text-amber-500" />
-                      ) : (
-                        <Ruler className="h-4 w-4 text-blue-500" />
-                      )}
-                      {isGym ? 'Esercizio palestra' : 'Esercizio di corsa'} #{i + 1}
-                    </CardTitle>
-                    {exercises.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeExercise(i)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    )}
-                  </CardHeader>
-
-                  <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <Tag className="h-3 w-3 text-slate-400" />
-                        Nome esercizio
-                      </Label>
+      <Card className="border-slate-200">
+        <CardHeader className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50/60">
+          <CardTitle className="flex items-center gap-2 text-slate-800">
+            <Database className="h-5 w-5 text-blue-500" /> training_sessions
+          </CardTitle>
+          <p className="text-xs text-slate-500">
+            Inserisci le informazioni generali sulla sessione. I campi obbligatori sono
+            evidenziati.
+          </p>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-hidden rounded-b-xl">
+            <table className="min-w-full text-sm">
+              <thead className="bg-slate-100 text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium">Colonna database</th>
+                  <th className="px-4 py-3 text-left font-medium">Valore</th>
+                  <th className="px-4 py-3 text-left font-medium">Descrizione</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                <tr>
+                  <td className="px-4 py-4 align-top font-mono text-xs text-slate-500">
+                    training_sessions.date
+                  </td>
+                  <td className="px-4 py-4 align-top">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-slate-400" />
                       <Input
-                        name="name"
-                        value={ex.name}
-                        onChange={e => handleExerciseChange(i, e)}
-                        placeholder={isGym ? 'Es. squat, panca...' : 'Es. 3 x 150m, 6 x 60m...'}
-                        className={errors[`name-${i}`] ? 'border-red-500' : ''}
+                        type="date"
+                        name="date"
+                        value={form.date}
+                        onChange={handleFormChange}
+                        className={errors.date ? 'border-red-500 ring-2 ring-red-100' : ''}
                       />
                     </div>
+                  </td>
+                  <td className="px-4 py-4 align-top text-xs text-slate-500">
+                    Data della sessione nel formato ISO.
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-4 align-top font-mono text-xs text-slate-500">
+                    training_sessions.type
+                  </td>
+                  <td className="px-4 py-4 align-top">
+                    <div className="flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-slate-400" />
+                      <select
+                        name="type"
+                        value={form.type}
+                        onChange={handleFormChange}
+                        className={`w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200 ${
+                          errors.type ? 'border-red-500 ring-2 ring-red-100' : 'border-slate-200'
+                        }`}
+                      >
+                        <option value="">Seleziona tipo...</option>
+                        <option value="test">Test</option>
+                        <option value="palestra">Palestra</option>
+                        <option value="velocità">Velocità</option>
+                        <option value="resistenza">Resistenza</option>
+                      </select>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 align-top text-xs text-slate-500">
+                    Categoria dell&apos;allenamento per filtri e statistiche.
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-4 align-top font-mono text-xs text-slate-500">
+                    training_sessions.location
+                  </td>
+                  <td className="px-4 py-4 align-top">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-slate-400" />
+                      <select
+                        name="location"
+                        value={form.location}
+                        onChange={handleFormChange}
+                        className={`w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200 ${
+                          errors.location
+                            ? 'border-red-500 ring-2 ring-red-100'
+                            : 'border-slate-200'
+                        }`}
+                      >
+                        <option value="">Seleziona luogo...</option>
+                        <option value="outdoor">Outdoor (pista/strada)</option>
+                        <option value="indoor">Indoor (palestra indoor)</option>
+                        <option value="palestra">Palestra (pesi)</option>
+                        <option value="erba">Erba</option>
+                      </select>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 align-top text-xs text-slate-500">
+                    Ambiente di svolgimento utile per le analisi successive.
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-4 align-top font-mono text-xs text-slate-500">
+                    training_sessions.notes
+                  </td>
+                  <td className="px-4 py-4 align-top">
+                    <div className="flex items-start gap-2">
+                      <StickyNote className="mt-2 h-4 w-4 text-slate-400" />
+                      <Textarea
+                        name="notes"
+                        value={form.notes}
+                        onChange={handleFormChange}
+                        placeholder="Sensazioni, variabili, obiettivi..."
+                        className="min-h-[96px]"
+                      />
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 align-top text-xs text-slate-500">
+                    Annotazioni libere sulla sessione, verranno salvate come testo.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
-                    {!isGym && (
-                      <div className="space-y-1">
-                        <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                          <Ruler className="h-3 w-3 text-slate-400" />
-                          Distanza (m)
-                        </Label>
+      <Card className="border-slate-200">
+        <CardHeader className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50/60">
+          <CardTitle className="flex items-center gap-2 text-slate-800">
+            <TableIcon className="h-5 w-5 text-blue-500" /> exercises
+          </CardTitle>
+          <p className="text-xs text-slate-500">
+            Riepiloga ogni esercizio come fosse una riga della tabella <code>exercises</code>.
+            Tutte le colonne restano allineate, anche in palestra.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="overflow-x-auto rounded-xl border border-slate-200">
+            <table className="min-w-full text-sm">
+              <thead className="bg-slate-100 text-[11px] uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-3 py-3 text-left font-medium">#</th>
+                  <th className="px-3 py-3 text-left font-medium">exercises.name</th>
+                  <th className="px-3 py-3 text-left font-medium">exercises.distance_m</th>
+                  <th className="px-3 py-3 text-left font-medium">exercises.sets</th>
+                  <th className="px-3 py-3 text-left font-medium">exercises.repetitions</th>
+                  <th className="px-3 py-3 text-left font-medium">exercises.rest_between_reps_s</th>
+                  <th className="px-3 py-3 text-left font-medium">exercises.rest_between_sets_s</th>
+                  <th className="px-3 py-3 text-left font-medium">exercises.intensity</th>
+                  <th className="px-3 py-3 text-left font-medium">exercises.effort_type</th>
+                  <th className="px-3 py-3 text-left font-medium">exercises.notes</th>
+                  <th className="px-3 py-3 text-left font-medium">Azioni</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {exercises.map((ex, i) => {
+                  const intensityNum = ex.intensity ? Number(ex.intensity) : null;
+                  const effortLabel = getIntensityLabel(intensityNum);
+
+                  return (
+                    <tr
+                      key={i}
+                      className={`bg-white transition hover:bg-slate-50 ${
+                        isGym ? 'even:bg-amber-50/30' : 'even:bg-blue-50/30'
+                      }`}
+                    >
+                      <td className="px-3 py-4 align-top text-xs font-semibold text-slate-500">
+                        {i + 1}
+                      </td>
+                      <td className="px-3 py-4 align-top">
+                        <Input
+                          name="name"
+                          value={ex.name}
+                          onChange={e => handleExerciseChange(i, e)}
+                          placeholder={isGym ? 'squat_back' : 'ripetute_150'}
+                          className={`font-mono text-xs ${
+                            errors[`name-${i}`] ? 'border-red-500 ring-2 ring-red-100' : ''
+                          }`}
+                        />
+                      </td>
+                      <td className="px-3 py-4 align-top">
                         <Input
                           name="distance_m"
                           type="number"
                           value={ex.distance_m}
                           onChange={e => handleExerciseChange(i, e)}
-                          placeholder="150"
+                          placeholder={isGym ? '—' : '150'}
+                          disabled={isGym}
+                          className={`text-xs ${
+                            isGym
+                              ? 'bg-slate-100 text-slate-400'
+                              : 'font-mono'
+                          }`}
                         />
-                      </div>
-                    )}
-
-                    <div className="space-y-1">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <Repeat className="h-3 w-3 text-slate-400" />
-                        Serie
-                      </Label>
-                      <Input
-                        name="sets"
-                        type="number"
-                        value={ex.sets}
-                        onChange={e => handleExerciseChange(i, e)}
-                        className={errors[`sets-${i}`] ? 'border-red-500' : ''}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <Repeat className="h-3 w-3 text-slate-400" />
-                        Ripetizioni per serie
-                      </Label>
-                      <Input
-                        name="repetitions"
-                        type="number"
-                        value={ex.repetitions}
-                        onChange={e => handleExerciseChange(i, e)}
-                        className={errors[`repetitions-${i}`] ? 'border-red-500' : ''}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <Timer className="h-3 w-3 text-slate-400" />
-                        Recupero tra ripetizioni (s)
-                      </Label>
-                      <Input
-                        name="rest_between_reps_s"
-                        type="number"
-                        value={ex.rest_between_reps_s}
-                        onChange={e => handleExerciseChange(i, e)}
-                        placeholder={isGym ? 'es. 60' : 'es. 120'}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <Timer className="h-3 w-3 text-slate-400" />
-                        Recupero tra serie (s)
-                      </Label>
-                      <Input
-                        name="rest_between_sets_s"
-                        type="number"
-                        value={ex.rest_between_sets_s}
-                        onChange={e => handleExerciseChange(i, e)}
-                        placeholder={isGym ? 'es. 180' : 'es. 300'}
-                      />
-                    </div>
-
-                    {/* Intensità + tipo sforzo auto */}
-                    <div className="space-y-1 md:col-span-1">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <Flame className="h-3 w-3 text-slate-400" />
-                        Intensità (1–10)
-                      </Label>
-                      <div className="space-y-1">
-                        <input
-                          type="range"
-                          name="intensity"
-                          min={1}
-                          max={10}
-                          value={ex.intensity}
+                      </td>
+                      <td className="px-3 py-4 align-top">
+                        <Input
+                          name="sets"
+                          type="number"
+                          value={ex.sets}
                           onChange={e => handleExerciseChange(i, e)}
-                          className="w-full"
+                          className={`text-xs font-mono ${
+                            errors[`sets-${i}`] ? 'border-red-500 ring-2 ring-red-100' : ''
+                          }`}
                         />
-                        <div className="text-xs flex items-center justify-between text-slate-600">
-                          <span>1</span>
-                          <span className="font-semibold">
-                            {ex.intensity || '–'}/10
-                          </span>
-                          <span>10</span>
+                      </td>
+                      <td className="px-3 py-4 align-top">
+                        <Input
+                          name="repetitions"
+                          type="number"
+                          value={ex.repetitions}
+                          onChange={e => handleExerciseChange(i, e)}
+                          className={`text-xs font-mono ${
+                            errors[`repetitions-${i}`]
+                              ? 'border-red-500 ring-2 ring-red-100'
+                              : ''
+                          }`}
+                        />
+                      </td>
+                      <td className="px-3 py-4 align-top">
+                        <Input
+                          name="rest_between_reps_s"
+                          type="number"
+                          value={ex.rest_between_reps_s}
+                          onChange={e => handleExerciseChange(i, e)}
+                          placeholder={isGym ? '60' : '120'}
+                          className="text-xs font-mono"
+                        />
+                      </td>
+                      <td className="px-3 py-4 align-top">
+                        <Input
+                          name="rest_between_sets_s"
+                          type="number"
+                          value={ex.rest_between_sets_s}
+                          onChange={e => handleExerciseChange(i, e)}
+                          placeholder={isGym ? '180' : '300'}
+                          className="text-xs font-mono"
+                        />
+                      </td>
+                      <td className="px-3 py-4 align-top">
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <Flame className="h-3 w-3 text-slate-400" />
+                            <span>{ex.intensity || '–'}/10</span>
+                          </div>
+                          <input
+                            type="range"
+                            name="intensity"
+                            min={1}
+                            max={10}
+                            value={ex.intensity}
+                            onChange={e => handleExerciseChange(i, e)}
+                            className="w-full"
+                          />
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <Activity className="h-3 w-3 text-slate-400" />
-                        Tipo sforzo (auto)
-                      </Label>
-                      <div className="px-3 py-2 rounded-md border bg-white text-xs flex items-center gap-1">
-                        <Info className="h-3 w-3 text-slate-400" />
-                        <span>{effortLabel}</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1 md:col-span-3">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <StickyNote className="h-3 w-3 text-slate-400" />
-                        Note esercizio
-                      </Label>
-                      <Textarea
-                        name="notes"
-                        value={ex.notes}
-                        onChange={e => handleExerciseChange(i, e)}
-                        placeholder={
-                          isGym
-                            ? 'Dettagli su carichi, sensazioni, esecuzione...'
-                            : 'Dettagli su tempi, vento, sensazioni...'
-                        }
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={addExercise}
-              className="flex items-center gap-2"
-            >
-              <PlusCircle size={16} /> Aggiungi esercizio
-            </Button>
+                      </td>
+                      <td className="px-3 py-4 align-top">
+                        <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
+                          <Info className="h-3 w-3 text-slate-400" />
+                          <span>{effortLabel}</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-4 align-top">
+                        <Textarea
+                          name="notes"
+                          value={ex.notes}
+                          onChange={e => handleExerciseChange(i, e)}
+                          placeholder={
+                            isGym
+                              ? 'carico=80kg, focus tecnica'
+                              : 'tempo 18\'\' netti, vento favorevole'
+                          }
+                          rows={2}
+                          className="text-xs"
+                        />
+                      </td>
+                      <td className="px-3 py-4 align-top">
+                        {exercises.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeExercise(i)}
+                            className="rounded-md border border-red-100 bg-red-50 px-3 py-1 text-xs font-medium text-red-600 transition hover:bg-red-100"
+                          >
+                            <Trash2 className="mr-1 inline h-3 w-3" /> Rimuovi
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
 
-          {/* --- Salva --- */}
-          <div className="pt-4 flex justify-end">
-            <Button onClick={handleSubmit} disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="animate-spin mr-2 h-4 w-4" /> Salvataggio...
-                </>
-              ) : (
-                'Salva Allenamento'
-              )}
+          <div className="flex justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-500">
+              <Dumbbell className="h-4 w-4 text-blue-500" />
+              <span>{exercises.length} esercizi in tabella</span>
+            </div>
+            <Button type="button" variant="outline" onClick={addExercise} className="gap-2">
+              <PlusCircle size={16} /> Aggiungi riga esercizio
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex items-center justify-end gap-3 pt-4">
+        <Button onClick={handleSubmit} disabled={loading} className="min-w-[220px] gap-2">
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> Salvataggio...
+            </>
+          ) : (
+            'Salva allenamento nel database'
+          )}
+        </Button>
+      </div>
     </div>
   );
 }
