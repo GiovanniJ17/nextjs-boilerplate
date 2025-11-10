@@ -13,6 +13,7 @@ import {
   FolderKanban,
   Loader2,
   Medal,
+  RotateCcw,
   Sparkles,
   Target,
   TrendingUp,
@@ -34,6 +35,7 @@ const sessionTypeFilters = [
   { value: 'pista', label: 'Pista' },
   { value: 'palestra', label: 'Palestra' },
   { value: 'test', label: 'Test' },
+  { value: 'gara', label: 'Gara' },
   { value: 'scarico', label: 'Scarico' },
   { value: 'recupero', label: 'Recupero' },
   { value: 'altro', label: 'Altro' },
@@ -128,9 +130,14 @@ export default function StatistichePage() {
   const [rangePreset, setRangePreset] = useState<string>('');
 
   useEffect(() => {
-    void Promise.all([loadStats(), loadBlocks()]);
+    void loadBlocks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    void loadStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromDate, toDate, typeFilter, blockFilter, distanceFilter]);
 
   async function loadBlocks() {
     const { data } = await supabase.from('training_blocks').select('id, name').order('start_date', {
@@ -365,7 +372,6 @@ export default function StatistichePage() {
     setTypeFilter('');
     setBlockFilter('');
     setRangePreset('');
-    void loadStats();
   }
 
   const tabs = useMemo(
@@ -501,8 +507,7 @@ export default function StatistichePage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs">
-            <span className="font-semibold text-slate-600">Intervallo rapido</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs">
             {rangePresets.map(preset => {
               const isActive = rangePreset === preset.key;
               return (
@@ -529,9 +534,9 @@ export default function StatistichePage() {
                 setFromDate('');
                 setToDate('');
               }}
-              className="rounded-full border border-transparent px-3 py-1 font-medium text-slate-500 transition hover:border-slate-200 hover:bg-white"
+              className="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1 font-medium text-slate-500 transition hover:border-slate-200 hover:bg-white"
             >
-              Rimuovi preset
+              <RotateCcw className="h-3.5 w-3.5" /> Reset
             </button>
           </div>
 
@@ -632,12 +637,14 @@ export default function StatistichePage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2">
-            <Button type="button" variant="outline" onClick={resetFilters} className="rounded-full text-xs">
-              Reset
-            </Button>
-            <Button type="button" onClick={loadStats} className="rounded-full text-xs">
-              Applica filtri
+          <div className="flex items-center justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetFilters}
+              className="inline-flex items-center gap-1 rounded-full text-xs"
+            >
+              <RotateCcw className="h-3.5 w-3.5" /> Reset
             </Button>
           </div>
         </CardContent>

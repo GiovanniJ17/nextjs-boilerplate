@@ -10,9 +10,11 @@ import {
   Clock,
   Droplets,
   Dumbbell,
+  Flag,
   Flame,
   FolderPlus,
   Gauge,
+  Leaf,
   ListPlus,
   Loader2,
   MapPin,
@@ -26,6 +28,7 @@ import {
   Target,
   Trash2,
   Trophy,
+  Wind,
   Weight,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
@@ -102,6 +105,11 @@ const sessionTypes = [
     hint: 'Test di valutazione e prove specifiche',
   },
   {
+    value: 'gara',
+    label: 'Gara',
+    hint: 'Sessioni di gara ufficiali o simulazioni complete',
+  },
+  {
     value: 'scarico',
     label: 'Scarico attivo',
     hint: 'Sessioni leggere di recupero con movimento controllato',
@@ -121,6 +129,9 @@ const sessionTypes = [
 const disciplineTypes = [
   { value: 'sprint', label: 'Sprint' },
   { value: 'forza', label: 'Forza' },
+  { value: 'gara', label: 'Gara' },
+  { value: 'test', label: 'Test' },
+  { value: 'fiato', label: 'Fiato' },
   { value: 'mobilità', label: 'Mobilità' },
   { value: 'tecnica', label: 'Tecnica' },
   { value: 'altro', label: 'Altro' },
@@ -138,32 +149,34 @@ const sessionTypeIcons: Record<string, LucideIcon> = {
   pista: Activity,
   palestra: Dumbbell,
   test: Target,
+  gara: Trophy,
   scarico: Clock,
   recupero: CheckCircle2,
   altro: PlusCircle,
 };
 
 const locationOptions = [
+  { value: 'pista-outdoor', label: 'Pista outdoor' },
   { value: 'pista-indoor', label: 'Pista indoor' },
-  { value: 'palazzetto', label: 'Palazzetto' },
-  { value: 'stadio', label: 'Stadio' },
   { value: 'palestra', label: 'Palestra' },
-  { value: 'outdoor', label: 'Outdoor' },
+  { value: 'erba', label: 'Erba' },
   { value: 'custom', label: 'Altro luogo' },
 ];
 
 const locationIcons: Record<string, LucideIcon> = {
+  'pista-outdoor': Flag,
   'pista-indoor': Activity,
-  palazzetto: Target,
-  stadio: Trophy,
   palestra: Dumbbell,
-  outdoor: MapPin,
+  erba: Leaf,
   custom: PenSquare,
 };
 
 const disciplineIcons: Record<string, LucideIcon> = {
   sprint: Activity,
   forza: Dumbbell,
+  gara: Trophy,
+  test: Target,
+  fiato: Wind,
   mobilità: MoveRight,
   tecnica: Target,
   altro: PenSquare,
@@ -259,6 +272,19 @@ const metricPlaybook: Record<string, MetricSuggestion[]> = {
       hint: 'Valuta la percezione globale di fatica',
     },
   ],
+  gara: [
+    {
+      metric_name: 'Tempo ufficiale',
+      category: 'prestazione',
+      unit: 's',
+      hint: 'Registra il crono finale della gara',
+    },
+    {
+      metric_name: 'Classifica',
+      category: 'altro',
+      hint: 'Annota il piazzamento raggiunto',
+    },
+  ],
   test: [
     {
       metric_name: 'Test CMJ',
@@ -317,6 +343,42 @@ const disciplineMetricPlaybook: Record<string, MetricSuggestion[]> = {
       metric_target: 'Lift principale',
       unit: 'W',
       hint: 'Inserisci il valore migliore rilevato',
+    },
+  ],
+  gara: [
+    {
+      metric_name: 'Tempo gara',
+      category: 'prestazione',
+      metric_target: 'Risultato ufficiale',
+      unit: 's',
+      hint: 'Registra il cronometraggio ottenuto in gara',
+    },
+    {
+      metric_name: 'Posizionamento',
+      category: 'altro',
+      hint: 'Annota piazzamento e sensazioni generali',
+    },
+  ],
+  test: [
+    {
+      metric_name: 'Indice test',
+      category: 'test',
+      metric_target: 'Valore di riferimento',
+      hint: 'Segna il punteggio o la valutazione ottenuta',
+    },
+  ],
+  fiato: [
+    {
+      metric_name: 'Tempo recupero',
+      category: 'recupero',
+      metric_target: 'Frequenza respiratoria',
+      unit: 's',
+      hint: 'Misura quanto impieghi a tornare a riposo',
+    },
+    {
+      metric_name: 'Sensazione fiato',
+      category: 'altro',
+      hint: 'Scala soggettiva da 1 a 10 sulla respirazione',
     },
   ],
   mobilità: [
@@ -1198,7 +1260,7 @@ export default function RegistroPage() {
                     );
                   })}
                 </div>
-                <div className="flex flex-wrap gap-2 pt-2">
+                <div className="flex w-full flex-wrap justify-center gap-2 pt-4">
                   <Button
                     type="button"
                     variant="outline"
@@ -1206,7 +1268,7 @@ export default function RegistroPage() {
                     className="gap-2 rounded-full border-slate-200"
                   >
                     <PenSquare className="h-4 w-4" />
-                    {showBlockForm ? 'Nascondi editor' : 'Nuovo blocco'}
+                    {showBlockForm ? 'Nascondi editor' : 'Crea nuovo blocco'}
                   </Button>
                   <Button
                     type="button"

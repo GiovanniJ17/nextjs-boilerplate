@@ -18,11 +18,14 @@ import {
   Loader2,
   MapPin,
   NotebookText,
+  RotateCcw,
   Search,
   Sparkles,
   Target,
+  Trash2,
   Weight,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -117,6 +120,12 @@ function humanDiscipline(discipline: string | null) {
   switch (discipline) {
     case 'forza':
       return 'Forza';
+    case 'gara':
+      return 'Gara';
+    case 'test':
+      return 'Test';
+    case 'fiato':
+      return 'Fiato';
     case 'mobilità':
       return 'Mobilità';
     case 'tecnica':
@@ -133,6 +142,7 @@ const sessionTypeOptions = [
   { value: 'pista', label: 'Allenamenti in pista' },
   { value: 'palestra', label: 'Palestra / forza' },
   { value: 'test', label: 'Test' },
+  { value: 'gara', label: 'Gare' },
   { value: 'scarico', label: 'Scarico' },
   { value: 'recupero', label: 'Recupero' },
   { value: 'altro', label: 'Altro' },
@@ -140,14 +150,15 @@ const sessionTypeOptions = [
 
 const smartRangeOptions = [
   { key: '14', label: 'Ultimi 14 giorni', days: 14 },
-  { key: '42', label: 'Ultime 6 settimane', days: 42 },
   { key: '90', label: 'Ultimi 90 giorni', days: 90 },
+  { key: '42', label: 'Ultime 6 settimane', days: 42 },
 ];
 
 const sessionTypeTokens: Record<string, { bg: string; text: string }> = {
   pista: { bg: 'bg-sky-100', text: 'text-sky-600' },
   palestra: { bg: 'bg-emerald-100', text: 'text-emerald-600' },
   test: { bg: 'bg-amber-100', text: 'text-amber-600' },
+  gara: { bg: 'bg-rose-100', text: 'text-rose-600' },
   scarico: { bg: 'bg-purple-100', text: 'text-purple-600' },
   recupero: { bg: 'bg-indigo-100', text: 'text-indigo-600' },
   altro: { bg: 'bg-slate-200', text: 'text-slate-600' },
@@ -197,6 +208,7 @@ export default function StoricoPage() {
   const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
   const [activeQuickSearch, setActiveQuickSearch] = useState<string | null>(null);
   const [activeSmartRange, setActiveSmartRange] = useState<string>('');
+  const [deletingSession, setDeletingSession] = useState<string | null>(null);
 
   useEffect(() => {
     void loadBlocks();
@@ -450,6 +462,31 @@ export default function StoricoPage() {
     setOpenSession(prev => (prev === id ? null : id));
   }
 
+  async function handleDeleteSession(sessionId: string) {
+    const session = sessions.find(item => item.id === sessionId);
+    const confirmationLabel = session?.date ? ` del ${formatDate(session.date)}` : '';
+    const shouldDelete = window.confirm(
+      `Eliminare definitivamente la sessione${confirmationLabel}? Verranno rimossi anche esercizi e metriche collegate.`
+    );
+    if (!shouldDelete) return;
+
+    setDeletingSession(sessionId);
+    const { error } = await supabase.from('training_sessions').delete().eq('id', sessionId);
+
+    if (error) {
+      toast.error('Errore durante l\'eliminazione della sessione');
+      setDeletingSession(null);
+      return;
+    }
+
+    toast.success('Sessione eliminata');
+    setSessions(prev => prev.filter(item => item.id !== sessionId));
+    setDeletingSession(null);
+    if (openSession === sessionId) {
+      setOpenSession(null);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <section className="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-white shadow-xl">
@@ -495,8 +532,7 @@ export default function StoricoPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs">
-            <span className="font-semibold text-slate-600">Intervalli rapidi</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs">
             {smartRangeOptions.map(option => {
               const isActive = activeSmartRange === option.key;
               return (
@@ -523,9 +559,9 @@ export default function StoricoPage() {
                 setFromDate('');
                 setToDate('');
               }}
-              className="rounded-full border border-transparent px-3 py-1 font-medium text-slate-500 transition hover:border-slate-200 hover:bg-white"
+              className="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1 font-medium text-slate-500 transition hover:border-slate-200 hover:bg-white"
             >
-              Rimuovi preset
+              <RotateCcw className="h-3.5 w-3.5" /> Reset
             </button>
           </div>
 
@@ -617,9 +653,9 @@ export default function StoricoPage() {
                 type="button"
                 variant="outline"
                 onClick={resetFilters}
-                className="rounded-full border-slate-200 text-xs"
+                className="inline-flex items-center gap-1 rounded-full border-slate-200 text-xs"
               >
-                Reset
+                <RotateCcw className="h-3.5 w-3.5" /> Reset
               </Button>
               <Button type="button" onClick={loadSessions} className="rounded-full text-xs">
                 Applica filtri
@@ -764,12 +800,13 @@ export default function StoricoPage() {
                       <span className="absolute left-[7px] top-8 h-3 w-3 rounded-full border-2 border-white bg-sky-500 shadow transition group-hover:scale-110" />
                     )}
                     <div className={cn('rounded-3xl border border-slate-200 bg-white shadow-sm transition', viewMode === 'timeline' && 'ml-4')}>
-                      <button
-                        type="button"
-                        onClick={() => toggleSession(session.id)}
-                        className="flex w-full items-center justify-between gap-4 rounded-3xl px-5 py-4 text-left transition hover:bg-slate-50"
-                      >
-                        <div className="flex flex-1 flex-col gap-3">
+                      <div className="flex items-start justify-between gap-3 px-5 py-4">
+                        <button
+                          type="button"
+                          onClick={() => toggleSession(session.id)}
+                          className="flex flex-1 items-center justify-between gap-4 rounded-2xl px-4 py-3 text-left transition hover:bg-slate-50 focus:outline-none"
+                        >
+                          <div className="flex flex-1 flex-col gap-3">
                           <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
                             <span className="inline-flex items-center gap-1 font-semibold text-slate-600">
                               <Calendar className="h-3 w-3" /> {formatDate(session.date)}
@@ -844,8 +881,23 @@ export default function StoricoPage() {
                           {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </div>
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleDeleteSession(session.id)}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-transparent bg-rose-50 text-rose-600 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70"
+                        disabled={deletingSession === session.id}
+                        aria-label="Elimina sessione"
+                        title="Elimina sessione"
+                      >
+                        {deletingSession === session.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
 
-                      {isOpen && (
+                    {isOpen && (
                         <div className="border-t border-slate-100 px-5 pb-5">
                           <div className="grid gap-4 py-4 lg:grid-cols-2">
                             <div className="space-y-3">
