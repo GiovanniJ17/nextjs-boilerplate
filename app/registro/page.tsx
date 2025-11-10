@@ -1195,262 +1195,273 @@ export default function RegistroPage() {
                 <NotebookPen className="h-5 w-5 text-sky-600" /> Dettagli sessione
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-600">Blocco di allenamento</Label>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleBlockSelect(null)}
-                    className={cn(
-                      'inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold transition',
-                      sessionForm.block_id
-                        ? 'border-slate-200 text-slate-500 hover:border-slate-300'
-                        : 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                    )}
-                    aria-pressed={!sessionForm.block_id}
-                  >
-                    Nessun blocco
-                  </button>
-                  {trainingBlocks.length === 0 && (
-                    <span className="inline-flex items-center rounded-2xl bg-slate-100 px-3 py-2 text-[11px] text-slate-500">
-                      Nessun blocco salvato
-                    </span>
-                  )}
-                  {trainingBlocks.map(block => {
-                    const isSelected = sessionForm.block_id === block.id;
-                    return (
-                      <div
-                        key={block.id}
-                        className={cn(
-                          'relative flex items-center gap-3 rounded-2xl border px-3 py-2 pr-10 text-left transition',
-                          isSelected
-                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
-                        )}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => handleBlockSelect(block.id)}
-                          className="flex flex-col text-left"
-                          aria-pressed={isSelected}
-                        >
-                          <span className="text-xs font-semibold">{block.name}</span>
-                          <span className="text-[11px] text-slate-500">
-                            {formatDateHuman(block.start_date)} → {formatDateHuman(block.end_date)}
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          className="absolute right-1 top-1 inline-flex items-center gap-1 rounded-full border border-transparent bg-white/80 px-2 py-1 text-[10px] font-semibold text-slate-400 transition hover:border-red-200 hover:text-red-500"
-                          onClick={() => handleDeleteBlock(block.id)}
-                          disabled={blockActionLoading === block.id}
-                          aria-label={`Elimina ${block.name}`}
-                          title="Rimuovi definitivamente il blocco"
-                        >
-                          {blockActionLoading === block.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-3 w-3" />
-                          )}
-                          <span>Elimina</span>
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex w-full flex-wrap justify-center gap-2 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowBlockForm(prev => !prev)}
-                    className="gap-2 rounded-full border-slate-200"
-                  >
-                    <PenSquare className="h-4 w-4" />
-                    {showBlockForm ? 'Nascondi editor' : 'Crea nuovo blocco'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => void fetchBlocks()}
-                    className="gap-2 border-transparent bg-transparent text-xs text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-sky-600"
-                  >
-                    <Loader2 className={cn('h-3.5 w-3.5', loadingBlocks ? 'animate-spin' : '')} /> Aggiorna elenco
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-600">Data</Label>
-                <Input
-                  type="date"
-                  name="date"
-                  value={sessionForm.date}
-                  onChange={handleSessionChange}
-                  className={cn('rounded-xl bg-slate-50', errors.date && 'border-red-500')}
-                />
-                {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
-              </div>
-            </div>
-
-            {showBlockForm && (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                  <Target className="h-4 w-4" /> Nuovo blocco di allenamento
-                </div>
-                <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <CardContent>
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+              <div className="space-y-6">
+                <div className="space-y-4">
                   <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600">Nome</Label>
-                    <Input
-                      value={blockForm.name}
-                      onChange={event => setBlockForm(prev => ({ ...prev, name: event.target.value }))}
-                      placeholder="Macro ciclo, preparazione indoor..."
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600">Inizio</Label>
-                    <Input
-                      type="date"
-                      value={blockForm.start_date}
-                      onChange={event => setBlockForm(prev => ({ ...prev, start_date: event.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600">Fine</Label>
-                    <Input
-                      type="date"
-                      value={blockForm.end_date}
-                      onChange={event => setBlockForm(prev => ({ ...prev, end_date: event.target.value }))}
-                    />
-                  </div>
-                </div>
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600">Obiettivo</Label>
-                    <Input
-                      value={blockForm.goal}
-                      onChange={event => setBlockForm(prev => ({ ...prev, goal: event.target.value }))}
-                      placeholder="Es. Migliorare accelerazione"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600">Note</Label>
-                    <Textarea
-                      value={blockForm.notes}
-                      onChange={event => setBlockForm(prev => ({ ...prev, notes: event.target.value }))}
-                      placeholder="Appunti generali, gare obiettivo..."
-                    />
-                  </div>
-                </div>
-                <div className="mt-4 flex justify-end">
-                  <Button type="button" onClick={handleCreateBlock} disabled={loadingBlocks} className="gap-2">
-                    {loadingBlocks && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Salva blocco
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-slate-600">Tipo di sessione</Label>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {sessionTypes.map(type => {
-                    const Icon = sessionTypeIcons[type.value] ?? Activity;
-                    const isSelected = sessionForm.type === type.value;
-                    return (
+                    <Label className="text-xs font-semibold text-slate-600">Blocco di allenamento</Label>
+                    <div className="flex flex-wrap gap-2">
                       <button
-                        key={type.value}
                         type="button"
-                        onClick={() => handleQuickTypeSelect(type.value)}
+                        onClick={() => handleBlockSelect(null)}
                         className={cn(
-                          'flex h-full flex-col items-start gap-1 rounded-2xl border px-3 py-2 text-left transition',
-                          isSelected
-                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
+                          'inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold transition',
+                          sessionForm.block_id
+                            ? 'border-slate-200 text-slate-500 hover:border-slate-300'
+                            : 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
                         )}
-                        aria-pressed={isSelected}
+                        aria-pressed={!sessionForm.block_id}
                       >
-                        <span className="inline-flex items-center gap-2 text-xs font-semibold">
-                          <span className={cn('flex h-6 w-6 items-center justify-center rounded-xl', isSelected ? 'bg-sky-100 text-sky-600' : 'bg-slate-100 text-slate-500')}>
-                            <Icon className="h-3.5 w-3.5" />
-                          </span>
-                          {type.label}
+                        Nessun blocco
+                      </button>
+                      {trainingBlocks.length === 0 && (
+                        <span className="inline-flex items-center rounded-2xl bg-slate-100 px-3 py-2 text-[11px] text-slate-500">
+                          Nessun blocco salvato
                         </span>
-                        <span className="text-[11px] text-slate-500">{type.hint}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                {errors.type && <p className="text-xs text-red-500">{errors.type}</p>}
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-600">Fase / Periodo</Label>
-                <Input
-                  name="phase"
-                  value={sessionForm.phase}
-                  onChange={handleSessionChange}
-                  placeholder="Es. Accumulo, Intensificazione, Taper"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-slate-600">Luogo</Label>
-                <div className="flex flex-wrap gap-2">
-                  {locationOptions.map(option => {
-                    const isSelected =
-                      option.value === 'custom'
-                        ? usingCustomLocation
-                        : sessionForm.location === option.label;
-                    const Icon = locationIcons[option.value] ?? MapPin;
-                    return (
-                      <button
-                        key={option.value}
+                      )}
+                      {trainingBlocks.map(block => {
+                        const isSelected = sessionForm.block_id === block.id;
+                        return (
+                          <div
+                            key={block.id}
+                            className={cn(
+                              'relative flex items-center gap-3 rounded-2xl border px-3 py-2 pr-10 text-left transition',
+                              isSelected
+                                ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                                : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
+                            )}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => handleBlockSelect(block.id)}
+                              className="flex flex-col text-left"
+                              aria-pressed={isSelected}
+                            >
+                              <span className="text-xs font-semibold">{block.name}</span>
+                              <span className="text-[11px] text-slate-500">
+                                {formatDateHuman(block.start_date)} → {formatDateHuman(block.end_date)}
+                              </span>
+                            </button>
+                            <button
+                              type="button"
+                              className="absolute right-1 top-1 inline-flex items-center gap-1 rounded-full border border-transparent bg-white/80 px-2 py-1 text-[10px] font-semibold text-slate-400 transition hover:border-red-200 hover:text-red-500"
+                              onClick={() => handleDeleteBlock(block.id)}
+                              disabled={blockActionLoading === block.id}
+                              aria-label={`Elimina ${block.name}`}
+                              title="Rimuovi definitivamente il blocco"
+                            >
+                              {blockActionLoading === block.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3 w-3" />
+                              )}
+                              <span>Elimina</span>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex w-full flex-wrap justify-center gap-2 pt-4">
+                      <Button
                         type="button"
-                        onClick={() => handleLocationSelect(option.value)}
-                        className={cn(
-                          'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition',
-                          isSelected
-                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-500 hover:border-sky-200 hover:text-sky-600'
-                        )}
-                        aria-pressed={isSelected}
-                        title={option.value === 'custom' ? 'Personalizza luogo' : option.label}
+                        variant="outline"
+                        onClick={() => setShowBlockForm(prev => !prev)}
+                        className="gap-2 rounded-full border-slate-200"
                       >
-                        <Icon className="h-3.5 w-3.5" /> {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                {usingCustomLocation && (
-                  <div className="space-y-1">
-                    <Input
-                      value={customLocation}
-                      onChange={event => handleCustomLocationChange(event.target.value)}
-                      placeholder="Specificare luogo..."
-                      className={cn('mt-1', errors.location && 'border-red-500')}
-                    />
-                    <p className="text-[11px] text-slate-500">Personalizza il luogo quando non rientra tra le proposte rapide.</p>
+                        <PenSquare className="h-4 w-4" />
+                        {showBlockForm ? 'Nascondi editor' : 'Crea nuovo blocco'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => void fetchBlocks()}
+                        className="gap-2 border-transparent bg-transparent text-xs text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-sky-600"
+                      >
+                        <Loader2 className={cn('h-3.5 w-3.5', loadingBlocks ? 'animate-spin' : '')} /> Aggiorna elenco
+                      </Button>
+                    </div>
                   </div>
-                )}
-                {!usingCustomLocation && sessionForm.location && (
-                  <p className="text-[11px] text-slate-500">Selezionato: {sessionForm.location}</p>
-                )}
-                {errors.location && <p className="text-xs text-red-500">{errors.location}</p>}
-              </div>
-            </div>
 
-            <div>
-              <Label className="text-xs font-semibold text-slate-600">Note sessione</Label>
-              <Textarea
-                name="notes"
-                value={sessionForm.notes}
-                onChange={handleSessionChange}
-                placeholder="Inserisci sensazioni, clima, focus tecnico..."
-                className="mt-1"
-              />
+                  {showBlockForm && (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                        <Target className="h-4 w-4" /> Nuovo blocco di allenamento
+                      </div>
+                      <div className="mt-4 grid gap-4 md:grid-cols-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold text-slate-600">Nome</Label>
+                          <Input
+                            value={blockForm.name}
+                            onChange={event => setBlockForm(prev => ({ ...prev, name: event.target.value }))}
+                            placeholder="Macro ciclo, preparazione indoor..."
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold text-slate-600">Inizio</Label>
+                          <Input
+                            type="date"
+                            value={blockForm.start_date}
+                            onChange={event => setBlockForm(prev => ({ ...prev, start_date: event.target.value }))}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold text-slate-600">Fine</Label>
+                          <Input
+                            type="date"
+                            value={blockForm.end_date}
+                            onChange={event => setBlockForm(prev => ({ ...prev, end_date: event.target.value }))}
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold text-slate-600">Obiettivo</Label>
+                          <Input
+                            value={blockForm.goal}
+                            onChange={event => setBlockForm(prev => ({ ...prev, goal: event.target.value }))}
+                            placeholder="Es. Migliorare accelerazione"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold text-slate-600">Note</Label>
+                          <Textarea
+                            value={blockForm.notes}
+                            onChange={event => setBlockForm(prev => ({ ...prev, notes: event.target.value }))}
+                            placeholder="Appunti generali, gare obiettivo..."
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-4 flex justify-end">
+                        <Button type="button" onClick={handleCreateBlock} disabled={loadingBlocks} className="gap-2">
+                          {loadingBlocks && <Loader2 className="h-4 w-4 animate-spin" />}
+                          Salva blocco
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold text-slate-600">Tipo di sessione</Label>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {sessionTypes.map(type => {
+                        const Icon = sessionTypeIcons[type.value] ?? Activity;
+                        const isSelected = sessionForm.type === type.value;
+                        return (
+                          <button
+                            key={type.value}
+                            type="button"
+                            onClick={() => handleQuickTypeSelect(type.value)}
+                            className={cn(
+                              'flex h-full flex-col items-start gap-1 rounded-2xl border px-3 py-2 text-left transition',
+                              isSelected
+                                ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                                : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
+                            )}
+                            aria-pressed={isSelected}
+                          >
+                            <span className="inline-flex items-center gap-2 text-xs font-semibold">
+                              <span
+                                className={cn(
+                                  'flex h-6 w-6 items-center justify-center rounded-xl',
+                                  isSelected ? 'bg-sky-100 text-sky-600' : 'bg-slate-100 text-slate-500'
+                                )}
+                              >
+                                <Icon className="h-3.5 w-3.5" />
+                              </span>
+                              {type.label}
+                            </span>
+                            <span className="text-[11px] text-slate-500">{type.hint}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {errors.type && <p className="text-xs text-red-500">{errors.type}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold text-slate-600">Luogo</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {locationOptions.map(option => {
+                        const isSelected =
+                          option.value === 'custom'
+                            ? usingCustomLocation
+                            : sessionForm.location === option.label;
+                        const Icon = locationIcons[option.value] ?? MapPin;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => handleLocationSelect(option.value)}
+                            className={cn(
+                              'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition',
+                              isSelected
+                                ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                                : 'border-slate-200 bg-white text-slate-500 hover:border-sky-200 hover:text-sky-600'
+                            )}
+                            aria-pressed={isSelected}
+                            title={option.value === 'custom' ? 'Personalizza luogo' : option.label}
+                          >
+                            <Icon className="h-3.5 w-3.5" /> {option.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {usingCustomLocation && (
+                      <div className="space-y-1">
+                        <Input
+                          value={customLocation}
+                          onChange={event => handleCustomLocationChange(event.target.value)}
+                          placeholder="Specificare luogo..."
+                          className={cn('mt-1', errors.location && 'border-red-500')}
+                        />
+                        <p className="text-[11px] text-slate-500">Personalizza il luogo quando non rientra tra le proposte rapide.</p>
+                      </div>
+                    )}
+                    {!usingCustomLocation && sessionForm.location && (
+                      <p className="text-[11px] text-slate-500">Selezionato: {sessionForm.location}</p>
+                    )}
+                    {errors.location && <p className="text-xs text-red-500">{errors.location}</p>}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-slate-600">Data</Label>
+                  <Input
+                    type="date"
+                    name="date"
+                    value={sessionForm.date}
+                    onChange={handleSessionChange}
+                    className={cn('rounded-xl bg-slate-50', errors.date && 'border-red-500')}
+                  />
+                  {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-slate-600">Fase / Periodo</Label>
+                  <Input
+                    name="phase"
+                    value={sessionForm.phase}
+                    onChange={handleSessionChange}
+                    placeholder="Es. Accumulo, Intensificazione, Taper"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-slate-600">Note sessione</Label>
+                  <Textarea
+                    name="notes"
+                    value={sessionForm.notes}
+                    onChange={handleSessionChange}
+                    placeholder="Inserisci sensazioni, clima, focus tecnico..."
+                    className="mt-1"
+                  />
+                </div>
+              </div>
             </div>
           </CardContent>
           </Card>

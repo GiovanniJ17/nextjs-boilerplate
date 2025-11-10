@@ -527,17 +527,6 @@ export default function StatistichePage() {
                 </button>
               );
             })}
-            <button
-              type="button"
-              onClick={() => {
-                setRangePreset('');
-                setFromDate('');
-                setToDate('');
-              }}
-              className="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1 font-medium text-slate-500 transition hover:border-slate-200 hover:bg-white"
-            >
-              <RotateCcw className="h-3.5 w-3.5" /> Reset
-            </button>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
