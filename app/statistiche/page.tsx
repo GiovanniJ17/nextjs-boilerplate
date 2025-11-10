@@ -34,6 +34,7 @@ const sessionTypeFilters = [
   { value: 'pista', label: 'Pista' },
   { value: 'palestra', label: 'Palestra' },
   { value: 'test', label: 'Test' },
+  { value: 'gara', label: 'Gara' },
   { value: 'scarico', label: 'Scarico' },
   { value: 'recupero', label: 'Recupero' },
   { value: 'altro', label: 'Altro' },
@@ -80,6 +81,10 @@ type MetricRow = {
   metric_name: string | null;
   metric_target: string | null;
   category: string | null;
+  distance_m: number | null;
+  time_s: number | null;
+  recovery_post_s: number | null;
+  intensity: number | null;
 };
 
 type StatsSnapshot = {
@@ -192,7 +197,9 @@ export default function StatistichePage() {
     if (sessionIds.length > 0) {
       let metricsQuery = supabase
         .from('metrics')
-        .select('session_id, value, unit, metric_name, metric_target, category')
+        .select(
+          'session_id, value, unit, metric_name, metric_target, category, distance_m, time_s, recovery_post_s, intensity'
+        )
         .in('session_id', sessionIds);
 
       if (fromDate) metricsQuery = metricsQuery.gte('date', fromDate);
