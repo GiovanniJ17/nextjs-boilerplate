@@ -1,497 +1,968 @@
 'use client';
 
-import React, { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import type { LucideIcon } from 'lucide-react';
+import {
+  Activity,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Dumbbell,
+  Loader2,
+  MapPin,
+  NotebookPen,
+  PenSquare,
+  Plus,
+  PlusCircle,
+  Target,
+  Trash2,
+  Trophy,
+  Weight,
+} from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import {
-  Loader2,
-  PlusCircle,
-  Trash2,
-  Calendar,
-  MapPin,
-  Tag,
-  StickyNote,
-  Ruler,
-  Repeat,
-  Timer,
-  Activity,
-  Info,
-  Dumbbell,
-  Flame,
-} from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/lib/supabaseClient';
+import { cn } from '@/lib/utils';
 
-// Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-interface ExerciseForm {
+type TrainingBlock = {
+  id: string;
   name: string;
+  start_date: string;
+  end_date: string;
+};
+
+type SessionFormState = {
+  block_id: string;
+  date: string;
+  type: string;
+  phase: string;
+  location: string;
+  notes: string;
+};
+
+type ExerciseResultForm = {
+  attempt_number: string;
+  repetition_number: string;
+  time_s: string;
+  weight_kg: string;
+  rpe: string;
+  notes: string;
+};
+
+type ExerciseForm = {
+  name: string;
+  discipline_type: string;
   distance_m: string;
   sets: string;
   repetitions: string;
   rest_between_reps_s: string;
   rest_between_sets_s: string;
-  intensity: string; // 1–10
+  rest_after_exercise_s: string;
+  intensity: string;
   notes: string;
-  [key: string]: string; // per gestire l'update dinamico via name
-}
+  results: ExerciseResultForm[];
+};
 
-const defaultExercise: ExerciseForm = {
-  name: '',
-  distance_m: '',
-  sets: '',
-  repetitions: '',
-  rest_between_reps_s: '',
-  rest_between_sets_s: '',
-  intensity: '5',
+type MetricForm = {
+  date: string;
+  metric_name: string;
+  category: string;
+  metric_target: string;
+  value: string;
+  unit: string;
+  notes: string;
+};
+
+const sessionTypeOptions = [
+  { value: 'pista', label: 'Pista', description: 'Ripetute, sprint, tecnica in pista', icon: Activity },
+  { value: 'palestra', label: 'Palestra', description: 'Forza e potenziamento', icon: Dumbbell },
+  { value: 'test', label: 'Test', description: 'Valutazioni e benchmark', icon: Target },
+  { value: 'scarico', label: 'Scarico', description: 'Scarico attivo guidato', icon: Clock },
+  { value: 'recupero', label: 'Recupero', description: 'Rigenerazione e mobilità', icon: CheckCircle2 },
+  { value: 'altro', label: 'Altro', description: 'Sessione diversa dal solito', icon: PlusCircle },
+] as const;
+
+const locationOptions = [
+  { value: 'pista-indoor', label: 'Pista indoor', icon: Activity },
+  { value: 'stadio', label: 'Stadio', icon: Trophy },
+  { value: 'palestra', label: 'Palestra', icon: Dumbbell },
+  { value: 'outdoor', label: 'Outdoor', icon: MapPin },
+  { value: 'palazzetto', label: 'Palazzetto', icon: Target },
+  { value: 'custom', label: 'Altro', icon: PenSquare },
+] as const;
+
+const disciplineOptions = [
+  { value: 'sprint', label: 'Sprint', icon: Activity },
+  { value: 'forza', label: 'Forza', icon: Dumbbell },
+  { value: 'mobilità', label: 'Mobilità', icon: Clock },
+  { value: 'tecnica', label: 'Tecnica', icon: Target },
+  { value: 'altro', label: 'Altro', icon: NotebookPen },
+] as const;
+
+const metricCategoryOptions = [
+  { value: 'prestazione', label: 'Prestazione', hint: 'Tempi, carichi, test gara', icon: Trophy },
+  { value: 'fisico', label: 'Fisico', hint: 'Peso, composizione corporea', icon: Weight },
+  { value: 'recupero', label: 'Recupero', hint: 'Qualità del sonno, HRV', icon: Clock },
+  { value: 'test', label: 'Test', hint: 'Valutazioni periodiche', icon: Target },
+  { value: 'altro', label: 'Altro', hint: 'Note extra', icon: NotebookPen },
+] as const;
+
+const defaultSessionState: SessionFormState = {
+  block_id: '',
+  date: new Date().toISOString().slice(0, 10),
+  type: 'pista',
+  phase: '',
+  location: 'pista-indoor',
   notes: '',
 };
 
-function getEffortType(intensity: number | null): string | null {
-  if (intensity == null || Number.isNaN(intensity)) return null;
-  if (intensity <= 3) return 'Molto leggero';
-  if (intensity <= 5) return 'Leggero';
-  if (intensity <= 7) return 'Medio';
-  if (intensity <= 8) return 'Alto';
-  return 'Massimo';
+const defaultResult: ExerciseResultForm = {
+  attempt_number: '1',
+  repetition_number: '',
+  time_s: '',
+  weight_kg: '',
+  rpe: '',
+  notes: '',
+};
+
+type ExerciseField = Exclude<keyof ExerciseForm, 'results'>;
+
+const defaultExercise: ExerciseForm = {
+  name: '',
+  discipline_type: 'sprint',
+  distance_m: '',
+  sets: '1',
+  repetitions: '1',
+  rest_between_reps_s: '',
+  rest_between_sets_s: '',
+  rest_after_exercise_s: '',
+  intensity: '',
+  notes: '',
+  results: [defaultResult],
+};
+
+const defaultMetric: MetricForm = {
+  date: new Date().toISOString().slice(0, 10),
+  metric_name: '',
+  category: 'prestazione',
+  metric_target: '',
+  value: '',
+  unit: '',
+  notes: '',
+};
+
+function deepClone<T>(value: T): T {
+  if (typeof structuredClone === 'function') {
+    return structuredClone(value);
+  }
+
+  return JSON.parse(JSON.stringify(value));
 }
 
-function getIntensityLabel(intensity: number | null): string {
-  return getEffortType(intensity) ?? 'Non impostato';
+function ChipButton({
+  label,
+  active,
+  icon: Icon,
+  onClick,
+  description,
+}: {
+  label: string;
+  active: boolean;
+  icon: LucideIcon;
+  onClick: () => void;
+  description?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex w-full flex-col items-start gap-1 rounded-2xl border p-3 text-left transition',
+        active
+          ? 'border-sky-500 bg-sky-50/80 text-sky-800 shadow-sm'
+          : 'border-slate-200 hover:border-sky-200 hover:bg-sky-50/40'
+      )}
+    >
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        <Icon className={cn('h-4 w-4', active ? 'text-sky-600' : 'text-slate-500')} />
+        {label}
+      </div>
+      {description && <p className="text-xs text-slate-500">{description}</p>}
+    </button>
+  );
 }
 
 export default function RegistroPage() {
-  const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    date: '',
-    type: '',
-    location: '',
-    notes: '',
-  });
-
+  const [blocks, setBlocks] = useState<TrainingBlock[]>([]);
+  const [session, setSession] = useState<SessionFormState>(defaultSessionState);
   const [exercises, setExercises] = useState<ExerciseForm[]>([defaultExercise]);
-  const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
+  const [metrics, setMetrics] = useState<MetricForm[]>([]);
+  const [saving, setSaving] = useState(false);
 
-  const isGym = form.location === 'palestra';
+  useEffect(() => {
+    async function loadBlocks() {
+      const { data, error } = await supabase
+        .from('training_blocks')
+        .select('id, name, start_date, end_date')
+        .order('start_date', { ascending: false });
 
-  // Gestione campi form principali
-  const handleFormChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  // Gestione campi esercizi
-  const handleExerciseChange = (
-    i: number,
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setExercises(prev => {
-      const next = [...prev];
-      const ex = { ...next[i] };
-      ex[name] = value;
-
-      // se cambia l'intensità, non salviamo effort_type nello stato,
-      // ma lo calcoliamo a runtime; qui potremmo solo normalizzare il valore
-      if (name === 'intensity') {
-        const num = Math.min(10, Math.max(1, Number(value) || 0));
-        ex.intensity = String(num);
+      if (error) {
+        toast.error('Impossibile recuperare i blocchi di allenamento');
+        return;
       }
 
-      next[i] = ex;
-      return next;
+      setBlocks(data ?? []);
+      if (!session.block_id && data && data.length > 0) {
+        setSession(prev => ({ ...prev, block_id: data[0].id }));
+      }
+    }
+
+    loadBlocks();
+  }, [session.block_id]);
+
+  const handleSessionChange = (
+    key: keyof SessionFormState,
+    value: string
+  ) => {
+    setSession(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleExerciseChange = (
+    index: number,
+    key: ExerciseField,
+    value: string
+  ) => {
+    setExercises(prev => {
+      const clone = deepClone(prev);
+      clone[index][key] = value;
+      return clone;
     });
   };
 
-  // Aggiungi esercizio
+  const handleResultChange = (
+    exerciseIndex: number,
+    resultIndex: number,
+    key: keyof ExerciseResultForm,
+    value: string
+  ) => {
+    setExercises(prev => {
+      const clone = deepClone(prev);
+      clone[exerciseIndex].results[resultIndex][key] = value;
+      return clone;
+    });
+  };
+
+  const handleMetricChange = (
+    index: number,
+    key: keyof MetricForm,
+    value: string
+  ) => {
+    setMetrics(prev => {
+      const clone = deepClone(prev);
+      clone[index][key] = value;
+      return clone;
+    });
+  };
+
   const addExercise = () => {
-    setExercises(prev => [...prev, { ...defaultExercise }]);
+    setExercises(prev => [...prev, deepClone(defaultExercise)]);
   };
 
-  // Rimuovi esercizio
-  const removeExercise = (i: number) => {
-    setExercises(prev => prev.filter((_, idx) => idx !== i));
-  };
-
-  // Validazione base
-  const validate = () => {
-    const newErrors: { [key: string]: boolean } = {};
-    if (!form.date) newErrors.date = true;
-    if (!form.type) newErrors.type = true;
-    if (!form.location) newErrors.location = true;
-
-    exercises.forEach((ex, i) => {
-      if (!ex.name.trim()) newErrors[`name-${i}`] = true;
-      if (!ex.sets.trim()) newErrors[`sets-${i}`] = true;
-      if (!ex.repetitions.trim()) newErrors[`repetitions-${i}`] = true;
+  const duplicateExercise = (index: number) => {
+    setExercises(prev => {
+      const clone = deepClone(prev);
+      clone.splice(index + 1, 0, deepClone(prev[index]));
+      return clone;
     });
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
-  // Salvataggio su Supabase
+  const removeExercise = (index: number) => {
+    setExercises(prev => (prev.length === 1 ? prev : prev.filter((_, i) => i !== index)));
+  };
+
+  const addResult = (exerciseIndex: number) => {
+    setExercises(prev => {
+      const clone = deepClone(prev);
+      clone[exerciseIndex].results.push(deepClone(defaultResult));
+      return clone;
+    });
+  };
+
+  const removeResult = (exerciseIndex: number, resultIndex: number) => {
+    setExercises(prev => {
+      const clone = structuredClone(prev);
+      const results = clone[exerciseIndex].results;
+      clone[exerciseIndex].results = results.length === 1 ? results : results.filter((_, i) => i !== resultIndex);
+      return clone;
+    });
+  };
+
+  const addMetric = () => {
+    setMetrics(prev => [...prev, deepClone(defaultMetric)]);
+  };
+
+  const removeMetric = (index: number) => {
+    setMetrics(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const recordedSummary = useMemo(() => {
+    const totalResults = exercises.reduce((acc, exercise) => acc + exercise.results.length, 0);
+    const involvedDisciplines = Array.from(new Set(exercises.map(item => item.discipline_type)));
+    return {
+      totalExercises: exercises.length,
+      totalResults,
+      involvedDisciplines,
+    };
+  }, [exercises]);
+
+  const resetForm = () => {
+    setSession(defaultSessionState);
+    setExercises([deepClone(defaultExercise)]);
+    setMetrics([]);
+  };
+
   const handleSubmit = async () => {
-    if (!validate()) {
-      toast.error('Compila tutti i campi obbligatori');
+    if (!session.date) {
+      toast.error('Seleziona una data per la sessione.');
       return;
     }
 
-    setLoading(true);
+    if (!session.type) {
+      toast.error('Scegli il tipo di sessione.');
+      return;
+    }
+
+    const hasNamedExercise = exercises.some(exercise => exercise.name.trim().length > 0);
+    if (!hasNamedExercise) {
+      toast.error('Inserisci almeno un esercizio con un nome.');
+      return;
+    }
+
+    setSaving(true);
 
     try {
-      // 1️⃣ Inserisci sessione
-      const { data: session, error: sessionErr } = await supabase
+      const { data: insertedSession, error: sessionError } = await supabase
         .from('training_sessions')
-        .insert([
-          {
-            date: form.date,
-            type: form.type,
-            location: form.location,
-            notes: form.notes,
-            created_at: new Date().toISOString(),
-          },
-        ])
-        .select()
+        .insert({
+          block_id: session.block_id || null,
+          date: session.date,
+          type: session.type,
+          phase: session.phase || null,
+          location: session.location,
+          notes: session.notes || null,
+        })
+        .select('id')
         .single();
 
-      if (sessionErr) throw sessionErr;
-
-      // 2️⃣ Inserisci esercizi
-      for (const ex of exercises) {
-        if (!ex.name.trim()) continue;
-
-        const intensityNum = ex.intensity ? parseFloat(ex.intensity) : null;
-        const effortType = getEffortType(intensityNum);
-
-        const { error: exErr } = await supabase.from('exercises').insert([
-          {
-            session_id: session.id,
-            name: ex.name,
-            distance_m: isGym
-              ? null
-              : ex.distance_m
-              ? parseInt(ex.distance_m)
-              : null,
-            sets: ex.sets ? parseInt(ex.sets) : null,
-            repetitions: ex.repetitions ? parseInt(ex.repetitions) : null,
-            rest_between_reps_s: ex.rest_between_reps_s
-              ? parseInt(ex.rest_between_reps_s)
-              : null,
-            rest_between_sets_s: ex.rest_between_sets_s
-              ? parseInt(ex.rest_between_sets_s)
-              : null,
-            intensity: intensityNum,
-            effort_type: effortType,
-            notes: ex.notes,
-            created_at: new Date().toISOString(),
-          },
-        ]);
-        if (exErr) throw exErr;
+      if (sessionError || !insertedSession) {
+        throw sessionError ?? new Error('Errore di salvataggio sessione');
       }
 
-      toast.success('Allenamento registrato con successo!');
-      setForm({ date: '', type: '', location: '', notes: '' });
-      setExercises([{ ...defaultExercise }]);
-      setErrors({});
-    } catch (err) {
-      console.error(err);
-      toast.error('Errore durante il salvataggio');
+      const exercisesToInsert = exercises
+        .filter(exercise => exercise.name.trim().length > 0)
+        .map(exercise => ({
+          payload: {
+            session_id: insertedSession.id,
+            name: exercise.name,
+            discipline_type: exercise.discipline_type,
+            distance_m: exercise.distance_m ? Number(exercise.distance_m) : null,
+            sets: exercise.sets ? Number(exercise.sets) : null,
+            repetitions: exercise.repetitions ? Number(exercise.repetitions) : null,
+            rest_between_reps_s: exercise.rest_between_reps_s ? Number(exercise.rest_between_reps_s) : null,
+            rest_between_sets_s: exercise.rest_between_sets_s ? Number(exercise.rest_between_sets_s) : null,
+            rest_after_exercise_s: exercise.rest_after_exercise_s ? Number(exercise.rest_after_exercise_s) : null,
+            intensity: exercise.intensity ? Number(exercise.intensity) : null,
+            notes: exercise.notes || null,
+          },
+          results: exercise.results,
+        }));
+
+      let insertedExercises: { id: string }[] = [];
+
+      if (exercisesToInsert.length > 0) {
+        const { data, error: exerciseError } = await supabase
+          .from('exercises')
+          .insert(exercisesToInsert.map(item => item.payload))
+          .select('id');
+
+        if (exerciseError) {
+          throw exerciseError;
+        }
+
+        insertedExercises = data ?? [];
+      }
+
+      if (insertedExercises.length > 0) {
+        const resultsPayload: Record<string, unknown>[] = [];
+
+        insertedExercises.forEach((exerciseRow, index) => {
+          const template = exercisesToInsert[index];
+
+          template.results
+            .filter(result =>
+              result.time_s || result.weight_kg || result.rpe || result.notes || result.repetition_number
+            )
+            .forEach(result => {
+              resultsPayload.push({
+                exercise_id: exerciseRow.id,
+                attempt_number: result.attempt_number ? Number(result.attempt_number) : 1,
+                repetition_number: result.repetition_number ? Number(result.repetition_number) : null,
+                time_s: result.time_s ? Number(result.time_s) : null,
+                weight_kg: result.weight_kg ? Number(result.weight_kg) : null,
+                rpe: result.rpe ? Number(result.rpe) : null,
+                notes: result.notes || null,
+              });
+            });
+        });
+
+        if (resultsPayload.length > 0) {
+          const { error: resultsError } = await supabase.from('exercise_results').insert(resultsPayload);
+          if (resultsError) {
+            throw resultsError;
+          }
+        }
+      }
+
+      if (metrics.length > 0) {
+        const metricsPayload = metrics
+          .filter(metric => metric.metric_name.trim().length > 0)
+          .map(metric => ({
+            session_id: insertedSession.id,
+            date: metric.date || session.date,
+            metric_name: metric.metric_name,
+            category: metric.category,
+            metric_target: metric.metric_target || null,
+            value: metric.value ? Number(metric.value) : null,
+            unit: metric.unit || null,
+            notes: metric.notes || null,
+          }));
+
+        if (metricsPayload.length > 0) {
+          const { error: metricsError } = await supabase.from('metrics').insert(metricsPayload);
+          if (metricsError) {
+            throw metricsError;
+          }
+        }
+      }
+
+      toast.success('Sessione registrata con successo!');
+      resetForm();
+    } catch (error) {
+      console.error(error);
+      toast.error('Impossibile salvare la sessione. Riprova.');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-4">
-      <h1 className="text-2xl font-semibold mb-6 flex items-center gap-2">
-        <Activity className="h-6 w-6 text-blue-500" />
-        Registra Allenamento
-      </h1>
+    <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-6">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-2xl font-bold text-slate-900">Registra allenamento</h1>
+        <p className="text-sm text-slate-500">
+          Compila le informazioni con tocchi rapidi: scegli il tipo di sessione, aggiungi gli esercizi, e collega
+          metriche e test utili.
+        </p>
+      </header>
 
-      <Card className="shadow-sm">
-        <CardContent className="space-y-6 p-6">
-          {/* --- Info base --- */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <Label className="flex items-center gap-1 text-sm font-medium text-slate-700">
-                <Calendar className="h-4 w-4 text-slate-400" />
-                Data
-              </Label>
+      <Card className="border-none shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base text-slate-800">
+            <Calendar className="h-4 w-4 text-sky-600" />
+            Dati principali
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="text-xs uppercase text-slate-500">Data</Label>
               <Input
                 type="date"
-                name="date"
-                value={form.date}
-                onChange={handleFormChange}
-                className={errors.date ? 'border-red-500' : ''}
+                value={session.date}
+                onChange={event => handleSessionChange('date', event.target.value)}
               />
             </div>
-
-            <div className="space-y-1">
-              <Label className="flex items-center gap-1 text-sm font-medium text-slate-700">
-                <Tag className="h-4 w-4 text-slate-400" />
-                Tipo allenamento
-              </Label>
-              <select
-                name="type"
-                value={form.type}
-                onChange={handleFormChange}
-                className={`w-full border rounded-md px-3 py-2 text-sm bg-white ${
-                  errors.type ? 'border-red-500' : ''
-                }`}
-              >
-                <option value="">Seleziona tipo...</option>
-                <option value="test">Test</option>
-                <option value="palestra">Palestra</option>
-                <option value="velocità">Velocità</option>
-                <option value="resistenza">Resistenza</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="flex items-center gap-1 text-sm font-medium text-slate-700">
-                <MapPin className="h-4 w-4 text-slate-400" />
-                Luogo
-              </Label>
-              <select
-                name="location"
-                value={form.location}
-                onChange={handleFormChange}
-                className={`w-full border rounded-md px-3 py-2 text-sm bg-white ${
-                  errors.location ? 'border-red-500' : ''
-                }`}
-              >
-                <option value="">Seleziona luogo...</option>
-                <option value="outdoor">Outdoor (pista/strada)</option>
-                <option value="indoor">Indoor (palestra indoor)</option>
-                <option value="palestra">Palestra (pesi)</option>
-                <option value="erba">Erba</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <Label className="flex items-center gap-1 text-sm font-medium text-slate-700">
-              <StickyNote className="h-4 w-4 text-slate-400" />
-              Note sessione
-            </Label>
-            <Textarea
-              name="notes"
-              value={form.notes}
-              onChange={handleFormChange}
-              placeholder="Sensazioni, variabili, obiettivi..."
-            />
-          </div>
-
-          {/* --- Esercizi --- */}
-          <div className="space-y-4">
-            {exercises.map((ex, i) => {
-              const intensityNum = ex.intensity ? Number(ex.intensity) : null;
-              const effortLabel = getIntensityLabel(intensityNum);
-
-              return (
-                <Card
-                  key={i}
-                  className={`border ${
-                    isGym ? 'bg-amber-50 border-amber-100' : 'bg-blue-50 border-blue-100'
-                  }`}
+            <div className="space-y-2">
+              <Label className="text-xs uppercase text-slate-500">Blocchi disponibili</Label>
+              <div className="flex flex-wrap gap-2">
+                {blocks.length === 0 && <p className="text-sm text-slate-500">Nessun blocco presente.</p>}
+                {blocks.map(block => (
+                  <Button
+                    key={block.id}
+                    type="button"
+                    variant={session.block_id === block.id ? 'default' : 'outline'}
+                    className={cn(
+                      'rounded-full border-slate-200 text-sm',
+                      session.block_id === block.id ? 'bg-sky-600 hover:bg-sky-700' : 'bg-white'
+                    )}
+                    onClick={() => handleSessionChange('block_id', block.id)}
+                  >
+                    {block.name}
+                  </Button>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-none bg-transparent text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                  onClick={() => handleSessionChange('block_id', '')}
                 >
-                  <CardHeader className="flex justify-between items-center pb-3">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                      {isGym ? (
-                        <Dumbbell className="h-4 w-4 text-amber-500" />
-                      ) : (
-                        <Ruler className="h-4 w-4 text-blue-500" />
-                      )}
-                      {isGym ? 'Esercizio palestra' : 'Esercizio di corsa'} #{i + 1}
-                    </CardTitle>
-                    {exercises.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeExercise(i)}
-                        className="text-red-500 hover:text-red-700"
+                  Nessun blocco
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="text-xs uppercase text-slate-500">Tipo di sessione</Label>
+              <div className="grid gap-2 md:grid-cols-2">
+                {sessionTypeOptions.map(option => (
+                  <ChipButton
+                    key={option.value}
+                    label={option.label}
+                    icon={option.icon}
+                    description={option.description}
+                    active={session.type === option.value}
+                    onClick={() => handleSessionChange('type', option.value)}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs uppercase text-slate-500">Luogo</Label>
+              <div className="grid gap-2 md:grid-cols-2">
+                {locationOptions.map(option => (
+                  <ChipButton
+                    key={option.value}
+                    label={option.label}
+                    icon={option.icon}
+                    active={session.location === option.value}
+                    onClick={() => handleSessionChange('location', option.value)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="text-xs uppercase text-slate-500">Fase (opzionale)</Label>
+              <Input
+                placeholder="Accumulo, intensificazione, tapering..."
+                value={session.phase}
+                onChange={event => handleSessionChange('phase', event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs uppercase text-slate-500">Note generali</Label>
+              <Textarea
+                rows={3}
+                placeholder="Sensazioni, obiettivi, condizioni meteo..."
+                value={session.notes}
+                onChange={event => handleSessionChange('notes', event.target.value)}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <section className="space-y-4">
+        <header className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Esercizi e risultati</h2>
+            <p className="text-sm text-slate-500">
+              Organizza gli esercizi per blocchi: puoi duplicarli, riordinarli e aggiungere risultati con un tap.
+            </p>
+          </div>
+          <Button variant="outline" onClick={addExercise} className="gap-2 rounded-full">
+            <Plus className="h-4 w-4" /> Nuovo blocco
+          </Button>
+        </header>
+
+        <div className="space-y-6">
+          {exercises.map((exercise, index) => (
+            <Card key={index} className="border border-slate-200/70 shadow-sm">
+              <CardHeader className="flex flex-row items-start justify-between gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase text-slate-500">Nome esercizio</Label>
+                  <Input
+                    placeholder="Es. Sprint 120m, Squat..."
+                    value={exercise.name}
+                    onChange={event => handleExerciseChange(index, 'name', event.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-9 rounded-full border-slate-200 p-0"
+                    onClick={() => duplicateExercise(index)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-9 rounded-full border-slate-200 text-rose-600 hover:border-rose-200 hover:bg-rose-50 p-0"
+                    onClick={() => removeExercise(index)}
+                    disabled={exercises.length === 1}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase text-slate-500">Disciplina</Label>
+                  <div className="grid gap-2 md:grid-cols-5">
+                    {disciplineOptions.map(option => (
+                      <ChipButton
+                        key={option.value}
+                        label={option.label}
+                        icon={option.icon}
+                        active={exercise.discipline_type === option.value}
+                        onClick={() => handleExerciseChange(index, 'discipline_type', option.value)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase text-slate-500">Distanza (m)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={exercise.distance_m}
+                      onChange={event => handleExerciseChange(index, 'distance_m', event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase text-slate-500">Serie</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={exercise.sets}
+                      onChange={event => handleExerciseChange(index, 'sets', event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase text-slate-500">Ripetizioni</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={exercise.repetitions}
+                      onChange={event => handleExerciseChange(index, 'repetitions', event.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase text-slate-500">Recupero tra ripetizioni (s)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={exercise.rest_between_reps_s}
+                      onChange={event => handleExerciseChange(index, 'rest_between_reps_s', event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase text-slate-500">Recupero tra serie (s)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={exercise.rest_between_sets_s}
+                      onChange={event => handleExerciseChange(index, 'rest_between_sets_s', event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase text-slate-500">Recupero finale (s)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={exercise.rest_after_exercise_s}
+                      onChange={event => handleExerciseChange(index, 'rest_after_exercise_s', event.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase text-slate-500">Intensità (0-10)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={exercise.intensity}
+                      onChange={event => handleExerciseChange(index, 'intensity', event.target.value)}
+                    />
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <Label className="text-xs uppercase text-slate-500">Note esercizio</Label>
+                    <Textarea
+                      rows={3}
+                      placeholder="Focus tecnico, sensazioni..."
+                      value={exercise.notes}
+                      onChange={event => handleExerciseChange(index, 'notes', event.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-slate-700">Risultati registrati</h3>
+                    <Button variant="outline" size="sm" className="gap-2 rounded-full" onClick={() => addResult(index)}>
+                      <Plus className="h-4 w-4" /> Aggiungi risultato
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {exercise.results.map((result, resultIndex) => (
+                      <div
+                        key={resultIndex}
+                        className="grid gap-3 rounded-xl border border-slate-200/80 p-3 md:grid-cols-6"
                       >
-                        <Trash2 size={18} />
-                      </button>
-                    )}
-                  </CardHeader>
-
-                  <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <Tag className="h-3 w-3 text-slate-400" />
-                        Nome esercizio
-                      </Label>
-                      <Input
-                        name="name"
-                        value={ex.name}
-                        onChange={e => handleExerciseChange(i, e)}
-                        placeholder={isGym ? 'Es. squat, panca...' : 'Es. 3 x 150m, 6 x 60m...'}
-                        className={errors[`name-${i}`] ? 'border-red-500' : ''}
-                      />
-                    </div>
-
-                    {!isGym && (
-                      <div className="space-y-1">
-                        <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                          <Ruler className="h-3 w-3 text-slate-400" />
-                          Distanza (m)
-                        </Label>
-                        <Input
-                          name="distance_m"
-                          type="number"
-                          value={ex.distance_m}
-                          onChange={e => handleExerciseChange(i, e)}
-                          placeholder="150"
-                        />
-                      </div>
-                    )}
-
-                    <div className="space-y-1">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <Repeat className="h-3 w-3 text-slate-400" />
-                        Serie
-                      </Label>
-                      <Input
-                        name="sets"
-                        type="number"
-                        value={ex.sets}
-                        onChange={e => handleExerciseChange(i, e)}
-                        className={errors[`sets-${i}`] ? 'border-red-500' : ''}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <Repeat className="h-3 w-3 text-slate-400" />
-                        Ripetizioni per serie
-                      </Label>
-                      <Input
-                        name="repetitions"
-                        type="number"
-                        value={ex.repetitions}
-                        onChange={e => handleExerciseChange(i, e)}
-                        className={errors[`repetitions-${i}`] ? 'border-red-500' : ''}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <Timer className="h-3 w-3 text-slate-400" />
-                        Recupero tra ripetizioni (s)
-                      </Label>
-                      <Input
-                        name="rest_between_reps_s"
-                        type="number"
-                        value={ex.rest_between_reps_s}
-                        onChange={e => handleExerciseChange(i, e)}
-                        placeholder={isGym ? 'es. 60' : 'es. 120'}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <Timer className="h-3 w-3 text-slate-400" />
-                        Recupero tra serie (s)
-                      </Label>
-                      <Input
-                        name="rest_between_sets_s"
-                        type="number"
-                        value={ex.rest_between_sets_s}
-                        onChange={e => handleExerciseChange(i, e)}
-                        placeholder={isGym ? 'es. 180' : 'es. 300'}
-                      />
-                    </div>
-
-                    {/* Intensità + tipo sforzo auto */}
-                    <div className="space-y-1 md:col-span-1">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <Flame className="h-3 w-3 text-slate-400" />
-                        Intensità (1–10)
-                      </Label>
-                      <div className="space-y-1">
-                        <input
-                          type="range"
-                          name="intensity"
-                          min={1}
-                          max={10}
-                          value={ex.intensity}
-                          onChange={e => handleExerciseChange(i, e)}
-                          className="w-full"
-                        />
-                        <div className="text-xs flex items-center justify-between text-slate-600">
-                          <span>1</span>
-                          <span className="font-semibold">
-                            {ex.intensity || '–'}/10
-                          </span>
-                          <span>10</span>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] uppercase text-slate-500">Tentativo</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={result.attempt_number}
+                            onChange={event =>
+                              handleResultChange(index, resultIndex, 'attempt_number', event.target.value)
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] uppercase text-slate-500">Ripetizione</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={result.repetition_number}
+                            onChange={event =>
+                              handleResultChange(index, resultIndex, 'repetition_number', event.target.value)
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] uppercase text-slate-500">Tempo (s)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={result.time_s}
+                            onChange={event => handleResultChange(index, resultIndex, 'time_s', event.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] uppercase text-slate-500">Carico (kg)</Label>
+                          <Input
+                            type="number"
+                            step="0.5"
+                            min="0"
+                            value={result.weight_kg}
+                            onChange={event => handleResultChange(index, resultIndex, 'weight_kg', event.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] uppercase text-slate-500">RPE</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="10"
+                            value={result.rpe}
+                            onChange={event => handleResultChange(index, resultIndex, 'rpe', event.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] uppercase text-slate-500">Note</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={result.notes}
+                              onChange={event => handleResultChange(index, resultIndex, 'notes', event.target.value)}
+                              placeholder="Condizioni, feedback..."
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-9 w-9 rounded-full border-slate-200 text-rose-600 hover:border-rose-200 hover:bg-rose-50 p-0"
+                              onClick={() => removeResult(index, resultIndex)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
 
-                    <div className="space-y-1">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <Activity className="h-3 w-3 text-slate-400" />
-                        Tipo sforzo (auto)
-                      </Label>
-                      <div className="px-3 py-2 rounded-md border bg-white text-xs flex items-center gap-1">
-                        <Info className="h-3 w-3 text-slate-400" />
-                        <span>{effortLabel}</span>
-                      </div>
-                    </div>
+      <Card className="border-none shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base text-slate-800">
+            <Target className="h-4 w-4 text-sky-600" /> Metriche e test
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-slate-500">
+            Collega rapidamente pesi, tempi o test specifici alla sessione. Usa le categorie per raggruppare le
+            misurazioni e avere una panoramica chiara.
+          </p>
 
-                    <div className="space-y-1 md:col-span-3">
-                      <Label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <StickyNote className="h-3 w-3 text-slate-400" />
-                        Note esercizio
-                      </Label>
-                      <Textarea
-                        name="notes"
-                        value={ex.notes}
-                        onChange={e => handleExerciseChange(i, e)}
-                        placeholder={
-                          isGym
-                            ? 'Dettagli su carichi, sensazioni, esecuzione...'
-                            : 'Dettagli su tempi, vento, sensazioni...'
-                        }
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+          <div className="space-y-4">
+            {metrics.map((metric, index) => (
+              <div key={index} className="rounded-2xl border border-slate-200/80 p-4 shadow-sm">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="flex flex-wrap gap-2">
+                    {metricCategoryOptions.map(option => (
+                      <Button
+                        key={option.value}
+                        type="button"
+                        variant={metric.category === option.value ? 'default' : 'outline'}
+                        className={cn(
+                          'gap-2 rounded-full border-slate-200 text-sm',
+                          metric.category === option.value
+                            ? 'bg-sky-600 hover:bg-sky-700'
+                            : 'bg-white text-slate-600'
+                        )}
+                        onClick={() => handleMetricChange(index, 'category', option.value)}
+                      >
+                        <option.icon className="h-4 w-4" />
+                        {option.label}
+                      </Button>
+                    ))}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 rounded-full border-slate-200 text-rose-600 hover:border-rose-200 hover:bg-rose-50"
+                    onClick={() => removeMetric(index)}
+                  >
+                    <Trash2 className="h-4 w-4" /> Rimuovi
+                  </Button>
+                </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={addExercise}
-              className="flex items-center gap-2"
-            >
-              <PlusCircle size={16} /> Aggiungi esercizio
-            </Button>
-          </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase text-slate-500">Data</Label>
+                    <Input
+                      type="date"
+                      value={metric.date}
+                      onChange={event => handleMetricChange(index, 'date', event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase text-slate-500">Nome metrica</Label>
+                    <Input
+                      placeholder="Peso corporeo, Test 60m..."
+                      value={metric.metric_name}
+                      onChange={event => handleMetricChange(index, 'metric_name', event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase text-slate-500">Target (opzionale)</Label>
+                    <Input
+                      placeholder="es. 100m, Salto verticale..."
+                      value={metric.metric_target}
+                      onChange={event => handleMetricChange(index, 'metric_target', event.target.value)}
+                    />
+                  </div>
+                </div>
 
-          {/* --- Salva --- */}
-          <div className="pt-4 flex justify-end">
-            <Button onClick={handleSubmit} disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="animate-spin mr-2 h-4 w-4" /> Salvataggio...
-                </>
-              ) : (
-                'Salva Allenamento'
-              )}
+                <div className="mt-4 grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase text-slate-500">Valore</Label>
+                    <Input
+                      type="number"
+                      value={metric.value}
+                      onChange={event => handleMetricChange(index, 'value', event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase text-slate-500">Unità</Label>
+                    <Input
+                      placeholder="kg, s, cm..."
+                      value={metric.unit}
+                      onChange={event => handleMetricChange(index, 'unit', event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-1">
+                    <Label className="text-xs uppercase text-slate-500">Note</Label>
+                    <Textarea
+                      rows={2}
+                      value={metric.notes}
+                      onChange={event => handleMetricChange(index, 'notes', event.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <Button variant="outline" className="gap-2 rounded-full" onClick={addMetric}>
+              <Plus className="h-4 w-4" /> Aggiungi metrica o test
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      <Card className="border-none bg-slate-900 text-white">
+        <CardHeader>
+          <CardTitle className="text-base">Riepilogo rapido</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-3">
+          <div>
+            <p className="text-sm text-slate-300">Esercizi totali</p>
+            <p className="text-2xl font-semibold">{recordedSummary.totalExercises}</p>
+          </div>
+          <div>
+            <p className="text-sm text-slate-300">Risultati registrati</p>
+            <p className="text-2xl font-semibold">{recordedSummary.totalResults}</p>
+          </div>
+          <div>
+            <p className="text-sm text-slate-300">Discipline coinvolte</p>
+            <p className="text-2xl font-semibold">{recordedSummary.involvedDisciplines.length}</p>
+            <p className="mt-1 text-xs text-slate-400">
+              {recordedSummary.involvedDisciplines.map(item => item.toUpperCase()).join(' · ') || '—'}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <footer className="flex items-center justify-end gap-3 pb-10">
+        <Button
+          type="button"
+          variant="outline"
+          className="border-none bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          onClick={resetForm}
+          disabled={saving}
+        >
+          Annulla
+        </Button>
+        <Button
+          type="button"
+          className="gap-2 rounded-full bg-sky-600 px-6 text-white hover:bg-sky-700"
+          onClick={handleSubmit}
+          disabled={saving}
+        >
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+          Salva sessione
+        </Button>
+      </footer>
     </div>
   );
 }
