@@ -431,6 +431,24 @@ function formatDateHuman(date: string) {
   );
 }
 
+function parseDecimalInput(value: string | null | undefined) {
+  if (value == null) return null;
+  const normalized = value.replace(',', '.').trim();
+  if (normalized === '') return null;
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseIntegerInput(value: string | null | undefined) {
+  const parsed = parseDecimalInput(value);
+  if (parsed == null) return null;
+  return Math.round(parsed);
+}
+
+function isFiniteNumber(value: number | null | undefined): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
 export default function RegistroPage() {
   const [sessionForm, setSessionForm] = useState<SessionFormState>(defaultSession);
   const [exercises, setExercises] = useState<ExerciseForm[]>([
@@ -501,9 +519,9 @@ export default function RegistroPage() {
 
   const volumePreview = useMemo(() => {
     return exercises.reduce((acc, ex) => {
-      const distance = Number(ex.distance_m) || 0;
-      const sets = Number(ex.sets) || 0;
-      const reps = Number(ex.repetitions) || 0;
+      const distance = parseIntegerInput(ex.distance_m) || 0;
+      const sets = parseIntegerInput(ex.sets) || 0;
+      const reps = parseIntegerInput(ex.repetitions) || 0;
       if (!distance || !sets || !reps) return acc;
       return acc + distance * sets * reps;
     }, 0);
@@ -721,8 +739,9 @@ export default function RegistroPage() {
       const copy = [...prev];
       const next = { ...copy[index] };
       if (name === 'intensity') {
-        const parsed = Math.max(1, Math.min(10, Number(value) || 0));
-        next.intensity = String(parsed);
+        const parsedValue = parseDecimalInput(value);
+        const clamped = Math.max(1, Math.min(10, parsedValue ?? 0));
+        next.intensity = String(clamped);
       } else {
         (next as Record<string, string | ExerciseResultForm[]>)[name] = value;
       }
@@ -878,9 +897,10 @@ export default function RegistroPage() {
       const ex = { ...copy[exerciseIndex] };
       if (ex.results.length === 0) return prev;
       const lastResult = ex.results[ex.results.length - 1];
+      const lastAttemptNumber = parseIntegerInput(lastResult.attempt_number);
       const duplicated: ExerciseResultForm = {
         ...lastResult,
-        attempt_number: String((Number(lastResult.attempt_number) || ex.results.length) + 1),
+        attempt_number: String((lastAttemptNumber || ex.results.length) + 1),
       };
       ex.results = [...ex.results, duplicated];
       copy[exerciseIndex] = ex;
@@ -986,7 +1006,7 @@ export default function RegistroPage() {
 
       if (!isTestOrRaceSession) {
         for (const ex of exercises) {
-          const intensityNumber = Number(ex.intensity);
+          const intensityNumber = parseDecimalInput(ex.intensity);
           const effortType = mapIntensityToEffort(Number.isFinite(intensityNumber) ? intensityNumber : null);
 
           const { data: insertedExercise, error: exerciseError } = await supabase
@@ -996,13 +1016,13 @@ export default function RegistroPage() {
                 session_id: session.id,
                 name: ex.name,
                 discipline_type: ex.discipline_type,
-                distance_m: ex.distance_m ? Number(ex.distance_m) : null,
-                sets: ex.sets ? Number(ex.sets) : null,
-                repetitions: ex.repetitions ? Number(ex.repetitions) : null,
-                rest_between_reps_s: ex.rest_between_reps_s ? Number(ex.rest_between_reps_s) : null,
-                rest_between_sets_s: ex.rest_between_sets_s ? Number(ex.rest_between_sets_s) : null,
-                rest_after_exercise_s: ex.rest_after_exercise_s ? Number(ex.rest_after_exercise_s) : null,
-                intensity: ex.intensity ? Number(ex.intensity) : null,
+                distance_m: parseIntegerInput(ex.distance_m),
+                sets: parseIntegerInput(ex.sets),
+                repetitions: parseIntegerInput(ex.repetitions),
+                rest_between_reps_s: parseIntegerInput(ex.rest_between_reps_s),
+                rest_between_sets_s: parseIntegerInput(ex.rest_between_sets_s),
+                rest_after_exercise_s: parseIntegerInput(ex.rest_after_exercise_s),
+                intensity: parseDecimalInput(ex.intensity),
                 effort_type: effortType,
                 notes: ex.notes || null,
               },
@@ -1024,11 +1044,11 @@ export default function RegistroPage() {
             const { error: resultError } = await supabase.from('exercise_results').insert([
               {
                 exercise_id: insertedExercise.id,
-                attempt_number: res.attempt_number ? Number(res.attempt_number) : idx + 1,
-                repetition_number: res.repetition_number ? Number(res.repetition_number) : null,
-                time_s: res.time_s ? Number(res.time_s) : null,
-                weight_kg: res.weight_kg ? Number(res.weight_kg) : null,
-                rpe: res.rpe ? Number(res.rpe) : null,
+                attempt_number: parseIntegerInput(res.attempt_number) ?? idx + 1,
+                repetition_number: parseIntegerInput(res.repetition_number),
+                time_s: parseDecimalInput(res.time_s),
+                weight_kg: parseDecimalInput(res.weight_kg),
+                rpe: parseDecimalInput(res.rpe),
                 notes: res.notes || null,
               },
             ]);
@@ -1053,17 +1073,16 @@ export default function RegistroPage() {
         if (isTestOrRaceSession) {
           payload.category = 'test';
           payload.metric_target = metric.metric_target || null;
-          payload.distance_m = metric.distance_m ? Number(metric.distance_m) : null;
-          payload.time_s = metric.time_s ? Number(metric.time_s) : null;
-          payload.recovery_post_s = metric.recovery_post_s
-            ? Math.round(Number(metric.recovery_post_s) * 60)
-            : null;
-          payload.intensity = metric.intensity ? Number(metric.intensity) : null;
+          payload.distance_m = parseIntegerInput(metric.distance_m);
+          payload.time_s = parseDecimalInput(metric.time_s);
+          const recoveryMinutes = parseDecimalInput(metric.recovery_post_s);
+          payload.recovery_post_s = recoveryMinutes != null ? Math.round(recoveryMinutes * 60) : null;
+          payload.intensity = parseDecimalInput(metric.intensity);
           payload.unit = 's';
         } else {
           payload.category = metric.category || null;
           payload.metric_target = metric.metric_target || null;
-          payload.value = metric.value ? Number(metric.value) : null;
+          payload.value = parseDecimalInput(metric.value);
           payload.unit = metric.unit || null;
         }
 
@@ -1575,18 +1594,18 @@ export default function RegistroPage() {
               )}
 
               {exercises.map((exercise, index) => {
-                const intensityNumber = Number(exercise.intensity) || null;
+                const intensityNumber = parseDecimalInput(exercise.intensity);
                 const effortType = mapIntensityToEffort(intensityNumber);
                 const attemptCount = exercise.results.length;
                 const timeValues = exercise.results
-                  .map(result => Number(result.time_s))
-                  .filter(value => Number.isFinite(value) && value > 0);
+                  .map(result => parseDecimalInput(result.time_s))
+                  .filter((value): value is number => isFiniteNumber(value) && value > 0);
                 const weightValues = exercise.results
-                  .map(result => Number(result.weight_kg))
-                  .filter(value => Number.isFinite(value) && value > 0);
+                  .map(result => parseDecimalInput(result.weight_kg))
+                  .filter((value): value is number => isFiniteNumber(value) && value > 0);
                 const rpeValues = exercise.results
-                  .map(result => Number(result.rpe))
-                  .filter(value => Number.isFinite(value) && value > 0);
+                  .map(result => parseDecimalInput(result.rpe))
+                  .filter((value): value is number => isFiniteNumber(value) && value > 0);
                 const bestTime = timeValues.length > 0 ? Math.min(...timeValues) : null;
                 const bestWeight = weightValues.length > 0 ? Math.max(...weightValues) : null;
                 const averageRpe =
@@ -1862,9 +1881,9 @@ export default function RegistroPage() {
 
                     <div className="mt-3 space-y-3">
                       {exercise.results.map((result, resultIndex) => {
-                        const numericTime = result.time_s ? Number(result.time_s) : null;
-                        const numericWeight = result.weight_kg ? Number(result.weight_kg) : null;
-                        const numericRpe = result.rpe ? Number(result.rpe) : null;
+                        const numericTime = parseDecimalInput(result.time_s);
+                        const numericWeight = parseDecimalInput(result.weight_kg);
+                        const numericRpe = parseDecimalInput(result.rpe);
                         const highlightBadges = [] as { key: string; label: string; icon: LucideIcon; accent: string }[];
                         if (numericTime != null && bestTime != null && Math.abs(numericTime - bestTime) < 0.001) {
                           highlightBadges.push({
@@ -2093,7 +2112,7 @@ export default function RegistroPage() {
                     </div>
                   )}
                   {metrics.map((metric, index) => {
-                    const intensityNumber = Number(metric.intensity) || 0;
+                    const intensityNumber = parseDecimalInput(metric.intensity) ?? 0;
                     return (
                       <div key={index} className="rounded-3xl border border-slate-200 bg-white/70 p-4 shadow-sm">
                         <div className="flex items-center justify-between">
