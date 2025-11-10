@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
@@ -35,6 +34,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { notifyError, notifySuccess } from '@/lib/notifications';
 
 type TrainingBlock = {
   id: string;
@@ -136,6 +137,7 @@ const sessionTypes = [
 const disciplineTypes = [
   { value: 'sprint', label: 'Sprint' },
   { value: 'forza', label: 'Forza' },
+  { value: 'resistenza', label: 'Resistenza' },
   { value: 'mobilità', label: 'Mobilità' },
   { value: 'tecnica', label: 'Tecnica' },
   { value: 'altro', label: 'Altro' },
@@ -208,6 +210,7 @@ const locationIcons: Record<string, LucideIcon> = {
 const disciplineIcons: Record<string, LucideIcon> = {
   sprint: Activity,
   forza: Dumbbell,
+  resistenza: Flame,
   mobilità: MoveRight,
   tecnica: Target,
   altro: PenSquare,
@@ -373,6 +376,15 @@ const disciplineMetricPlaybook: Record<string, MetricSuggestion[]> = {
       hint: 'Inserisci il valore migliore rilevato',
     },
   ],
+  resistenza: [
+    {
+      metric_name: 'Tempo medio split',
+      category: 'prestazione',
+      metric_target: 'Ripetute resistenza',
+      unit: 's',
+      hint: 'Annota il ritmo costante sulle prove più lunghe',
+    },
+  ],
   mobilità: [
     {
       metric_name: 'Range articolare',
@@ -460,6 +472,7 @@ export default function RegistroPage() {
   const [loadingBlocks, setLoadingBlocks] = useState(false);
   const [showBlockForm, setShowBlockForm] = useState(false);
   const [blockActionLoading, setBlockActionLoading] = useState<string | null>(null);
+  const [blockToDelete, setBlockToDelete] = useState<{ id: string; label: string } | null>(null);
   const [blockForm, setBlockForm] = useState({
     name: '',
     start_date: '',
@@ -694,25 +707,35 @@ export default function RegistroPage() {
     setSessionForm(prev => ({ ...prev, block_id: blockId ?? '' }));
   }
 
-  async function handleDeleteBlock(blockId: string) {
+  function requestDeleteBlock(blockId: string) {
     const block = trainingBlocks.find(item => item.id === blockId);
-    const confirmationLabel = block?.name ? ` il blocco "${block.name}"` : ' questo blocco';
-    const shouldDelete = window.confirm(`Eliminare${confirmationLabel}? Verrà rimosso solo il collegamento.`);
-    if (!shouldDelete) return;
+    const label = block?.name ? `"${block.name}"` : 'questo blocco';
+    setBlockToDelete({ id: blockId, label });
+  }
 
-    setBlockActionLoading(blockId);
-    const { error } = await supabase.from('training_blocks').delete().eq('id', blockId);
+  async function confirmDeleteBlock() {
+    if (!blockToDelete) return;
+
+    const { id } = blockToDelete;
+    setBlockActionLoading(id);
+    const { error } = await supabase.from('training_blocks').delete().eq('id', id);
 
     if (error) {
-      toast.error('Errore durante l\'eliminazione del blocco');
+      notifyError("Errore durante l'eliminazione del blocco", {
+        description: 'Riprova tra qualche secondo.',
+      });
       setBlockActionLoading(null);
+      setBlockToDelete(null);
       return;
     }
 
-    toast.success('Blocco eliminato');
-    setTrainingBlocks(prev => prev.filter(item => item.id !== blockId));
+    notifySuccess('Blocco eliminato', {
+      description: 'La sessione non sarà più collegata a questo periodo.',
+    });
+    setTrainingBlocks(prev => prev.filter(item => item.id !== id));
     setBlockActionLoading(null);
-    if (sessionForm.block_id === blockId) {
+    setBlockToDelete(null);
+    if (sessionForm.block_id === id) {
       handleBlockSelect(null);
     }
   }
@@ -944,7 +967,9 @@ export default function RegistroPage() {
 
   async function handleCreateBlock() {
     if (!blockForm.name || !blockForm.start_date || !blockForm.end_date) {
-      toast.error('Compila nome e date del blocco');
+      notifyError('Compila nome e date del blocco', {
+        description: 'Inserisci tutte le informazioni richieste per creare il periodo.',
+      });
       return;
     }
 
@@ -963,11 +988,15 @@ export default function RegistroPage() {
       .single();
 
     if (error) {
-      toast.error('Errore durante la creazione del blocco');
+      notifyError('Errore durante la creazione del blocco', {
+        description: 'Controlla la connessione e riprova.',
+      });
       return;
     }
 
-    toast.success('Blocco creato con successo');
+    notifySuccess('Blocco creato', {
+      description: 'Ora puoi collegarlo alla sessione in corso.',
+    });
     setBlockForm({ name: '', start_date: '', end_date: '', goal: '', notes: '' });
     setShowBlockForm(false);
     await fetchBlocks();
@@ -978,7 +1007,9 @@ export default function RegistroPage() {
 
   async function handleSubmit() {
     if (!validateForms()) {
-      toast.error('Controlla i campi evidenziati');
+      notifyError('Controlla i campi evidenziati', {
+        description: 'Alcuni dati obbligatori non sono ancora completi.',
+      });
       return;
     }
 
@@ -1093,7 +1124,9 @@ export default function RegistroPage() {
         }
       }
 
-      toast.success('Allenamento registrato con successo');
+      notifySuccess('Allenamento registrato', {
+        description: 'La sessione è stata aggiunta allo storico.',
+      });
       setSessionForm(defaultSession);
       setExercises([{ ...defaultExercise, results: [{ ...defaultExerciseResult }] }]);
       setMetrics([]);
@@ -1103,7 +1136,9 @@ export default function RegistroPage() {
       setShowBlockForm(false);
     } catch (error) {
       console.error(error);
-      toast.error('Si è verificato un errore durante il salvataggio');
+      notifyError('Si è verificato un errore durante il salvataggio', {
+        description: 'Riprova più tardi o verifica la connessione.',
+      });
     } finally {
       setLoading(false);
     }
@@ -1112,7 +1147,7 @@ export default function RegistroPage() {
   const selectedBlock = trainingBlocks.find(block => block.id === sessionForm.block_id);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-page">
       <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-sky-500 via-sky-600 to-blue-600 p-6 text-white shadow-lg">
         <div className="space-y-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -1319,7 +1354,7 @@ export default function RegistroPage() {
                         <button
                           type="button"
                           className="absolute right-1 top-1 inline-flex items-center gap-1 rounded-full border border-transparent bg-white/80 px-2 py-1 text-[10px] font-semibold text-slate-400 transition hover:border-red-200 hover:text-red-500"
-                          onClick={() => handleDeleteBlock(block.id)}
+                          onClick={() => requestDeleteBlock(block.id)}
                           disabled={blockActionLoading === block.id}
                           aria-label={`Elimina ${block.name}`}
                           title="Rimuovi definitivamente il blocco"
@@ -2131,17 +2166,24 @@ export default function RegistroPage() {
 
                         {isTestOrRaceSession ? (
                           <div className="mt-4 space-y-4">
-                            <div className="grid gap-4 md:grid-cols-3">
+                            <div className="grid gap-4 md:grid-cols-2">
                               <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Data</Label>
-                                <Input
-                                  type="date"
-                                  name="date"
-                                  value={metric.date}
-                                  onChange={event => updateMetric(index, event)}
-                                />
+                                <Label className="text-xs font-semibold text-slate-600">Data della sessione</Label>
+                                <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+                                  <Calendar className="h-4 w-4 text-slate-400" />
+                                  <span>
+                                    {sessionForm.date
+                                      ? formatDateHuman(sessionForm.date)
+                                      : 'Imposta la data nella sezione Dettagli sessione'}
+                                  </span>
+                                </div>
+                                {!sessionForm.date && (
+                                  <p className="text-[11px] text-rose-500">
+                                    La data verrà salvata automaticamente quando compili i dettagli della sessione.
+                                  </p>
+                                )}
                               </div>
-                              <div className="space-y-1 md:col-span-2">
+                              <div className="space-y-1">
                                 <Label className="text-xs font-semibold text-slate-600">Prova / Distanza</Label>
                                 <Input
                                   name="metric_name"
@@ -2366,6 +2408,21 @@ export default function RegistroPage() {
           Salva allenamento
         </Button>
       </div>
+      <ConfirmDialog
+        open={blockToDelete != null}
+        title="Eliminare il blocco?"
+        description={
+          blockToDelete
+            ? `Confermando rimuoverai il collegamento con ${blockToDelete.label}.`
+            : undefined
+        }
+        confirmLabel="Elimina"
+        cancelLabel="Annulla"
+        tone="danger"
+        processing={blockToDelete ? blockActionLoading === blockToDelete.id : false}
+        onCancel={() => setBlockToDelete(null)}
+        onConfirm={confirmDeleteBlock}
+      />
     </div>
   );
 }

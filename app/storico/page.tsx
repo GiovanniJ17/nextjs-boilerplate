@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import {
   Activity,
@@ -31,6 +30,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { notifyError, notifySuccess } from '@/lib/notifications';
 
 type ExerciseResult = {
   id: string;
@@ -207,6 +208,7 @@ export default function StoricoPage() {
   const [activeQuickSearch, setActiveQuickSearch] = useState<string | null>(null);
   const [activeSmartRange, setActiveSmartRange] = useState<string>('');
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
+  const [sessionToDelete, setSessionToDelete] = useState<{ id: string; label: string } | null>(null);
 
   useEffect(() => {
     void loadBlocks();
@@ -444,31 +446,38 @@ export default function StoricoPage() {
     setActiveQuickSearch(query);
   }
 
-  async function handleDeleteSession(sessionId: string) {
+  function requestDeleteSession(sessionId: string) {
     const session = sessions.find(item => item.id === sessionId);
     const dateLabel = session?.date ? formatDate(session.date) : null;
-    const confirmationMessage = dateLabel
-      ? `Eliminare la sessione del ${dateLabel}? Verranno rimossi anche esercizi e metriche collegate.`
-      : 'Eliminare questa sessione? Verranno rimossi anche esercizi e metriche collegate.';
+    const label = dateLabel ? `la sessione del ${dateLabel}` : 'questa sessione';
+    setSessionToDelete({ id: sessionId, label });
+  }
 
-    const shouldDelete = window.confirm(confirmationMessage);
-    if (!shouldDelete) return;
+  async function confirmDeleteSession() {
+    if (!sessionToDelete) return;
 
-    setDeletingSessionId(sessionId);
-    const { error } = await supabase.from('training_sessions').delete().eq('id', sessionId);
+    const { id, label } = sessionToDelete;
+    setDeletingSessionId(id);
+    const { error } = await supabase.from('training_sessions').delete().eq('id', id);
 
     if (error) {
-      toast.error("Errore durante l'eliminazione della sessione");
+      notifyError("Errore durante l'eliminazione della sessione", {
+        description: 'Riprova tra pochi secondi.',
+      });
       setDeletingSessionId(null);
+      setSessionToDelete(null);
       return;
     }
 
-    setSessions(prev => prev.filter(sessionItem => sessionItem.id !== sessionId));
-    if (openSession === sessionId) {
+    setSessions(prev => prev.filter(sessionItem => sessionItem.id !== id));
+    if (openSession === id) {
       setOpenSession(null);
     }
     setDeletingSessionId(null);
-    toast.success('Sessione eliminata con successo');
+    setSessionToDelete(null);
+    notifySuccess('Sessione eliminata', {
+      description: `Hai rimosso ${label} dallo storico.`,
+    });
   }
 
   const filteredSessions = useMemo(() => {
@@ -497,7 +506,7 @@ export default function StoricoPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-page">
       <section className="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-white shadow-xl">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-3">
@@ -886,7 +895,7 @@ export default function StoricoPage() {
                         <div className="pr-5 pt-4">
                           <button
                             type="button"
-                            onClick={() => handleDeleteSession(session.id)}
+                            onClick={() => requestDeleteSession(session.id)}
                             disabled={deletingSessionId === session.id}
                             className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 p-2 text-rose-600 transition hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
                             aria-label="Elimina sessione"
@@ -1097,6 +1106,21 @@ export default function StoricoPage() {
           )}
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={sessionToDelete != null}
+        title="Eliminare la sessione?"
+        description={
+          sessionToDelete
+            ? `Stai per rimuovere ${sessionToDelete.label}. Saranno eliminati anche esercizi e metriche associate.`
+            : undefined
+        }
+        confirmLabel="Elimina"
+        cancelLabel="Annulla"
+        tone="danger"
+        processing={sessionToDelete ? deletingSessionId === sessionToDelete.id : false}
+        onCancel={() => setSessionToDelete(null)}
+        onConfirm={confirmDeleteSession}
+      />
     </div>
   );
 }
