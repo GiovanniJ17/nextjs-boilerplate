@@ -88,6 +88,12 @@ type MetricForm = {
   intensity: string;
 };
 
+type MetricCategory = {
+  value: string;
+  label: string;
+  description: string;
+};
+
 const sessionTypes = [
   {
     value: 'pista',
@@ -134,6 +140,34 @@ const disciplineTypes = [
   { value: 'altro', label: 'Altro' },
 ];
 
+const metricCategories: MetricCategory[] = [
+  {
+    value: 'prestazione',
+    label: 'Prestazione',
+    description: 'Tempi, carichi e risultati misurabili della sessione.',
+  },
+  {
+    value: 'recupero',
+    label: 'Recupero',
+    description: 'Indicatori di recupero, fatica percepita e carico interno.',
+  },
+  {
+    value: 'fisico',
+    label: 'Stato fisico',
+    description: 'Parametri fisiologici, valutazioni corporee e benessere generale.',
+  },
+  {
+    value: 'test',
+    label: 'Test e gare',
+    description: 'Metriche ufficiali legate a prove cronometrate o test specifici.',
+  },
+  {
+    value: 'altro',
+    label: 'Altro',
+    description: 'Note qualitative o informazioni extra sulla sessione.',
+  },
+];
+
 const sessionTypeIcons: Record<string, LucideIcon> = {
   pista: Activity,
   palestra: Dumbbell,
@@ -152,6 +186,14 @@ const locationOptions = [
   { value: 'outdoor', label: 'Outdoor' },
   { value: 'custom', label: 'Altro luogo' },
 ];
+
+const metricCategoryIcons: Record<string, LucideIcon> = {
+  prestazione: Trophy,
+  recupero: Clock,
+  fisico: Dumbbell,
+  test: Target,
+  altro: StickyNote,
+};
 
 const locationIcons: Record<string, LucideIcon> = {
   'pista-indoor': Activity,
@@ -768,6 +810,31 @@ export default function RegistroPage() {
         metric_name: isTestOrRaceSession ? `Prova ${prev.length + 1}` : '',
       },
     ]);
+  }
+
+  function handleAddMetricFromSuggestion(suggestion: MetricSuggestion) {
+    setMetrics(prev => {
+      const exists = prev.some(
+        metric =>
+          metric.metric_name === suggestion.metric_name && metric.category === suggestion.category
+      );
+
+      if (exists) {
+        return prev;
+      }
+
+      return [
+        ...prev,
+        {
+          ...defaultMetric,
+          metric_name: suggestion.metric_name,
+          category: suggestion.category || defaultMetric.category,
+          metric_target: suggestion.metric_target ?? '',
+          unit: suggestion.unit ?? '',
+          notes: suggestion.notes ?? '',
+        },
+      ];
+    });
   }
 
   function handleMetricCategorySelect(index: number, category: string) {
@@ -1967,52 +2034,6 @@ export default function RegistroPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {!isTestOrRaceSession && metricSuggestions.length > 0 && (
-                <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                      <Sparkles className="h-4 w-4 text-sky-600" /> Suggerimenti rapidi
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      Usa i preset per legare subito le metriche al tipo di allenamento o disciplina.
-                    </p>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {metricSuggestions.map(suggestion => (
-                      <button
-                        key={`${suggestion.metric_name}-${suggestion.category}`}
-                        type="button"
-                        onClick={() => handleAddMetricFromSuggestion(suggestion)}
-                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600 transition hover:border-sky-200 hover:text-sky-600"
-                        title={suggestion.hint}
-                      >
-                        <PlusCircle className="h-3 w-3" />
-                        <span>{suggestion.metric_name}</span>
-                        <span className="text-slate-400">
-                          · {metricCategories.find(cat => cat.value === suggestion.category)?.label ?? suggestion.category}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {metrics.map((metric, index) => {
-                      const intensityNumber = Number(metric.intensity) || 0;
-                      return (
-                        <div key={index} className="rounded-3xl border border-slate-200 bg-white/70 p-4 shadow-sm">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                              <Activity className="h-4 w-4 text-slate-500" /> Prova #{index + 1}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => removeMetric(index)}
-                              className="inline-flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-600"
-                            >
-                              <Trash2 className="h-3 w-3" /> Rimuovi
-                            </button>
-                          </div>
-
               {metrics.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-6 text-center text-sm text-slate-500">
                   <p>
@@ -2032,6 +2053,35 @@ export default function RegistroPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
+                  {!isTestOrRaceSession && metricSuggestions.length > 0 && (
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+                      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                          <Sparkles className="h-4 w-4 text-sky-600" /> Suggerimenti rapidi
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          Usa i preset per legare subito le metriche al tipo di allenamento o disciplina.
+                        </p>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {metricSuggestions.map(suggestion => (
+                          <button
+                            key={`${suggestion.metric_name}-${suggestion.category}`}
+                            type="button"
+                            onClick={() => handleAddMetricFromSuggestion(suggestion)}
+                            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600 transition hover:border-sky-200 hover:text-sky-600"
+                            title={suggestion.hint}
+                          >
+                            <PlusCircle className="h-3 w-3" />
+                            <span>{suggestion.metric_name}</span>
+                            <span className="text-slate-400">
+                              · {metricCategories.find(cat => cat.value === suggestion.category)?.label ?? suggestion.category}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {metrics.map((metric, index) => {
                     const intensityNumber = Number(metric.intensity) || 0;
                     return (
