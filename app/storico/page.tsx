@@ -210,10 +210,6 @@ export default function StoricoPage() {
   }, []);
 
   useEffect(() => {
-    void loadSessions();
-  }, [loadSessions]);
-
-  useEffect(() => {
     if (!search.trim()) {
       setActiveQuickSearch(null);
     }
@@ -269,6 +265,10 @@ export default function StoricoPage() {
 
     setLoading(false);
   }, [blockFilter, fromDate, toDate, typeFilter]);
+
+  useEffect(() => {
+    void loadSessions();
+  }, [loadSessions]);
 
   const historicalStats = useMemo(() => {
     if (sessions.length === 0) {

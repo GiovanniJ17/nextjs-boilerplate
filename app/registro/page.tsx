@@ -1282,9 +1282,9 @@ export default function RegistroPage() {
                   </Button>
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     onClick={() => void fetchBlocks()}
-                    className="gap-2 text-xs text-slate-500 hover:text-sky-600"
+                    className="gap-2 border-transparent bg-transparent text-xs text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-sky-600"
                   >
                     <Loader2 className={cn('h-3.5 w-3.5', loadingBlocks ? 'animate-spin' : '')} /> Aggiorna elenco
                   </Button>
@@ -1959,7 +1959,8 @@ export default function RegistroPage() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
                     </div>
                   </div>
                 </div>
