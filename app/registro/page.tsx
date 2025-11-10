@@ -213,7 +213,7 @@ const disciplineIcons: Record<string, LucideIcon> = {
 
 const defaultExerciseResult: ExerciseResultForm = {
   attempt_number: '1',
-  repetition_number: '',
+  repetition_number: '1',
   time_s: '',
   weight_kg: '',
   rpe: '',
@@ -231,7 +231,7 @@ const defaultExercise: ExerciseForm = {
   rest_after_exercise_s: '',
   intensity: '6',
   notes: '',
-  results: [defaultExerciseResult],
+  results: [],
 };
 
 const defaultSession: SessionFormState = {
@@ -446,11 +446,61 @@ function isFiniteNumber(value: number | null | undefined): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
+type ExerciseSeriesGroup = {
+  seriesNumber: number;
+  entries: {
+    result: ExerciseResultForm;
+    resultIndex: number;
+    repetitionNumber: number;
+  }[];
+};
+
+function groupResultsBySeries(results: ExerciseResultForm[]): ExerciseSeriesGroup[] {
+  const groupMap = new Map<number, ExerciseSeriesGroup['entries']>();
+
+  results.forEach((result, index) => {
+    const seriesNumber = parseIntegerInput(result.attempt_number) ?? 1;
+    const repetitionNumber = parseIntegerInput(result.repetition_number) ?? index + 1;
+
+    if (!groupMap.has(seriesNumber)) {
+      groupMap.set(seriesNumber, []);
+    }
+
+    groupMap.get(seriesNumber)!.push({
+      result,
+      resultIndex: index,
+      repetitionNumber,
+    });
+  });
+
+  return Array.from(groupMap.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([seriesNumber, entries]) => ({
+      seriesNumber,
+      entries: entries.slice().sort((a, b) => a.repetitionNumber - b.repetitionNumber),
+    }));
+}
+
+function normalizeExerciseResults(results: ExerciseResultForm[]) {
+  const grouped = groupResultsBySeries(results);
+  const normalized: ExerciseResultForm[] = [];
+
+  grouped.forEach((group, groupIndex) => {
+    group.entries.forEach((entry, repIndex) => {
+      normalized.push({
+        ...entry.result,
+        attempt_number: String(groupIndex + 1),
+        repetition_number: String(repIndex + 1),
+      });
+    });
+  });
+
+  return normalized;
+}
+
 export default function RegistroPage() {
   const [sessionForm, setSessionForm] = useState<SessionFormState>(defaultSession);
-  const [exercises, setExercises] = useState<ExerciseForm[]>([
-    { ...defaultExercise, results: [{ ...defaultExerciseResult }] },
-  ]);
+  const [exercises, setExercises] = useState<ExerciseForm[]>([{ ...defaultExercise }]);
   const [metrics, setMetrics] = useState<MetricForm[]>([]);
   const [trainingBlocks, setTrainingBlocks] = useState<TrainingBlock[]>([]);
   const [loading, setLoading] = useState(false);
@@ -801,7 +851,7 @@ export default function RegistroPage() {
   function addExercise() {
     setExercises(prev => [
       ...prev,
-      { ...defaultExercise, results: [{ ...defaultExerciseResult }] },
+      { ...defaultExercise },
     ]);
   }
 
@@ -809,11 +859,47 @@ export default function RegistroPage() {
     setExercises(prev => prev.filter((_, i) => i !== index));
   }
 
-  function addResult(exerciseIndex: number) {
+  function addSeries(exerciseIndex: number) {
     setExercises(prev => {
       const copy = [...prev];
       const ex = { ...copy[exerciseIndex] };
-      ex.results = [...ex.results, { ...defaultExerciseResult }];
+      const normalized = normalizeExerciseResults(ex.results);
+      const currentSeries = groupResultsBySeries(normalized);
+      const nextSeriesNumber = currentSeries.length + 1;
+      const repetitionsTarget = Math.max(parseIntegerInput(ex.repetitions) ?? 1, 1);
+
+      const newEntries = Array.from({ length: repetitionsTarget }, (_, repIndex) => ({
+        ...defaultExerciseResult,
+        attempt_number: String(nextSeriesNumber),
+        repetition_number: String(repIndex + 1),
+      }));
+
+      ex.results = [...normalized, ...newEntries];
+      copy[exerciseIndex] = ex;
+      return copy;
+    });
+  }
+
+  function addRepetition(exerciseIndex: number, seriesNumber: number) {
+    setExercises(prev => {
+      const copy = [...prev];
+      const ex = { ...copy[exerciseIndex] };
+      const normalized = normalizeExerciseResults(ex.results);
+      const groups = groupResultsBySeries(normalized);
+      const targetGroup = groups.find(group => group.seriesNumber === seriesNumber);
+
+      if (!targetGroup) {
+        return prev;
+      }
+
+      const nextRepNumber = targetGroup.entries.length + 1;
+      const newResult: ExerciseResultForm = {
+        ...defaultExerciseResult,
+        attempt_number: String(seriesNumber),
+        repetition_number: String(nextRepNumber),
+      };
+
+      ex.results = normalizeExerciseResults([...normalized, newResult]);
       copy[exerciseIndex] = ex;
       return copy;
     });
@@ -823,7 +909,22 @@ export default function RegistroPage() {
     setExercises(prev => {
       const copy = [...prev];
       const ex = { ...copy[exerciseIndex] };
-      ex.results = ex.results.filter((_, i) => i !== resultIndex);
+      const filtered = ex.results.filter((_, i) => i !== resultIndex);
+      ex.results = normalizeExerciseResults(filtered);
+      copy[exerciseIndex] = ex;
+      return copy;
+    });
+  }
+
+  function removeSeries(exerciseIndex: number, seriesNumber: number) {
+    setExercises(prev => {
+      const copy = [...prev];
+      const ex = { ...copy[exerciseIndex] };
+      const filtered = ex.results.filter(result => {
+        const attempt = parseIntegerInput(result.attempt_number) ?? 0;
+        return attempt !== seriesNumber;
+      });
+      ex.results = normalizeExerciseResults(filtered);
       copy[exerciseIndex] = ex;
       return copy;
     });
@@ -899,18 +1000,26 @@ export default function RegistroPage() {
     setMetrics(prev => prev.filter((_, i) => i !== index));
   }
 
-  function duplicateLastResult(exerciseIndex: number) {
+  function duplicateLastSeries(exerciseIndex: number) {
     setExercises(prev => {
       const copy = [...prev];
       const ex = { ...copy[exerciseIndex] };
-      if (ex.results.length === 0) return prev;
-      const lastResult = ex.results[ex.results.length - 1];
-      const lastAttemptNumber = parseIntegerInput(lastResult.attempt_number);
-      const duplicated: ExerciseResultForm = {
-        ...lastResult,
-        attempt_number: String((lastAttemptNumber || ex.results.length) + 1),
-      };
-      ex.results = [...ex.results, duplicated];
+      const normalized = normalizeExerciseResults(ex.results);
+      const groups = groupResultsBySeries(normalized);
+
+      if (groups.length === 0) {
+        return prev;
+      }
+
+      const lastGroup = groups[groups.length - 1];
+      const nextSeriesNumber = groups.length + 1;
+      const duplicatedResults = lastGroup.entries.map(entry => ({
+        ...entry.result,
+        attempt_number: String(nextSeriesNumber),
+        repetition_number: String(entry.repetitionNumber),
+      }));
+
+      ex.results = normalizeExerciseResults([...normalized, ...duplicatedResults]);
       copy[exerciseIndex] = ex;
       return copy;
     });
@@ -1051,7 +1160,7 @@ export default function RegistroPage() {
           }
 
           for (const [idx, res] of ex.results.entries()) {
-            const hasValues = [res.time_s, res.weight_kg, res.rpe, res.notes, res.repetition_number].some(
+            const hasValues = [res.time_s, res.weight_kg, res.rpe, res.notes].some(
               value => Boolean(value && value.trim())
             );
 
@@ -1621,7 +1730,12 @@ export default function RegistroPage() {
                   typeof intensityNumber === 'number' && Number.isFinite(intensityNumber)
                     ? Math.round(intensityNumber)
                     : 0;
-                const attemptCount = exercise.results.length;
+                const seriesGroups = groupResultsBySeries(exercise.results);
+                const seriesCount = seriesGroups.length;
+                const totalRepetitions = seriesGroups.reduce(
+                  (acc, group) => acc + group.entries.length,
+                  0
+                );
                 const timeValues = exercise.results
                   .map(result => parseDecimalInput(result.time_s))
                   .filter((value): value is number => isFiniteNumber(value) && value > 0);
@@ -1651,13 +1765,22 @@ export default function RegistroPage() {
                 const highlightCards = (
                   [
                     {
-                      key: 'attempts',
-                      label: 'Ripetute registrate',
-                      value: attemptCount,
+                      key: 'series',
+                      label: 'Serie registrate',
+                      value: seriesCount,
                       description:
-                        attemptCount > 1
-                          ? 'Confronta le prove per valutare la costanza'
-                          : 'Singolo tentativo registrato',
+                        seriesCount > 1
+                          ? 'Struttura delle serie completa'
+                          : 'Aggiungi le serie pianificate per iniziare',
+                    },
+                    totalRepetitions > 0 && {
+                      key: 'repetitions',
+                      label: 'Ripetizioni registrate',
+                      value: totalRepetitions,
+                      description:
+                        totalRepetitions > 1
+                          ? 'Analizza i tempi e i recuperi per ogni ripetizione'
+                          : 'Compila i dati della prima ripetizione',
                     },
                     distanceValue != null && {
                       key: 'distance',
@@ -1714,7 +1837,7 @@ export default function RegistroPage() {
                         <DisciplineIcon className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-base">Ripetuta #{index + 1}</p>
+                <p className="text-base">Blocco ripetute #{index + 1}</p>
                         <p className="text-xs text-slate-500">{exercise.name || 'Dettagli ripetuta'}</p>
                       </div>
                     </div>
@@ -1910,234 +2033,241 @@ export default function RegistroPage() {
                   </div>
 
                     <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                      <Timer className="h-4 w-4 text-slate-500" /> Risultati registrati
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => duplicateLastResult(index)}
-                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100"
-                          disabled={exercise.results.length === 0}
-                        >
-                          <PlusCircle className="h-3 w-3" /> Duplica ultimo
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => addResult(index)}
-                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
-                        >
-                          <PlusCircle className="h-3 w-3" /> Aggiungi risultato
-                        </button>
-                      </div>
-                    </div>
-
-                    <p className="mt-4 text-xs text-slate-500">
-                      Registra qui i tentativi della ripetuta. Inserisci il tempo cronometrato, il recupero effettivo e la
-                      percezione dello sforzo: i campi non necessari possono rimanere vuoti.
-                    </p>
-
-                    {highlightCards.length > 0 && (
-                      <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-                        {highlightCards.map(card => (
-                          <div key={card.key} className="rounded-2xl bg-white px-3 py-2 text-[11px] text-slate-500">
-                            <p className="text-xs font-semibold text-slate-600">{card.label}</p>
-                            <p className="text-lg font-semibold text-slate-800">{card.value}</p>
-                            <p className="text-[10px] text-slate-400">{card.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="mt-3 space-y-3">
-                      {exercise.results.map((result, resultIndex) => {
-                        const numericTime = parseDecimalInput(result.time_s);
-                        const numericRecovery = parseDecimalInput(result.weight_kg);
-                        const numericRpe = parseDecimalInput(result.rpe);
-                        const highlightBadges = [] as { key: string; label: string; icon: LucideIcon; accent: string }[];
-                        if (numericTime != null && bestTime != null && Math.abs(numericTime - bestTime) < 0.001) {
-                          highlightBadges.push({
-                            key: 'best-time',
-                            label: 'PB di giornata',
-                            icon: Trophy,
-                            accent: 'bg-amber-100 text-amber-700',
-                          });
-                        }
-                        if (numericRpe != null && easiestRpe != null && Math.abs(numericRpe - easiestRpe) < 0.001) {
-                          highlightBadges.push({
-                            key: 'min-rpe',
-                            label: 'RPE più basso',
-                            icon: Gauge,
-                            accent: 'bg-sky-100 text-sky-700',
-                          });
-                        }
-
-                        return (
-                          <div
-                            key={resultIndex}
-                            className={cn(
-                              'rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs shadow-sm',
-                              highlightBadges.length > 0 && 'border-sky-200 bg-sky-50/60'
-                            )}
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                          <Timer className="h-4 w-4 text-slate-500" /> Registro serie e ripetute
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => duplicateLastSeries(index)}
+                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100"
+                            disabled={seriesGroups.length === 0}
                           >
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                              <span className="font-semibold text-slate-700">Tentativo #{resultIndex + 1}</span>
-                              <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-                                {numericTime != null && (
-                                  <span className="inline-flex items-center gap-1">
-                                    <Timer className="h-3 w-3" /> {numericTime.toFixed(2)}s
-                                  </span>
-                                )}
-                                {numericRecovery != null && (
-                                  <span className="inline-flex items-center gap-1">
-                                    <RefreshCcw className="h-3 w-3" /> {numericRecovery.toFixed(1)}s
-                                  </span>
-                                )}
-                                {numericRpe != null && (
-                                  <span className="inline-flex items-center gap-1">
-                                    <Gauge className="h-3 w-3" /> RPE {numericRpe.toFixed(1)}
-                                  </span>
-                                )}
-                              </div>
-                              {exercise.results.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeResult(index, resultIndex)}
-                                  className="flex items-center gap-1 text-[11px] font-medium text-red-500 hover:text-red-600"
-                                >
-                                  <Trash2 className="h-3 w-3" /> Rimuovi
-                                </button>
-                              )}
-                            </div>
+                            <PlusCircle className="h-3 w-3" /> Duplica ultima serie
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => addSeries(index)}
+                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+                          >
+                            <ListPlus className="h-3 w-3" /> Aggiungi serie
+                          </button>
+                        </div>
+                      </div>
 
-                            {highlightBadges.length > 0 && (
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {highlightBadges.map(badge => {
-                                  const Icon = badge.icon;
-                                  return (
-                                    <span
-                                      key={badge.key}
-                                      className={cn(
-                                        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold',
-                                        badge.accent
-                                      )}
-                                    >
-                                      <Icon className="h-3 w-3" /> {badge.label}
-                                    </span>
-                                  );
-                                })}
-                              </div>
+                      <p className="mt-4 text-xs text-slate-500">
+                        Organizza le ripetute per serie e registra tempi, recuperi e sensazioni percepite durante ogni prova.
+                      </p>
+
+                      {highlightCards.length > 0 && (
+                        <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                          {highlightCards.map(card => (
+                            <div key={card.key} className="rounded-2xl bg-white px-3 py-2 text-[11px] text-slate-500">
+                              <p className="text-xs font-semibold text-slate-600">{card.label}</p>
+                              <p className="text-lg font-semibold text-slate-800">{card.value}</p>
+                              <p className="text-[10px] text-slate-400">{card.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {seriesGroups.length === 0 ? (
+                        <div className="mt-4 rounded-2xl border border-slate-200 bg-white/80 p-4 text-xs text-slate-600">
+                          <p className="text-sm font-semibold text-slate-700">Nessuna serie registrata</p>
+                          <p className="mt-1 text-slate-500">
+                            Definisci serie e ripetizioni nel piano e aggiungi la prima serie per iniziare a raccogliere i tempi.
+                          </p>
+                          <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500">
+                            {exercise.sets && exercise.repetitions && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600">
+                                <ListPlus className="h-3 w-3 text-slate-500" /> Piano: {exercise.sets} serie × {exercise.repetitions} rip.
+                              </span>
                             )}
-
-                            <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Identificatori</p>
-                                <p className="mt-1 text-[11px] text-slate-500">
-                                  Numeri di riferimento utili per distinguere serie e ripetizioni nella stessa seduta.
-                                </p>
-                                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                                  <div className="space-y-1">
-                                    <Label className="text-[11px] text-slate-500">Tentativo</Label>
-                                    <Input
-                                      name="attempt_number"
-                                      type="number"
-                                      min={1}
-                                      value={result.attempt_number}
-                                      onChange={event => handleResultChange(index, resultIndex, event)}
-                                    />
-                                  </div>
-                                  <div className="space-y-1">
-                                    <Label className="text-[11px] text-slate-500">Ripetizione / serie</Label>
-                                    <Input
-                                      name="repetition_number"
-                                      type="number"
-                                      min={1}
-                                      value={result.repetition_number}
-                                      onChange={event => handleResultChange(index, resultIndex, event)}
-                                    />
-                                  </div>
+                            {distanceValue != null && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600">
+                                <Ruler className="h-3 w-3 text-slate-500" /> {distanceValue} m
+                              </span>
+                            )}
+                            {exercise.rest_between_reps_s && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600">
+                                <RefreshCcw className="h-3 w-3 text-slate-500" /> Recupero tra ripetizioni: {exercise.rest_between_reps_s}s
+                              </span>
+                            )}
+                            {exercise.rest_between_sets_s && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600">
+                                <Clock className="h-3 w-3 text-slate-500" /> Recupero tra serie: {exercise.rest_between_sets_s}s
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => addSeries(index)}
+                            className="mt-4 inline-flex items-center gap-2 rounded-full bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700"
+                          >
+                            <PlusCircle className="h-3 w-3" /> Aggiungi la prima serie
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="mt-4 space-y-4">
+                          {seriesGroups.map(group => (
+                            <div key={group.seriesNumber} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                              <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-semibold text-slate-700">Serie #{group.seriesNumber}</p>
+                                  <p className="text-xs text-slate-500">Ripetizioni registrate: {group.entries.length}</p>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => addRepetition(index, group.seriesNumber)}
+                                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+                                  >
+                                    <ListPlus className="h-3 w-3" /> Aggiungi ripetizione
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeSeries(index, group.seriesNumber)}
+                                    className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-medium text-rose-500 transition hover:bg-rose-50"
+                                  >
+                                    <Trash2 className="h-3 w-3" /> Rimuovi serie
+                                  </button>
                                 </div>
                               </div>
 
-                              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Ripetute su pista</p>
-                                <p className="mt-1 text-[11px] text-slate-500">
-                                  Inserisci il tempo cronometrato e la percezione dello sforzo per ogni prova di corsa.
-                                </p>
-                                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                                  <div className="space-y-1">
-                                    <Label className="text-[11px] text-slate-500">Tempo (s)</Label>
-                                    <Input
-                                      name="time_s"
-                                      type="number"
-                                      step="0.01"
-                                      min={0}
-                                      value={result.time_s}
-                                      onChange={event => handleResultChange(index, resultIndex, event)}
-                                    />
-                                  </div>
-                                  <div className="space-y-1">
-                                    <Label className="text-[11px] text-slate-500">RPE</Label>
-                                    <Input
-                                      name="rpe"
-                                      type="number"
-                                      step="0.1"
-                                      min={0}
-                                      max={10}
-                                      value={result.rpe}
-                                      onChange={event => handleResultChange(index, resultIndex, event)}
-                                    />
-                                  </div>
-                                </div>
+                              <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500">
+                                {distanceValue != null && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
+                                    <Ruler className="h-3 w-3 text-slate-500" /> {distanceValue} m
+                                  </span>
+                                )}
+                                {exercise.rest_between_reps_s && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
+                                    <RefreshCcw className="h-3 w-3 text-slate-500" /> Recupero previsto: {exercise.rest_between_reps_s}s
+                                  </span>
+                                )}
+                                {exercise.rest_between_sets_s && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
+                                    <Clock className="h-3 w-3 text-slate-500" /> Pausa tra serie: {exercise.rest_between_sets_s}s
+                                  </span>
+                                )}
                               </div>
 
-                              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                  Recupero e gestione pausa
-                                </p>
-                                <p className="mt-1 text-[11px] text-slate-500">
-                                  Annota quanto recupero hai rispettato tra una ripetuta e l'altra per confrontarlo con il piano.
-                                </p>
-                                <div className="mt-3 space-y-3">
-                                  <div className="space-y-1">
-                                    <Label className="text-[11px] text-slate-500">Recupero effettivo (s)</Label>
-                                    <Input
-                                      name="weight_kg"
-                                      type="number"
-                                      step="0.5"
-                                      min={0}
-                                      value={result.weight_kg}
-                                      onChange={event => handleResultChange(index, resultIndex, event)}
-                                    />
-                                  </div>
-                                  <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-3 py-2 text-[11px] text-slate-500">
-                                    Recupero previsto: <span className="font-semibold text-slate-700">{exercise.rest_between_reps_s || '—'}s</span>
-                                  </div>
-                                </div>
-                              </div>
+                              <div className="mt-4 overflow-x-auto">
+                                <table className="min-w-full divide-y divide-slate-200 text-sm">
+                                  <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                    <tr>
+                                      <th className="px-3 py-2 text-left">Ripetizione</th>
+                                      <th className="px-3 py-2 text-left">Tempo (s)</th>
+                                      <th className="px-3 py-2 text-left">Recupero (s)</th>
+                                      <th className="px-3 py-2 text-left">RPE</th>
+                                      <th className="px-3 py-2 text-left">Note</th>
+                                      <th className="px-3 py-2 text-right">Azioni</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-200">
+                                    {group.entries.map(entry => {
+                                      const numericTime = parseDecimalInput(entry.result.time_s);
+                                      const numericRecovery = parseDecimalInput(entry.result.weight_kg);
+                                      const numericRpe = parseDecimalInput(entry.result.rpe);
+                                      const isBestTime =
+                                        numericTime != null &&
+                                        bestTime != null &&
+                                        Math.abs(numericTime - bestTime) < 0.001;
+                                      const isEasiestRpe =
+                                        numericRpe != null &&
+                                        easiestRpe != null &&
+                                        Math.abs(numericRpe - easiestRpe) < 0.001;
 
-                              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Note e contesto</p>
-                                <p className="mt-1 text-[11px] text-slate-500">
-                                  Annotazioni rapide su condizioni, variazioni tecniche o feedback del coach.
-                                </p>
-                                <div className="mt-3 space-y-1">
-                                  <Label className="text-[11px] text-slate-500">Note</Label>
-                                  <Textarea
-                                    name="notes"
-                                    value={result.notes}
-                                    onChange={event => handleResultChange(index, resultIndex, event)}
-                                    placeholder="Condizioni, feedback, adattamenti..."
-                                  />
-                                </div>
+                                      return (
+                                        <tr
+                                          key={`${group.seriesNumber}-${entry.repetitionNumber}-${entry.resultIndex}`}
+                                          className="bg-white"
+                                        >
+                                          <td className="px-3 py-3 align-top text-sm font-medium text-slate-600">
+                                            Rip. #{entry.repetitionNumber}
+                                          </td>
+                                          <td className="px-3 py-3 align-top">
+                                            <div className="space-y-1">
+                                              <Input
+                                                name="time_s"
+                                                type="number"
+                                                step="0.01"
+                                                min={0}
+                                                value={entry.result.time_s}
+                                                onChange={event => handleResultChange(index, entry.resultIndex, event)}
+                                              />
+                                              {isBestTime && (
+                                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                                                  <Trophy className="h-3 w-3" /> PB di giornata
+                                                </span>
+                                              )}
+                                            </div>
+                                          </td>
+                                          <td className="px-3 py-3 align-top">
+                                            <div className="space-y-1">
+                                              <Input
+                                                name="weight_kg"
+                                                type="number"
+                                                step="0.5"
+                                                min={0}
+                                                value={entry.result.weight_kg}
+                                                onChange={event => handleResultChange(index, entry.resultIndex, event)}
+                                              />
+                                              {numericRecovery == null && exercise.rest_between_reps_s && (
+                                                <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+                                                  <RefreshCcw className="h-3 w-3" /> Previsto {exercise.rest_between_reps_s}s
+                                                </span>
+                                              )}
+                                            </div>
+                                          </td>
+                                          <td className="px-3 py-3 align-top">
+                                            <div className="space-y-1">
+                                              <Input
+                                                name="rpe"
+                                                type="number"
+                                                step="0.1"
+                                                min={0}
+                                                max={10}
+                                                value={entry.result.rpe}
+                                                onChange={event => handleResultChange(index, entry.resultIndex, event)}
+                                              />
+                                              {isEasiestRpe && (
+                                                <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-700">
+                                                  <Gauge className="h-3 w-3" /> RPE più basso
+                                                </span>
+                                              )}
+                                            </div>
+                                          </td>
+                                          <td className="px-3 py-3 align-top">
+                                            <Textarea
+                                              name="notes"
+                                              value={entry.result.notes}
+                                              onChange={event => handleResultChange(index, entry.resultIndex, event)}
+                                              placeholder="Condizioni, feedback, adattamenti..."
+                                              rows={2}
+                                            />
+                                          </td>
+                                          <td className="px-3 py-3 align-top text-right">
+                                            <button
+                                              type="button"
+                                              onClick={() => removeResult(index, entry.resultIndex)}
+                                              className="inline-flex items-center gap-1 text-xs font-medium text-rose-500 hover:text-rose-600"
+                                            >
+                                              <Trash2 className="h-3 w-3" /> Rimuovi
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
                 </div>
               );
             })}
@@ -2149,7 +2279,7 @@ export default function RegistroPage() {
                 className="group flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-slate-300 py-4 text-slate-600 hover:border-sky-300 hover:bg-sky-50"
               >
                 <PlusCircle className="h-4 w-4 transition group-hover:text-sky-600" />
-                Aggiungi un'altra ripetuta
+                Aggiungi un altro blocco di ripetute
               </Button>
               </CardContent>
             </Card>
