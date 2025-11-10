@@ -1272,9 +1272,9 @@ export default function RegistroPage() {
                   </Button>
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     onClick={() => void fetchBlocks()}
-                    className="gap-2 text-xs text-slate-500 hover:text-sky-600"
+                    className="gap-2 border-transparent bg-transparent text-xs text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-sky-600"
                   >
                     <Loader2 className={cn('h-3.5 w-3.5', loadingBlocks ? 'animate-spin' : '')} /> Aggiorna elenco
                   </Button>
@@ -1848,90 +1848,88 @@ export default function RegistroPage() {
 
                             {highlightBadges.length > 0 && (
                               <div className="mt-2 flex flex-wrap gap-2">
-                                {highlightBadges.map(badge => {
-                                  const Icon = badge.icon;
-                                  return (
-                                    <span
-                                      key={badge.key}
-                                      className={cn(
-                                        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold',
-                                        badge.accent
-                                      )}
-                                    >
-                                      <Icon className="h-3 w-3" /> {badge.label}
-                                    </span>
-                                  );
-                                })}
+                                {highlightBadges.map(({ key, label, icon: Icon, accent }) => (
+                                  <span
+                                    key={key}
+                                    className={cn(
+                                      'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold',
+                                      accent
+                                    )}
+                                  >
+                                    <Icon className="h-3 w-3" /> {label}
+                                  </span>
+                                ))}
                               </div>
                             )}
 
                             <div className="mt-3 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
-                            <div className="space-y-1">
-                              <Label className="text-[11px] text-slate-500">Tentativo</Label>
-                              <Input
-                                name="attempt_number"
-                                type="number"
-                                min={1}
-                                value={result.attempt_number}
-                                onChange={event => handleResultChange(index, resultIndex, event)}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-[11px] text-slate-500">Ripetizione</Label>
-                              <Input
-                                name="repetition_number"
-                                type="number"
-                                min={1}
-                                value={result.repetition_number}
-                                onChange={event => handleResultChange(index, resultIndex, event)}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-[11px] text-slate-500">Tempo (s)</Label>
-                              <Input
-                                name="time_s"
-                                type="number"
-                                step="0.01"
-                                min={0}
-                                value={result.time_s}
-                                onChange={event => handleResultChange(index, resultIndex, event)}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-[11px] text-slate-500">Carico (kg)</Label>
-                              <Input
-                                name="weight_kg"
-                                type="number"
-                                step="0.5"
-                                min={0}
-                                value={result.weight_kg}
-                                onChange={event => handleResultChange(index, resultIndex, event)}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-[11px] text-slate-500">RPE</Label>
-                              <Input
-                                name="rpe"
-                                type="number"
-                                step="0.1"
-                                min={0}
-                                max={10}
-                                value={result.rpe}
-                                onChange={event => handleResultChange(index, resultIndex, event)}
-                              />
-                            </div>
-                            <div className="space-y-1 md:col-span-3 xl:col-span-2">
-                              <Label className="text-[11px] text-slate-500">Note</Label>
-                              <Input
-                                name="notes"
-                                value={result.notes}
-                                onChange={event => handleResultChange(index, resultIndex, event)}
-                                placeholder="Condizioni, feedback..."
-                              />
+                              <div className="space-y-1">
+                                <Label className="text-[11px] text-slate-500">Tentativo</Label>
+                                <Input
+                                  name="attempt_number"
+                                  type="number"
+                                  min={1}
+                                  value={result.attempt_number}
+                                  onChange={event => handleResultChange(index, resultIndex, event)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-[11px] text-slate-500">Ripetizione</Label>
+                                <Input
+                                  name="repetition_number"
+                                  type="number"
+                                  min={1}
+                                  value={result.repetition_number}
+                                  onChange={event => handleResultChange(index, resultIndex, event)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-[11px] text-slate-500">Tempo (s)</Label>
+                                <Input
+                                  name="time_s"
+                                  type="number"
+                                  step="0.01"
+                                  min={0}
+                                  value={result.time_s}
+                                  onChange={event => handleResultChange(index, resultIndex, event)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-[11px] text-slate-500">Carico (kg)</Label>
+                                <Input
+                                  name="weight_kg"
+                                  type="number"
+                                  step="0.5"
+                                  min={0}
+                                  value={result.weight_kg}
+                                  onChange={event => handleResultChange(index, resultIndex, event)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-[11px] text-slate-500">RPE</Label>
+                                <Input
+                                  name="rpe"
+                                  type="number"
+                                  step="0.1"
+                                  min={0}
+                                  max={10}
+                                  value={result.rpe}
+                                  onChange={event => handleResultChange(index, resultIndex, event)}
+                                />
+                              </div>
+                              <div className="space-y-1 md:col-span-3 xl:col-span-2">
+                                <Label className="text-[11px] text-slate-500">Note</Label>
+                                <Input
+                                  name="notes"
+                                  value={result.notes}
+                                  onChange={event => handleResultChange(index, resultIndex, event)}
+                                  placeholder="Condizioni, feedback..."
+                                />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
