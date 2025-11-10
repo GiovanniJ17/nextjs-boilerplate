@@ -57,6 +57,64 @@ button {
   box-shadow: 0 24px 55px -28px rgba(15, 23, 42, 0.35);
 }
 
+.range-input {
+  appearance: none;
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background-color: rgb(226 232 240);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.35);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+
+.range-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 6px rgba(14, 165, 233, 0.15);
+}
+
+.range-input::-webkit-slider-thumb {
+  appearance: none;
+  height: 1.25rem;
+  width: 1.25rem;
+  border-radius: 9999px;
+  background-color: rgb(14 165 233);
+  border: 3px solid rgb(255 255 255);
+  box-shadow: 0 6px 18px -10px rgba(14, 165, 233, 0.9);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.range-input:active::-webkit-slider-thumb {
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px -12px rgba(14, 165, 233, 0.9);
+}
+
+.range-input::-moz-range-thumb {
+  height: 1.25rem;
+  width: 1.25rem;
+  border-radius: 9999px;
+  background-color: rgb(14 165 233);
+  border: 3px solid rgb(255 255 255);
+  box-shadow: 0 6px 18px -10px rgba(14, 165, 233, 0.9);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.range-input:active::-moz-range-thumb {
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px -12px rgba(14, 165, 233, 0.9);
+}
+
+.range-input::-webkit-slider-runnable-track {
+  appearance: none;
+  border-radius: 9999px;
+  height: 0.5rem;
+}
+
+.range-input::-moz-range-track {
+  border-radius: 9999px;
+  height: 0.5rem;
+}
+
 .animate-fade-up {
   animation: fade-up-soft 0.4s var(--ease-soft) both;
 }
