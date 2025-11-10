@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import {
   Activity,
@@ -22,6 +23,7 @@ import {
   Search,
   Sparkles,
   Target,
+  Trash2,
   Weight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -204,6 +206,7 @@ export default function StoricoPage() {
   const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
   const [activeQuickSearch, setActiveQuickSearch] = useState<string | null>(null);
   const [activeSmartRange, setActiveSmartRange] = useState<string>('');
+  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     void loadBlocks();
@@ -441,6 +444,33 @@ export default function StoricoPage() {
     setActiveQuickSearch(query);
   }
 
+  async function handleDeleteSession(sessionId: string) {
+    const session = sessions.find(item => item.id === sessionId);
+    const dateLabel = session?.date ? formatDate(session.date) : null;
+    const confirmationMessage = dateLabel
+      ? `Eliminare la sessione del ${dateLabel}? Verranno rimossi anche esercizi e metriche collegate.`
+      : 'Eliminare questa sessione? Verranno rimossi anche esercizi e metriche collegate.';
+
+    const shouldDelete = window.confirm(confirmationMessage);
+    if (!shouldDelete) return;
+
+    setDeletingSessionId(sessionId);
+    const { error } = await supabase.from('training_sessions').delete().eq('id', sessionId);
+
+    if (error) {
+      toast.error("Errore durante l'eliminazione della sessione");
+      setDeletingSessionId(null);
+      return;
+    }
+
+    setSessions(prev => prev.filter(sessionItem => sessionItem.id !== sessionId));
+    if (openSession === sessionId) {
+      setOpenSession(null);
+    }
+    setDeletingSessionId(null);
+    toast.success('Sessione eliminata con successo');
+  }
+
   const filteredSessions = useMemo(() => {
     if (!search.trim()) return sessions;
     const term = search.trim().toLowerCase();
@@ -452,6 +482,9 @@ export default function StoricoPage() {
         session.notes,
         session.block?.name,
         ...session.exercises.map(exercise => exercise.name || ''),
+        ...session.metrics.map(
+          metric => `${metric.metric_name ?? ''} ${metric.notes ?? ''} ${metric.metric_target ?? ''}`
+        ),
       ]
         .join(' ')
         .toLowerCase();
@@ -762,29 +795,37 @@ export default function StoricoPage() {
                       <span className="absolute left-[7px] top-8 h-3 w-3 rounded-full border-2 border-white bg-sky-500 shadow transition group-hover:scale-110" />
                     )}
                     <div className={cn('rounded-3xl border border-slate-200 bg-white shadow-sm transition', viewMode === 'timeline' && 'ml-4')}>
-                      <button
-                        type="button"
-                        onClick={() => toggleSession(session.id)}
-                        className="flex w-full items-center justify-between gap-4 rounded-3xl px-5 py-4 text-left transition hover:bg-slate-50"
-                      >
-                        <div className="flex flex-1 flex-col gap-3">
-                          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
-                            <span className="inline-flex items-center gap-1 font-semibold text-slate-600">
-                              <Calendar className="h-3 w-3" /> {formatDate(session.date)}
-                            </span>
-                            <div className="flex flex-wrap items-center gap-2">
-                              {highlightBadges.map(badge => {
-                                const Icon = badge.icon;
-                                return (
-                                  <span
-                                    key={badge.label}
-                                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600"
-                                  >
-                                    <Icon className="h-3 w-3" /> {badge.value}
-                                  </span>
-                                );
-                              })}
-                            </div>
+                      <div className="flex items-start justify-between">
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => toggleSession(session.id)}
+                          onKeyDown={event => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              toggleSession(session.id);
+                            }
+                          }}
+                          className="flex flex-1 cursor-pointer items-center justify-between gap-4 rounded-3xl px-5 py-4 text-left transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                        >
+                          <div className="flex flex-1 flex-col gap-3">
+                            <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+                              <span className="inline-flex items-center gap-1 font-semibold text-slate-600">
+                                <Calendar className="h-3 w-3" /> {formatDate(session.date)}
+                              </span>
+                              <div className="flex flex-wrap items-center gap-2">
+                                {highlightBadges.map(badge => {
+                                  const Icon = badge.icon;
+                                  return (
+                                    <span
+                                      key={badge.label}
+                                      className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600"
+                                    >
+                                      <Icon className="h-3 w-3" /> {badge.value}
+                                    </span>
+                                  );
+                                })}
+                              </div>
                           </div>
                           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
                             <span
@@ -837,11 +878,27 @@ export default function StoricoPage() {
                             </span>
                           </div>
                           {session.notes && <p className="text-sm text-slate-600 line-clamp-2">{session.notes}</p>}
+                          </div>
+                          <div className="rounded-full border border-slate-200 bg-white p-2 text-slate-500">
+                            {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </div>
                         </div>
-                        <div className="rounded-full border border-slate-200 bg-white p-2 text-slate-500">
-                          {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        <div className="pr-5 pt-4">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSession(session.id)}
+                            disabled={deletingSessionId === session.id}
+                            className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 p-2 text-rose-600 transition hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            aria-label="Elimina sessione"
+                          >
+                            {deletingSessionId === session.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
                         </div>
-                      </button>
+                      </div>
 
                       {isOpen && (
                         <div className="border-t border-slate-100 px-5 pb-5">
