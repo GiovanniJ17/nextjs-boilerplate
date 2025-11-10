@@ -491,7 +491,7 @@ export default function StatistichePage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-page">
       <section className="rounded-3xl bg-gradient-to-br from-indigo-500 via-sky-500 to-cyan-500 p-6 text-white shadow-xl">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-3">

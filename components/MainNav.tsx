@@ -14,16 +14,16 @@ export function MainNav() {
   const pathname = usePathname();
 
   return (
-    <header className="border-b bg-slate-50/80 backdrop-blur">
+    <header className="animate-header border-b bg-slate-50/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2 font-semibold text-sky-600">
           <span className="text-xl">🏃‍♂️</span>
           <span>Tracker Velocista</span>
         </div>
 
-        <nav className="rounded-full border bg-white p-1 shadow-sm">
+        <nav className="surface-animated rounded-full border bg-white/90 p-1 shadow-sm">
           <ul className="flex gap-1 text-sm">
-            {tabs.map((tab) => {
+            {tabs.map(tab => {
               const active = pathname === tab.href;
 
               return (
@@ -31,10 +31,10 @@ export function MainNav() {
                   <Link
                     href={tab.href}
                     className={cn(
-                      "rounded-full px-4 py-1.5 transition-colors",
+                      "rounded-full px-4 py-1.5 transition-all duration-300",
                       active
-                        ? "bg-sky-600 text-white shadow-sm"
-                        : "text-slate-600 hover:bg-slate-100"
+                        ? "bg-sky-600 text-white shadow-[0_14px_30px_-18px_rgba(14,165,233,0.8)]"
+                        : "text-slate-600 hover:-translate-y-0.5 hover:bg-slate-100"
                     )}
                   >
                     {tab.label}
