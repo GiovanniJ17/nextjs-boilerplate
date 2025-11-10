@@ -63,6 +63,10 @@ type Metric = {
   value: number | null;
   unit: string | null;
   notes: string | null;
+  distance_m: number | null;
+  time_s: number | null;
+  recovery_post_s: number | null;
+  intensity: number | null;
 };
 
 type TrainingBlock = {
@@ -133,6 +137,7 @@ const sessionTypeOptions = [
   { value: 'pista', label: 'Allenamenti in pista' },
   { value: 'palestra', label: 'Palestra / forza' },
   { value: 'test', label: 'Test' },
+  { value: 'gara', label: 'Gara' },
   { value: 'scarico', label: 'Scarico' },
   { value: 'recupero', label: 'Recupero' },
   { value: 'altro', label: 'Altro' },
@@ -148,6 +153,7 @@ const sessionTypeTokens: Record<string, { bg: string; text: string }> = {
   pista: { bg: 'bg-sky-100', text: 'text-sky-600' },
   palestra: { bg: 'bg-emerald-100', text: 'text-emerald-600' },
   test: { bg: 'bg-amber-100', text: 'text-amber-600' },
+  gara: { bg: 'bg-rose-100', text: 'text-rose-600' },
   scarico: { bg: 'bg-purple-100', text: 'text-purple-600' },
   recupero: { bg: 'bg-indigo-100', text: 'text-indigo-600' },
   altro: { bg: 'bg-slate-200', text: 'text-slate-600' },
@@ -236,7 +242,7 @@ export default function StoricoPage() {
            id, name, discipline_type, distance_m, sets, repetitions, rest_between_reps_s, rest_between_sets_s, rest_after_exercise_s, intensity, effort_type, notes,
            results:exercise_results (id, attempt_number, repetition_number, time_s, weight_kg, rpe, notes)
          ),
-         metrics:metrics (id, metric_name, category, metric_target, value, unit, notes)
+         metrics:metrics (id, metric_name, category, metric_target, value, unit, notes, distance_m, time_s, recovery_post_s, intensity)
         `
       )
       .order('date', { ascending: false })
@@ -958,6 +964,16 @@ export default function StoricoPage() {
                                   const categoryKey = metric.category ?? 'altro';
                                   const token = metricCategoryTokens[categoryKey] ?? metricCategoryTokens.altro;
                                   const CategoryIcon = metricCategoryIconsMap[categoryKey] ?? FileText;
+                                  const isPerformanceMetric =
+                                    categoryKey === 'test' ||
+                                    metric.time_s != null ||
+                                    metric.distance_m != null;
+                                  const recoveryMinutes =
+                                    metric.recovery_post_s != null
+                                      ? Math.round((metric.recovery_post_s / 60) * 10) / 10
+                                      : null;
+                                  const intensityLabel =
+                                    metric.intensity != null ? `${metric.intensity}/10` : null;
                                   return (
                                     <div
                                       key={metric.id}
@@ -969,19 +985,53 @@ export default function StoricoPage() {
                                           <CategoryIcon className="h-3 w-3" /> {metricCategoryLabels[categoryKey] ?? 'Altro'}
                                         </span>
                                       </div>
-                                      <div className="mt-2 grid gap-2 md:grid-cols-2">
-                                        <div className="rounded-xl bg-slate-50 px-3 py-2">
-                                          <p className="text-[10px] uppercase text-slate-500">Valore</p>
-                                          <p className="text-sm font-semibold text-slate-700">
-                                            {metric.value ?? '—'} {metric.unit ?? ''}
-                                          </p>
+                                      {isPerformanceMetric ? (
+                                        <div className="mt-2 grid gap-2 md:grid-cols-4">
+                                          <div className="rounded-xl bg-slate-50 px-3 py-2">
+                                            <p className="text-[10px] uppercase text-slate-500">Distanza</p>
+                                            <p className="text-sm font-semibold text-slate-700">
+                                              {metric.distance_m != null ? `${metric.distance_m} m` : '—'}
+                                            </p>
+                                          </div>
+                                          <div className="rounded-xl bg-slate-50 px-3 py-2">
+                                            <p className="text-[10px] uppercase text-slate-500">Tempo</p>
+                                            <p className="text-sm font-semibold text-slate-700">
+                                              {metric.time_s != null ? `${metric.time_s.toFixed(2)} s` : '—'}
+                                            </p>
+                                          </div>
+                                          <div className="rounded-xl bg-slate-50 px-3 py-2">
+                                            <p className="text-[10px] uppercase text-slate-500">Recupero</p>
+                                            <p className="text-sm font-semibold text-slate-700">
+                                              {recoveryMinutes != null ? `${recoveryMinutes} min` : '—'}
+                                            </p>
+                                          </div>
+                                          <div className="rounded-xl bg-slate-50 px-3 py-2">
+                                            <p className="text-[10px] uppercase text-slate-500">Intensità</p>
+                                            <p className="text-sm font-semibold text-slate-700">
+                                              {intensityLabel ?? '—'}
+                                            </p>
+                                          </div>
                                         </div>
-                                        <div className="rounded-xl bg-slate-50 px-3 py-2">
-                                          <p className="text-[10px] uppercase text-slate-500">Target</p>
-                                          <p className="text-sm font-semibold text-slate-700">{metric.metric_target ?? '—'}</p>
+                                      ) : (
+                                        <div className="mt-2 grid gap-2 md:grid-cols-2">
+                                          <div className="rounded-xl bg-slate-50 px-3 py-2">
+                                            <p className="text-[10px] uppercase text-slate-500">Valore</p>
+                                            <p className="text-sm font-semibold text-slate-700">
+                                              {metric.value ?? '—'} {metric.unit ?? ''}
+                                            </p>
+                                          </div>
+                                          <div className="rounded-xl bg-slate-50 px-3 py-2">
+                                            <p className="text-[10px] uppercase text-slate-500">Target</p>
+                                            <p className="text-sm font-semibold text-slate-700">{metric.metric_target ?? '—'}</p>
+                                          </div>
                                         </div>
-                                      </div>
-                                      {metric.notes && <p className="mt-3 text-xs text-slate-500">{metric.notes}</p>}
+                                      )}
+                                      {isPerformanceMetric && metric.metric_target && (
+                                        <p className="mt-3 text-xs text-slate-500">Contesto: {metric.metric_target}</p>
+                                      )}
+                                      {metric.notes && (
+                                        <p className="mt-2 text-xs text-slate-500">{metric.notes}</p>
+                                      )}
                                     </div>
                                   );
                                 })
