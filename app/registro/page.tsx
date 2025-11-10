@@ -8,25 +8,26 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  Dumbbell,
   Flame,
+  Flag,
   FolderPlus,
   Gauge,
   Loader2,
   ListPlus,
-  RefreshCcw,
   MapPin,
   MoveRight,
   NotebookPen,
   PenSquare,
   PlusCircle,
+  RefreshCcw,
   Ruler,
   Sparkles,
   StickyNote,
   Target,
+  Timer,
   Trash2,
   Trophy,
-  Weight,
+  Wind,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
@@ -101,102 +102,83 @@ const sessionTypes = [
   {
     value: 'pista',
     label: 'Allenamento in pista',
-    hint: 'Ripetute, lavori di velocità e sessioni tecniche su pista',
-  },
-  {
-    value: 'palestra',
-    label: 'Palestra / forza',
-    hint: 'Sessioni di potenziamento muscolare e forza',
+    hint: 'Ripetute, accelerazioni e lavori tecnici sul rettilineo o curva',
   },
   {
     value: 'test',
-    label: 'Test',
-    hint: 'Test di valutazione e prove specifiche',
+    label: 'Test cronometrati',
+    hint: 'Valutazioni ufficiali o simulate svolte in pista',
   },
   {
     value: 'gara',
     label: 'Gara',
-    hint: 'Competizioni ufficiali o simulazioni di gara',
+    hint: 'Competizioni ufficiali o simulazioni complete',
   },
   {
     value: 'scarico',
     label: 'Scarico attivo',
-    hint: 'Sessioni leggere di recupero con movimento controllato',
+    hint: 'Sessioni leggere di rigenerazione sempre in pista',
   },
   {
     value: 'recupero',
     label: 'Recupero',
-    hint: 'Riposo guidato, mobilità e rigenerazione',
+    hint: 'Lavori di mobilità, jogging blando o tecnica a bassa intensità',
   },
   {
     value: 'altro',
     label: 'Altro',
-    hint: 'Qualsiasi altro allenamento particolare',
+    hint: 'Qualsiasi sessione particolare legata alla pista',
   },
 ];
 
 const disciplineTypes = [
-  { value: 'sprint', label: 'Sprint' },
-  { value: 'forza', label: 'Forza' },
-  { value: 'resistenza', label: 'Resistenza' },
-  { value: 'mobilità', label: 'Mobilità' },
-  { value: 'tecnica', label: 'Tecnica' },
-  { value: 'altro', label: 'Altro' },
+  { value: 'accelerazioni', label: 'Accelerazioni' },
+  { value: 'partenze', label: 'Partenze dai blocchi' },
+  { value: 'allunghi', label: 'Allunghi / progressioni' },
+  { value: 'resistenza', label: 'Resistenza lattacida' },
+  { value: 'tecnica', label: 'Tecnica di corsa' },
+  { value: 'mobilità', label: 'Mobilità specifica' },
 ];
 
 const metricCategories: MetricCategory[] = [
   {
-    value: 'prestazione',
-    label: 'Prestazione',
-    description: 'Tempi, carichi e risultati misurabili della sessione.',
-  },
-  {
-    value: 'recupero',
-    label: 'Recupero',
-    description: 'Indicatori di recupero, fatica percepita e carico interno.',
-  },
-  {
-    value: 'fisico',
-    label: 'Stato fisico',
-    description: 'Parametri fisiologici, valutazioni corporee e benessere generale.',
+    value: 'gara',
+    label: 'Gara',
+    description: 'Cronometraggi ufficiali, piazzamenti e riferimenti di competizione.',
   },
   {
     value: 'test',
-    label: 'Test e gare',
-    description: 'Metriche ufficiali legate a prove cronometrate o test specifici.',
+    label: 'Test',
+    description: 'Prove di valutazione interne con cronometro o sensori.',
   },
   {
-    value: 'altro',
-    label: 'Altro',
-    description: 'Note qualitative o informazioni extra sulla sessione.',
+    value: 'massimale',
+    label: 'Massimale',
+    description: 'Valori di forza o potenza registrati in palestra come riferimento.',
   },
 ];
 
 const sessionTypeIcons: Record<string, LucideIcon> = {
   pista: Activity,
-  palestra: Dumbbell,
   test: Target,
   gara: Trophy,
-  scarico: Clock,
-  recupero: CheckCircle2,
+  scarico: Wind,
+  recupero: RefreshCcw,
   altro: PlusCircle,
 };
 
 const locationOptions = [
   { value: 'pista-indoor', label: 'Pista indoor' },
-  { value: 'palazzetto', label: 'Palazzetto' },
-  { value: 'stadio', label: 'Stadio' },
-  { value: 'palestra', label: 'Palestra' },
-  { value: 'outdoor', label: 'Outdoor' },
+  { value: 'pista-outdoor', label: 'Pista outdoor' },
+  { value: 'campo-scuola', label: 'Campo scuola' },
+  { value: 'outdoor', label: 'Strada / parco' },
   { value: 'custom', label: 'Altro luogo' },
 ];
 
 const metricCategoryIcons: Record<string, LucideIcon> = {
-  prestazione: Trophy,
-  recupero: Clock,
-  fisico: Dumbbell,
+  gara: Trophy,
   test: Target,
-  altro: StickyNote,
+  massimale: Gauge,
 };
 
 function buildRangeBackground(value: string | number, min = 1, max = 10): CSSProperties {
@@ -214,20 +196,19 @@ function buildRangeBackground(value: string | number, min = 1, max = 10): CSSPro
 
 const locationIcons: Record<string, LucideIcon> = {
   'pista-indoor': Activity,
-  palazzetto: Target,
-  stadio: Trophy,
-  palestra: Dumbbell,
-  outdoor: MapPin,
+  'pista-outdoor': Flag,
+  'campo-scuola': MapPin,
+  outdoor: Wind,
   custom: PenSquare,
 };
 
 const disciplineIcons: Record<string, LucideIcon> = {
-  sprint: Activity,
-  forza: Dumbbell,
+  accelerazioni: Activity,
+  partenze: Flag,
+  allunghi: Wind,
   resistenza: Flame,
-  mobilità: MoveRight,
   tecnica: Target,
-  altro: PenSquare,
+  mobilità: MoveRight,
 };
 
 const defaultExerciseResult: ExerciseResultForm = {
@@ -241,7 +222,7 @@ const defaultExerciseResult: ExerciseResultForm = {
 
 const defaultExercise: ExerciseForm = {
   name: '',
-  discipline_type: 'sprint',
+  discipline_type: 'accelerazioni',
   distance_m: '',
   sets: '1',
   repetitions: '1',
@@ -265,7 +246,7 @@ const defaultSession: SessionFormState = {
 const defaultMetric: MetricForm = {
   date: '',
   metric_name: '',
-  category: 'prestazione',
+  category: 'test',
   metric_target: '',
   value: '',
   unit: '',
@@ -289,139 +270,129 @@ const metricPlaybook: Record<string, MetricSuggestion[]> = {
   pista: [
     {
       metric_name: 'Tempo 30m',
-      category: 'prestazione',
-      metric_target: 'Sprint breve',
+      category: 'test',
+      metric_target: 'Accelerazioni',
       unit: 's',
-      hint: 'Registra i riferimenti sui tratti esplosivi',
+      hint: 'Cronometra i tratti esplosivi chiave della seduta.',
     },
     {
-      metric_name: 'Lattato post sessione',
-      category: 'recupero',
-      unit: 'mmol',
-      hint: 'Aiuta a monitorare la fatica metabolica',
-    },
-  ],
-  palestra: [
-    {
-      metric_name: 'Carico massimo',
-      category: 'prestazione',
-      metric_target: 'Esercizi forza',
-      unit: 'kg',
-      hint: 'Traccia il peso migliore eseguito in giornata',
-    },
-    {
-      metric_name: 'RPE sessione',
-      category: 'recupero',
-      unit: 'scala 1-10',
-      hint: 'Valuta la percezione globale di fatica',
+      metric_name: 'Velocità massima GPS',
+      category: 'test',
+      unit: 'km/h',
+      hint: 'Inserisci il picco registrato dai sensori in pista.',
     },
   ],
   test: [
     {
       metric_name: 'Test CMJ',
-      category: 'prestazione',
+      category: 'massimale',
       unit: 'cm',
-      hint: 'Collega il salto verticale al periodo di test',
+      hint: 'Collega i valori di forza esplosiva al ciclo di test.',
     },
     {
-      metric_name: 'HRV mattutina',
-      category: 'recupero',
-      unit: 'ms',
-      hint: 'Controlla lo stato di recupero nei giorni dei test',
+      metric_name: 'Tempo prova ufficiale',
+      category: 'gara',
+      unit: 's',
+      hint: 'Segna il riferimento cronometrico principale del test.',
     },
   ],
   gara: [
     {
       metric_name: 'Tempo ufficiale',
-      category: 'prestazione',
+      category: 'gara',
       unit: 's',
-      hint: 'Registra il crono finale della gara',
+      hint: 'Registra il crono finale della gara.',
     },
     {
-      metric_name: 'Recupero post gara',
-      category: 'recupero',
-      unit: 'min',
-      hint: 'Segna quanto tempo ti è servito per recuperare',
+      metric_name: 'Split 200m',
+      category: 'test',
+      unit: 's',
+      hint: 'Aggiungi passaggi intermedi utili per l’analisi.',
     },
   ],
   scarico: [
     {
-      metric_name: 'Qualità sonno',
-      category: 'recupero',
-      unit: '1-5',
-      notes: 'Nota eventuali sveglie notturne',
-      hint: 'Associa la percezione di recupero ai giorni leggeri',
+      metric_name: 'HRV mattutina',
+      category: 'test',
+      unit: 'ms',
+      hint: 'Controlla lo stato di recupero nei giorni di scarico.',
     },
   ],
   recupero: [
     {
-      metric_name: 'Dolore muscolare',
-      category: 'fisico',
+      metric_name: 'Sensazione gambe',
+      category: 'test',
       unit: '1-10',
-      hint: 'Traccia il DOMS dopo lavori intensi',
-    },
-  ],
-  altro: [
-    {
-      metric_name: 'Feeling generale',
-      category: 'recupero',
-      unit: '1-10',
-      hint: 'Segna velocemente come ti senti a fine giornata',
-    },
-  ],
-};
-
-const disciplineMetricPlaybook: Record<string, MetricSuggestion[]> = {
-  sprint: [
-    {
-      metric_name: 'Tempo medio ripetute',
-      category: 'prestazione',
-      metric_target: 'Serie sprint',
-      unit: 's',
-      hint: 'Confronta le prove interne alla seduta',
-    },
-  ],
-  forza: [
-    {
-      metric_name: 'Peak Power',
-      category: 'prestazione',
-      metric_target: 'Lift principale',
-      unit: 'W',
-      hint: 'Inserisci il valore migliore rilevato',
-    },
-  ],
-  resistenza: [
-    {
-      metric_name: 'Tempo medio split',
-      category: 'prestazione',
-      metric_target: 'Ripetute resistenza',
-      unit: 's',
-      hint: 'Annota il ritmo costante sulle prove più lunghe',
-    },
-  ],
-  mobilità: [
-    {
-      metric_name: 'Range articolare',
-      category: 'fisico',
-      metric_target: 'Angolo o profondità',
-      unit: '°',
-      hint: 'Annota i progressi sulla mobilità specifica',
-    },
-  ],
-  tecnica: [
-    {
-      metric_name: 'Valutazione coach',
-      category: 'altro',
-      unit: '1-5',
-      notes: 'Riporta feedback qualitativi',
-      hint: 'Inserisci la nota tecnica ricevuta',
+      hint: 'Registra come rispondono le gambe dopo il lavoro in pista.',
     },
   ],
   altro: [
     {
       metric_name: 'Nota chiave',
-      category: 'altro',
-      hint: 'Qualsiasi informazione extra collegata al focus',
+      category: 'test',
+      hint: 'Qualsiasi informazione extra collegata al focus.',
+    },
+  ],
+};
+
+const disciplineMetricPlaybook: Record<string, MetricSuggestion[]> = {
+  accelerazioni: [
+    {
+      metric_name: 'Tempo medio 30m',
+      category: 'test',
+      metric_target: 'Accelerazioni',
+      unit: 's',
+      hint: 'Valuta la rapidità di uscita dalle prime falcate.',
+    },
+    {
+      metric_name: 'Reazione blocchi',
+      category: 'test',
+      unit: 'ms',
+      hint: 'Inserisci la risposta del sistema di cronometraggio.',
+    },
+  ],
+  partenze: [
+    {
+      metric_name: 'Tempo 10m',
+      category: 'test',
+      metric_target: 'Partenze',
+      unit: 's',
+      hint: 'Confronta la progressione dei primi appoggi.',
+    },
+  ],
+  allunghi: [
+    {
+      metric_name: 'Passaggio 60m',
+      category: 'test',
+      unit: 's',
+      hint: 'Monitora la fase di costruzione della velocità.',
+    },
+  ],
+  resistenza: [
+    {
+      metric_name: 'Tempo medio serie',
+      category: 'test',
+      metric_target: 'Ripetute lattacide',
+      unit: 's',
+      hint: 'Confronta ogni serie con l’obiettivo prefissato.',
+    },
+  ],
+  tecnica: [
+    {
+      metric_name: 'Valutazione tecnica',
+      category: 'test',
+      unit: '1-5',
+      notes: 'Riporta feedback o aspetti da migliorare.',
+      hint: 'Inserisci una scala rapida per il lavoro tecnico.',
+    },
+  ],
+  mobilità: [
+    {
+      metric_name: 'Range articolare',
+      category: 'test',
+      metric_target: 'Mobilità specifica',
+      unit: '°',
+      hint: 'Annota i progressi sulla mobilità dedicata alla corsa.',
     },
   ],
 };
@@ -629,9 +600,9 @@ export default function RegistroPage() {
       },
       {
         key: 'exercises',
-        label: 'Esercizi',
-        description: 'Serie, intensità e risultati',
-        icon: Dumbbell,
+        label: 'Ripetute',
+        description: 'Serie, intensità e risultati in pista',
+        icon: Flag,
         status: exercisesComplete ? 'done' : 'todo',
       },
       {
@@ -658,8 +629,8 @@ export default function RegistroPage() {
 
   const summaryStats = useMemo(
     () => [
-      { icon: Dumbbell, label: 'Esercizi', value: exercises.length },
-      { icon: Weight, label: 'Tentativi', value: totalResults },
+      { icon: Flag, label: 'Ripetute', value: exercises.length },
+      { icon: Timer, label: 'Tentativi', value: totalResults },
       {
         icon: Ruler,
         label: 'Volume stimato',
@@ -1593,7 +1564,7 @@ export default function RegistroPage() {
                   <Target className="h-6 w-6" />
                 </div>
                 <CardTitle className="text-lg text-slate-800">
-                  Esercizi e risultati disabilitati
+                  Ripetute e risultati disabilitati
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-center text-sm text-slate-600">
@@ -1603,7 +1574,7 @@ export default function RegistroPage() {
                   Test».
                 </p>
                 <p className="text-xs text-slate-500">
-                  Questa scheda resta disponibile e completa quando registri allenamenti standard.
+                  Questa scheda resta disponibile quando registri allenamenti standard in pista.
                 </p>
               </CardContent>
             </Card>
@@ -1611,7 +1582,7 @@ export default function RegistroPage() {
             <Card className="border-none shadow-lg">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
-                  <ListPlus className="h-5 w-5 text-sky-600" /> Esercizi e risultati
+                  <ListPlus className="h-5 w-5 text-sky-600" /> Ripetute e risultati
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1619,10 +1590,10 @@ export default function RegistroPage() {
                 <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-slate-700">
                     <span className="inline-flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-sky-600" /> Focus della sessione
+                      <Sparkles className="h-4 w-4 text-sky-600" /> Focus ripetute
                     </span>
                     <span className="text-xs font-medium text-slate-500">
-                      Gli esercizi aggiunti guidano i suggerimenti dei risultati e delle metriche
+                      Le ripetute aggiunte guidano i suggerimenti dei risultati e delle metriche
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -1643,20 +1614,26 @@ export default function RegistroPage() {
               )}
 
               {exercises.map((exercise, index) => {
+                const DisciplineIcon = disciplineIcons[exercise.discipline_type] ?? Flag;
                 const intensityNumber = parseDecimalInput(exercise.intensity);
                 const effortType = mapIntensityToEffort(intensityNumber);
+                const sliderValue =
+                  typeof intensityNumber === 'number' && Number.isFinite(intensityNumber)
+                    ? Math.round(intensityNumber)
+                    : 0;
                 const attemptCount = exercise.results.length;
                 const timeValues = exercise.results
                   .map(result => parseDecimalInput(result.time_s))
                   .filter((value): value is number => isFiniteNumber(value) && value > 0);
-                const weightValues = exercise.results
+                const recoveryValues = exercise.results
                   .map(result => parseDecimalInput(result.weight_kg))
-                  .filter((value): value is number => isFiniteNumber(value) && value > 0);
+                  .filter((value): value is number => isFiniteNumber(value) && value >= 0);
                 const rpeValues = exercise.results
                   .map(result => parseDecimalInput(result.rpe))
                   .filter((value): value is number => isFiniteNumber(value) && value > 0);
+                const distanceValue = parseIntegerInput(exercise.distance_m);
                 const bestTime = timeValues.length > 0 ? Math.min(...timeValues) : null;
-                const bestWeight = weightValues.length > 0 ? Math.max(...weightValues) : null;
+                const slowestTime = timeValues.length > 0 ? Math.max(...timeValues) : null;
                 const averageRpe =
                   rpeValues.length > 0
                     ? Math.round((rpeValues.reduce((acc, curr) => acc + curr, 0) / rpeValues.length) * 10) / 10
@@ -1665,17 +1642,28 @@ export default function RegistroPage() {
                   timeValues.length > 0
                     ? Math.round((timeValues.reduce((acc, value) => acc + value, 0) / timeValues.length) * 100) / 100
                     : null;
+                const averageRecovery =
+                  recoveryValues.length > 0
+                    ? Math.round((recoveryValues.reduce((acc, value) => acc + value, 0) / recoveryValues.length) * 10) /
+                      10
+                    : null;
                 const easiestRpe = rpeValues.length > 0 ? Math.min(...rpeValues) : null;
                 const highlightCards = (
                   [
                     {
                       key: 'attempts',
-                      label: 'Tentativi',
+                      label: 'Ripetute registrate',
                       value: attemptCount,
                       description:
                         attemptCount > 1
                           ? 'Confronta le prove per valutare la costanza'
                           : 'Singolo tentativo registrato',
+                    },
+                    distanceValue != null && {
+                      key: 'distance',
+                      label: 'Distanza obiettivo',
+                      value: `${distanceValue} m`,
+                      description: 'Valore inserito nella scheda ripetute',
                     },
                     bestTime != null && {
                       key: 'best-time',
@@ -1686,14 +1674,23 @@ export default function RegistroPage() {
                           ? `Media sessione ${averageTime.toFixed(2)}s`
                           : 'Aggiungi tempi per calcolare la media',
                     },
-                    bestWeight != null && {
-                      key: 'best-weight',
-                      label: 'Carico massimo',
-                      value: `${bestWeight.toFixed(1)}kg`,
-                      description:
-                        averageRpe != null
-                          ? `RPE medio ${averageRpe.toFixed(1)}`
-                          : 'Registra RPE per confrontare la fatica',
+                    slowestTime != null && slowestTime !== bestTime && {
+                      key: 'slowest-time',
+                      label: 'Tempo più alto',
+                      value: `${slowestTime.toFixed(2)}s`,
+                      description: 'Aiuta a valutare la dispersione delle prove',
+                    },
+                    averageRpe != null && {
+                      key: 'avg-rpe',
+                      label: 'RPE medio',
+                      value: `RPE ${averageRpe.toFixed(1)}`,
+                      description: 'Percezione complessiva della sessione',
+                    },
+                    averageRecovery != null && {
+                      key: 'avg-recovery',
+                      label: 'Recupero medio',
+                      value: `${averageRecovery.toFixed(1)}s`,
+                      description: 'Confronta il recupero rispetto al piano',
                     },
                     easiestRpe != null && {
                       key: 'min-rpe',
@@ -1714,15 +1711,11 @@ export default function RegistroPage() {
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3 text-sm font-semibold text-slate-700">
                       <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
-                        {exercise.discipline_type === 'forza' ? (
-                          <Dumbbell className="h-5 w-5" />
-                        ) : (
-                          <Ruler className="h-5 w-5" />
-                        )}
+                        <DisciplineIcon className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-base">Esercizio #{index + 1}</p>
-                        <p className="text-xs text-slate-500">{exercise.name || 'Dettagli esercizio'}</p>
+                        <p className="text-base">Ripetuta #{index + 1}</p>
+                        <p className="text-xs text-slate-500">{exercise.name || 'Dettagli ripetuta'}</p>
                       </div>
                     </div>
                     {exercises.length > 1 && (
@@ -1738,22 +1731,18 @@ export default function RegistroPage() {
 
                   <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     <div className="space-y-1">
-                      <Label className="text-xs font-semibold text-slate-600">Nome esercizio</Label>
+                      <Label className="text-xs font-semibold text-slate-600">Nome ripetuta</Label>
                       <Input
                         name="name"
                         value={exercise.name}
                         onChange={event => handleExerciseChange(index, event)}
-                        placeholder={
-                          exercise.discipline_type === 'forza'
-                            ? 'Es. Squat, Stacco...'
-                            : 'Es. Sprint 150m, 3x60m...'
-                        }
+                        placeholder="Es. 4×60m blocchi, 3×150m progressivi"
                         className={cn(errors[`exercise-${index}-name`] && 'border-red-500')}
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <Label className="text-xs font-semibold text-slate-600">Disciplina</Label>
+                      <Label className="text-xs font-semibold text-slate-600">Focus tecnico</Label>
                       <div className="flex flex-wrap gap-2">
                         {disciplineTypes.map(type => {
                           const Icon = disciplineIcons[type.value] ?? Activity;
@@ -1857,10 +1846,6 @@ export default function RegistroPage() {
                     <div className="space-y-1">
                       <Label className="text-xs font-semibold text-slate-600">Intensità percepita</Label>
                       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                        <div className="flex items-center justify-between text-xs text-slate-500">
-                          <span>1</span>
-                          <span>10</span>
-                        </div>
                         <input
                           type="range"
                           min={1}
@@ -1872,6 +1857,36 @@ export default function RegistroPage() {
                           className="range-input mt-2"
                           style={buildRangeBackground(exercise.intensity)}
                         />
+                        <div className="mt-3 grid grid-cols-10 gap-1 text-[10px]">
+                          {Array.from({ length: 10 }).map((_, tickIndex) => {
+                            const tickValue = tickIndex + 1;
+                            const isActive = sliderValue >= tickValue;
+                            return (
+                              <div key={tickValue} className="flex flex-col items-center gap-1">
+                                <span
+                                  className={cn(
+                                    'block h-2 w-1 rounded-full transition-colors',
+                                    isActive ? 'bg-sky-500' : 'bg-slate-300'
+                                  )}
+                                />
+                                <span
+                                  className={cn(
+                                    'font-medium',
+                                    isActive ? 'text-slate-600' : 'text-slate-400'
+                                  )}
+                                >
+                                  {tickValue}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="mt-2 grid grid-cols-4 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                          <span className="text-left">Basso</span>
+                          <span className="text-center">Medio</span>
+                          <span className="text-center">Alto</span>
+                          <span className="text-right">Massimo</span>
+                        </div>
                         <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
                           <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-1 text-sky-700">
                             <Flame className="h-3 w-3" /> {exercise.intensity || '—'}/10
@@ -1896,8 +1911,8 @@ export default function RegistroPage() {
 
                     <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <Weight className="h-4 w-4 text-slate-500" /> Risultati registrati
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                      <Timer className="h-4 w-4 text-slate-500" /> Risultati registrati
                       </div>
                       <div className="flex items-center gap-2">
                         <button
@@ -1919,8 +1934,8 @@ export default function RegistroPage() {
                     </div>
 
                     <p className="mt-4 text-xs text-slate-500">
-                      Registra qui i tentativi dell'esercizio. Compila tempo e RPE per le ripetute in pista e usa carico e
-                      ripetizioni quando lavori in palestra: i campi non necessari possono rimanere vuoti.
+                      Registra qui i tentativi della ripetuta. Inserisci il tempo cronometrato, il recupero effettivo e la
+                      percezione dello sforzo: i campi non necessari possono rimanere vuoti.
                     </p>
 
                     {highlightCards.length > 0 && (
@@ -1938,7 +1953,7 @@ export default function RegistroPage() {
                     <div className="mt-3 space-y-3">
                       {exercise.results.map((result, resultIndex) => {
                         const numericTime = parseDecimalInput(result.time_s);
-                        const numericWeight = parseDecimalInput(result.weight_kg);
+                        const numericRecovery = parseDecimalInput(result.weight_kg);
                         const numericRpe = parseDecimalInput(result.rpe);
                         const highlightBadges = [] as { key: string; label: string; icon: LucideIcon; accent: string }[];
                         if (numericTime != null && bestTime != null && Math.abs(numericTime - bestTime) < 0.001) {
@@ -1947,14 +1962,6 @@ export default function RegistroPage() {
                             label: 'PB di giornata',
                             icon: Trophy,
                             accent: 'bg-amber-100 text-amber-700',
-                          });
-                        }
-                        if (numericWeight != null && bestWeight != null && Math.abs(numericWeight - bestWeight) < 0.001) {
-                          highlightBadges.push({
-                            key: 'best-weight',
-                            label: 'Carico top',
-                            icon: Weight,
-                            accent: 'bg-emerald-100 text-emerald-700',
                           });
                         }
                         if (numericRpe != null && easiestRpe != null && Math.abs(numericRpe - easiestRpe) < 0.001) {
@@ -1979,12 +1986,12 @@ export default function RegistroPage() {
                               <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
                                 {numericTime != null && (
                                   <span className="inline-flex items-center gap-1">
-                                    <Clock className="h-3 w-3" /> {numericTime.toFixed(2)}s
+                                    <Timer className="h-3 w-3" /> {numericTime.toFixed(2)}s
                                   </span>
                                 )}
-                                {numericWeight != null && (
+                                {numericRecovery != null && (
                                   <span className="inline-flex items-center gap-1">
-                                    <Weight className="h-3 w-3" /> {numericWeight.toFixed(1)}kg
+                                    <RefreshCcw className="h-3 w-3" /> {numericRecovery.toFixed(1)}s
                                   </span>
                                 )}
                                 {numericRpe != null && (
@@ -2027,7 +2034,7 @@ export default function RegistroPage() {
                               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
                                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Identificatori</p>
                                 <p className="mt-1 text-[11px] text-slate-500">
-                                  Numeri di riferimento utili per distinguere tentativi su pista e serie in palestra.
+                                  Numeri di riferimento utili per distinguere serie e ripetizioni nella stessa seduta.
                                 </p>
                                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                   <div className="space-y-1">
@@ -2086,14 +2093,15 @@ export default function RegistroPage() {
                               </div>
 
                               <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Serie in palestra</p>
+                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                  Recupero e gestione pausa
+                                </p>
                                 <p className="mt-1 text-[11px] text-slate-500">
-                                  Registra il carico utilizzato per le sessioni di forza. Il numero di ripetizioni è indicato nel
-                                  pannello Identificatori.
+                                  Annota quanto recupero hai rispettato tra una ripetuta e l'altra per confrontarlo con il piano.
                                 </p>
                                 <div className="mt-3 space-y-3">
                                   <div className="space-y-1">
-                                    <Label className="text-[11px] text-slate-500">Carico (kg)</Label>
+                                    <Label className="text-[11px] text-slate-500">Recupero effettivo (s)</Label>
                                     <Input
                                       name="weight_kg"
                                       type="number"
@@ -2104,7 +2112,7 @@ export default function RegistroPage() {
                                     />
                                   </div>
                                   <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-3 py-2 text-[11px] text-slate-500">
-                                    Ripetizioni completate: <span className="font-semibold text-slate-700">{result.repetition_number || '—'}</span>
+                                    Recupero previsto: <span className="font-semibold text-slate-700">{exercise.rest_between_reps_s || '—'}s</span>
                                   </div>
                                 </div>
                               </div>
@@ -2141,7 +2149,7 @@ export default function RegistroPage() {
                 className="group flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-slate-300 py-4 text-slate-600 hover:border-sky-300 hover:bg-sky-50"
               >
                 <PlusCircle className="h-4 w-4 transition group-hover:text-sky-600" />
-                Aggiungi un altro esercizio
+                Aggiungi un'altra ripetuta
               </Button>
               </CardContent>
             </Card>
@@ -2161,7 +2169,7 @@ export default function RegistroPage() {
                   <p>
                     {isTestOrRaceSession
                       ? 'Aggiungi le prove della gara o del test: distanza, tempo e recupero.'
-                      : 'Collega metriche come peso, tempi test o dati di recupero alla sessione.'}
+                      : 'Collega metriche come tempi test, valori massimali o dati di recupero alla sessione.'}
                   </p>
                   <Button
                     type="button"
