@@ -83,6 +83,10 @@ type MetricForm = {
   value: string;
   unit: string;
   notes: string;
+  distance_m: string;
+  time_s: string;
+  recovery_post_s: string;
+  intensity: string;
 };
 
 const sessionTypes = [
@@ -100,6 +104,11 @@ const sessionTypes = [
     value: 'test',
     label: 'Test',
     hint: 'Test di valutazione e prove specifiche',
+  },
+  {
+    value: 'gara',
+    label: 'Gara',
+    hint: 'Competizioni ufficiali o simulazioni di gara',
   },
   {
     value: 'scarico',
@@ -138,6 +147,7 @@ const sessionTypeIcons: Record<string, LucideIcon> = {
   pista: Activity,
   palestra: Dumbbell,
   test: Target,
+  gara: Trophy,
   scarico: Clock,
   recupero: CheckCircle2,
   altro: PlusCircle,
@@ -217,6 +227,10 @@ const defaultMetric: MetricForm = {
   value: '',
   unit: '',
   notes: '',
+  distance_m: '',
+  time_s: '',
+  recovery_post_s: '',
+  intensity: '8',
 };
 
 type MetricSuggestion = {
@@ -271,6 +285,20 @@ const metricPlaybook: Record<string, MetricSuggestion[]> = {
       category: 'recupero',
       unit: 'ms',
       hint: 'Controlla lo stato di recupero nei giorni dei test',
+    },
+  ],
+  gara: [
+    {
+      metric_name: 'Tempo ufficiale',
+      category: 'prestazione',
+      unit: 's',
+      hint: 'Registra il crono finale della gara',
+    },
+    {
+      metric_name: 'Recupero post gara',
+      category: 'recupero',
+      unit: 'min',
+      hint: 'Segna quanto tempo ti è servito per recuperare',
     },
   ],
   scarico: [
@@ -399,6 +427,8 @@ export default function RegistroPage() {
   const [usingCustomLocation, setUsingCustomLocation] = useState(false);
   const [customLocation, setCustomLocation] = useState('');
 
+  const isTestOrRaceSession = sessionForm.type === 'test' || sessionForm.type === 'gara';
+
   const sectionRefs = {
     details: useRef<HTMLDivElement | null>(null),
     exercises: useRef<HTMLDivElement | null>(null),
@@ -454,6 +484,10 @@ export default function RegistroPage() {
   }, [exercises]);
 
   const metricSuggestions = useMemo(() => {
+    if (isTestOrRaceSession) {
+      return [] as MetricSuggestion[];
+    }
+
     const collected = new Map<string, MetricSuggestion>();
 
     if (sessionForm.type && metricPlaybook[sessionForm.type]) {
@@ -476,16 +510,23 @@ export default function RegistroPage() {
     }
 
     return Array.from(collected.values());
-  }, [exercises, sessionForm.type]);
+  }, [exercises, isTestOrRaceSession, sessionForm.type]);
 
   const stepProgress = useMemo<StepDefinition[]>(() => {
     const detailsComplete = Boolean(sessionForm.date && sessionForm.type && sessionForm.location);
     const exercisesComplete =
-      exercises.length > 0 &&
-      exercises.every(ex => ex.name.trim() && ex.discipline_type && ex.sets && ex.repetitions);
-    const metricsComplete =
-      metrics.length === 0 ||
-      metrics.every(metric => !metric.metric_name.trim() || (metric.metric_name.trim() && metric.value));
+      isTestOrRaceSession ||
+      (exercises.length > 0 &&
+        exercises.every(ex => ex.name.trim() && ex.discipline_type && ex.sets && ex.repetitions));
+    const metricsComplete = metrics.length === 0
+      ? true
+      : metrics.every(metric => {
+          if (!metric.metric_name.trim()) return true;
+          if (isTestOrRaceSession) {
+            return Boolean(metric.time_s && metric.distance_m);
+          }
+          return Boolean(metric.value);
+        });
 
     const base: StepDefinition[] = [
       {
@@ -517,7 +558,7 @@ export default function RegistroPage() {
     }
 
     return base;
-  }, [exercises, metrics, sessionForm.date, sessionForm.location, sessionForm.type]);
+  }, [exercises, isTestOrRaceSession, metrics, sessionForm.date, sessionForm.location, sessionForm.type]);
 
   const completedSteps = stepProgress.filter(step => step.status === 'done').length;
   const progressValue =
@@ -773,6 +814,12 @@ export default function RegistroPage() {
     if (name === 'value') {
       clearError(`metric-${index}-value`);
     }
+    if (name === 'distance_m') {
+      clearError(`metric-${index}-distance_m`);
+    }
+    if (name === 'time_s') {
+      clearError(`metric-${index}-time_s`);
+    }
   }
 
   function removeMetric(index: number) {
@@ -802,15 +849,25 @@ export default function RegistroPage() {
     if (!sessionForm.type) validation.type = 'Seleziona il tipo di sessione';
     if (!sessionForm.location) validation.location = 'Indica il luogo della sessione';
 
-    exercises.forEach((ex, index) => {
-      if (!ex.name.trim()) validation[`exercise-${index}-name`] = 'Nome obbligatorio';
-      if (!ex.discipline_type) validation[`exercise-${index}-discipline`] = 'Seleziona la disciplina';
-      if (!ex.sets) validation[`exercise-${index}-sets`] = 'Inserisci le serie';
-      if (!ex.repetitions) validation[`exercise-${index}-repetitions`] = 'Inserisci le ripetizioni';
-    });
+    if (!isTestOrRaceSession) {
+      exercises.forEach((ex, index) => {
+        if (!ex.name.trim()) validation[`exercise-${index}-name`] = 'Nome obbligatorio';
+        if (!ex.discipline_type) validation[`exercise-${index}-discipline`] = 'Seleziona la disciplina';
+        if (!ex.sets) validation[`exercise-${index}-sets`] = 'Inserisci le serie';
+        if (!ex.repetitions) validation[`exercise-${index}-repetitions`] = 'Inserisci le ripetizioni';
+      });
+    }
 
     metrics.forEach((metric, index) => {
-      if (metric.metric_name && !metric.value) {
+      if (!metric.metric_name.trim()) return;
+      if (isTestOrRaceSession) {
+        if (!metric.distance_m) {
+          validation[`metric-${index}-distance_m`] = 'Indica la distanza della prova';
+        }
+        if (!metric.time_s) {
+          validation[`metric-${index}-time_s`] = 'Inserisci il tempo registrato';
+        }
+      } else if (!metric.value) {
         validation[`metric-${index}-value`] = 'Inserisci il valore della metrica';
       }
     });
@@ -881,56 +938,58 @@ export default function RegistroPage() {
         throw sessionError ?? new Error('Sessione non creata');
       }
 
-      for (const ex of exercises) {
-        const intensityNumber = Number(ex.intensity);
-        const effortType = mapIntensityToEffort(Number.isFinite(intensityNumber) ? intensityNumber : null);
+      if (!isTestOrRaceSession) {
+        for (const ex of exercises) {
+          const intensityNumber = Number(ex.intensity);
+          const effortType = mapIntensityToEffort(Number.isFinite(intensityNumber) ? intensityNumber : null);
 
-        const { data: insertedExercise, error: exerciseError } = await supabase
-          .from('exercises')
-          .insert([
-            {
-              session_id: session.id,
-              name: ex.name,
-              discipline_type: ex.discipline_type,
-              distance_m: ex.distance_m ? Number(ex.distance_m) : null,
-              sets: ex.sets ? Number(ex.sets) : null,
-              repetitions: ex.repetitions ? Number(ex.repetitions) : null,
-              rest_between_reps_s: ex.rest_between_reps_s ? Number(ex.rest_between_reps_s) : null,
-              rest_between_sets_s: ex.rest_between_sets_s ? Number(ex.rest_between_sets_s) : null,
-              rest_after_exercise_s: ex.rest_after_exercise_s ? Number(ex.rest_after_exercise_s) : null,
-              intensity: ex.intensity ? Number(ex.intensity) : null,
-              effort_type: effortType,
-              notes: ex.notes || null,
-            },
-          ])
-          .select()
-          .single();
+          const { data: insertedExercise, error: exerciseError } = await supabase
+            .from('exercises')
+            .insert([
+              {
+                session_id: session.id,
+                name: ex.name,
+                discipline_type: ex.discipline_type,
+                distance_m: ex.distance_m ? Number(ex.distance_m) : null,
+                sets: ex.sets ? Number(ex.sets) : null,
+                repetitions: ex.repetitions ? Number(ex.repetitions) : null,
+                rest_between_reps_s: ex.rest_between_reps_s ? Number(ex.rest_between_reps_s) : null,
+                rest_between_sets_s: ex.rest_between_sets_s ? Number(ex.rest_between_sets_s) : null,
+                rest_after_exercise_s: ex.rest_after_exercise_s ? Number(ex.rest_after_exercise_s) : null,
+                intensity: ex.intensity ? Number(ex.intensity) : null,
+                effort_type: effortType,
+                notes: ex.notes || null,
+              },
+            ])
+            .select()
+            .single();
 
-        if (exerciseError || !insertedExercise) {
-          throw exerciseError ?? new Error('Errore inserimento esercizio');
-        }
+          if (exerciseError || !insertedExercise) {
+            throw exerciseError ?? new Error('Errore inserimento esercizio');
+          }
 
-        for (const [idx, res] of ex.results.entries()) {
-          const hasValues = [res.time_s, res.weight_kg, res.rpe, res.notes, res.repetition_number].some(
-            value => Boolean(value && value.trim())
-          );
+          for (const [idx, res] of ex.results.entries()) {
+            const hasValues = [res.time_s, res.weight_kg, res.rpe, res.notes, res.repetition_number].some(
+              value => Boolean(value && value.trim())
+            );
 
-          if (!hasValues) continue;
+            if (!hasValues) continue;
 
-          const { error: resultError } = await supabase.from('exercise_results').insert([
-            {
-              exercise_id: insertedExercise.id,
-              attempt_number: res.attempt_number ? Number(res.attempt_number) : idx + 1,
-              repetition_number: res.repetition_number ? Number(res.repetition_number) : null,
-              time_s: res.time_s ? Number(res.time_s) : null,
-              weight_kg: res.weight_kg ? Number(res.weight_kg) : null,
-              rpe: res.rpe ? Number(res.rpe) : null,
-              notes: res.notes || null,
-            },
-          ]);
+            const { error: resultError } = await supabase.from('exercise_results').insert([
+              {
+                exercise_id: insertedExercise.id,
+                attempt_number: res.attempt_number ? Number(res.attempt_number) : idx + 1,
+                repetition_number: res.repetition_number ? Number(res.repetition_number) : null,
+                time_s: res.time_s ? Number(res.time_s) : null,
+                weight_kg: res.weight_kg ? Number(res.weight_kg) : null,
+                rpe: res.rpe ? Number(res.rpe) : null,
+                notes: res.notes || null,
+              },
+            ]);
 
-          if (resultError) {
-            throw resultError;
+            if (resultError) {
+              throw resultError;
+            }
           }
         }
       }
@@ -938,18 +997,31 @@ export default function RegistroPage() {
       for (const metric of metrics) {
         if (!metric.metric_name.trim()) continue;
 
-        const { error: metricError } = await supabase.from('metrics').insert([
-          {
-            date: metric.date || sessionForm.date,
-            metric_name: metric.metric_name,
-            category: metric.category || null,
-            metric_target: metric.metric_target || null,
-            value: metric.value ? Number(metric.value) : null,
-            unit: metric.unit || null,
-            session_id: session.id,
-            notes: metric.notes || null,
-          },
-        ]);
+        const payload: Record<string, unknown> = {
+          date: metric.date || sessionForm.date,
+          metric_name: metric.metric_name,
+          session_id: session.id,
+          notes: metric.notes || null,
+        };
+
+        if (isTestOrRaceSession) {
+          payload.category = 'test';
+          payload.metric_target = metric.metric_target || null;
+          payload.distance_m = metric.distance_m ? Number(metric.distance_m) : null;
+          payload.time_s = metric.time_s ? Number(metric.time_s) : null;
+          payload.recovery_post_s = metric.recovery_post_s
+            ? Math.round(Number(metric.recovery_post_s) * 60)
+            : null;
+          payload.intensity = metric.intensity ? Number(metric.intensity) : null;
+          payload.unit = 's';
+        } else {
+          payload.category = metric.category || null;
+          payload.metric_target = metric.metric_target || null;
+          payload.value = metric.value ? Number(metric.value) : null;
+          payload.unit = metric.unit || null;
+        }
+
+        const { error: metricError } = await supabase.from('metrics').insert([payload]);
 
         if (metricError) {
           throw metricError;
@@ -1210,9 +1282,9 @@ export default function RegistroPage() {
                   </Button>
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     onClick={() => void fetchBlocks()}
-                    className="gap-2 text-xs text-slate-500 hover:text-sky-600"
+                    className="gap-2 border-transparent bg-transparent text-xs text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-sky-600"
                   >
                     <Loader2 className={cn('h-3.5 w-3.5', loadingBlocks ? 'animate-spin' : '')} /> Aggiorna elenco
                   </Button>
@@ -1395,7 +1467,25 @@ export default function RegistroPage() {
         </div>
 
         <div ref={sectionRefs.exercises} className="scroll-mt-24">
-          <Card className="border-none shadow-lg">
+          <div className="relative">
+            {isTestOrRaceSession && (
+              <div className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center rounded-3xl bg-white/80 p-6 text-center">
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-slate-700">
+                    Per test e gare compila solo la sezione "Metriche & Test"
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Questa scheda resta disponibile per gli allenamenti standard.
+                  </p>
+                </div>
+              </div>
+            )}
+            <Card
+              className={cn(
+                'border-none shadow-lg',
+                isTestOrRaceSession && 'pointer-events-none opacity-50'
+              )}
+            >
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
                 <ListPlus className="h-5 w-5 text-sky-600" /> Esercizi e risultati
@@ -1869,7 +1959,8 @@ export default function RegistroPage() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
                     </div>
                   </div>
                 </div>
@@ -1885,8 +1976,9 @@ export default function RegistroPage() {
               <PlusCircle className="h-4 w-4 transition group-hover:text-sky-600" />
               Aggiungi un altro esercizio
             </Button>
-          </CardContent>
-          </Card>
+            </CardContent>
+            </Card>
+          </div>
         </div>
 
         <div ref={sectionRefs.metrics} className="scroll-mt-24">
@@ -1897,7 +1989,7 @@ export default function RegistroPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {metricSuggestions.length > 0 && (
+              {!isTestOrRaceSession && metricSuggestions.length > 0 && (
                 <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
@@ -1929,141 +2021,264 @@ export default function RegistroPage() {
 
               {metrics.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-6 text-center text-sm text-slate-500">
-                  <p>Collega metriche come peso, tempi test o dati di recupero alla sessione.</p>
+                  <p>
+                    {isTestOrRaceSession
+                      ? 'Aggiungi le prove della gara o del test: distanza, tempo e recupero.'
+                      : 'Collega metriche come peso, tempi test o dati di recupero alla sessione.'}
+                  </p>
                   <Button
                     type="button"
                     onClick={addMetric}
                     variant="outline"
                     className="mt-3 gap-2 rounded-full border-slate-300"
                   >
-                    <PlusCircle className="h-4 w-4" /> Aggiungi metrica
+                    <PlusCircle className="h-4 w-4" />
+                    {isTestOrRaceSession ? 'Aggiungi prova' : 'Aggiungi metrica'}
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                {metrics.map((metric, index) => (
-                  <div key={index} className="rounded-3xl border border-slate-200 bg-white/70 p-4 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <Activity className="h-4 w-4 text-slate-500" /> Metrica #{index + 1}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeMetric(index)}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-600"
-                      >
-                        <Trash2 className="h-3 w-3" /> Rimuovi
-                      </button>
-                    </div>
-
-                    <div className="mt-4 grid gap-4 md:grid-cols-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs font-semibold text-slate-600">Data</Label>
-                        <Input
-                          type="date"
-                          name="date"
-                          value={metric.date}
-                          onChange={event => updateMetric(index, event)}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-semibold text-slate-600">Nome metrica</Label>
-                        <Input
-                          name="metric_name"
-                          value={metric.metric_name}
-                          onChange={event => updateMetric(index, event)}
-                          placeholder="Es. Peso corporeo, Test 30m"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-semibold text-slate-600">Categoria</Label>
-                        <div className="flex flex-wrap gap-2">
-                          {metricCategories.map(category => {
-                            const Icon = metricCategoryIcons[category.value] ?? Activity;
-                            const isActive = metric.category === category.value;
-                            return (
-                              <button
-                                key={category.value}
-                                type="button"
-                                onClick={() => handleMetricCategorySelect(index, category.value)}
-                                className={cn(
-                                  'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium transition',
-                                  isActive
-                                    ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                                    : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
-                                )}
-                                aria-pressed={isActive}
-                              >
-                                <Icon className="h-3.5 w-3.5" />
-                                {category.label}
-                              </button>
-                            );
-                          })}
+                  {metrics.map((metric, index) => {
+                    const intensityNumber = Number(metric.intensity) || 0;
+                    return (
+                      <div key={index} className="rounded-3xl border border-slate-200 bg-white/70 p-4 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                            <Activity className="h-4 w-4 text-slate-500" />
+                            {isTestOrRaceSession ? `Prova #${index + 1}` : `Metrica #${index + 1}`}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeMetric(index)}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-600"
+                          >
+                            <Trash2 className="h-3 w-3" /> Rimuovi
+                          </button>
                         </div>
-                        <p className="text-[11px] text-slate-500">
-                          {metricCategories.find(cat => cat.value === metric.category)?.description ??
-                            'Abbina rapidamente la metrica all\'allenamento'}
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="mt-4 grid gap-4 md:grid-cols-4">
-                      <div className="space-y-1">
-                        <Label className="text-xs font-semibold text-slate-600">Target / Test</Label>
-                        <Input
-                          name="metric_target"
-                          value={metric.metric_target}
-                          onChange={event => updateMetric(index, event)}
-                          placeholder="Es. 60m indoor"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-semibold text-slate-600">Valore</Label>
-                        <Input
-                          name="value"
-                          type="number"
-                          step="0.01"
-                          value={metric.value}
-                          onChange={event => updateMetric(index, event)}
-                          className={cn(errors[`metric-${index}-value`] && 'border-red-500')}
-                        />
-                        {errors[`metric-${index}-value`] && (
-                          <p className="text-[11px] text-red-500">{errors[`metric-${index}-value`]}</p>
+                        {isTestOrRaceSession ? (
+                          <div className="mt-4 space-y-4">
+                            <div className="grid gap-4 md:grid-cols-3">
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-slate-600">Data</Label>
+                                <Input
+                                  type="date"
+                                  name="date"
+                                  value={metric.date}
+                                  onChange={event => updateMetric(index, event)}
+                                />
+                              </div>
+                              <div className="space-y-1 md:col-span-2">
+                                <Label className="text-xs font-semibold text-slate-600">Prova / Distanza</Label>
+                                <Input
+                                  name="metric_name"
+                                  value={metric.metric_name}
+                                  onChange={event => updateMetric(index, event)}
+                                  placeholder="Es. Test 150m massimo sforzo"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid gap-4 md:grid-cols-4">
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-slate-600">Distanza (m)</Label>
+                                <Input
+                                  name="distance_m"
+                                  type="number"
+                                  min={0}
+                                  value={metric.distance_m}
+                                  onChange={event => updateMetric(index, event)}
+                                  className={cn(errors[`metric-${index}-distance_m`] && 'border-red-500')}
+                                />
+                                {errors[`metric-${index}-distance_m`] && (
+                                  <p className="text-[11px] text-red-500">{errors[`metric-${index}-distance_m`]}</p>
+                                )}
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-slate-600">Tempo (s)</Label>
+                                <Input
+                                  name="time_s"
+                                  type="number"
+                                  step="0.01"
+                                  min={0}
+                                  value={metric.time_s}
+                                  onChange={event => updateMetric(index, event)}
+                                  className={cn(errors[`metric-${index}-time_s`] && 'border-red-500')}
+                                />
+                                {errors[`metric-${index}-time_s`] && (
+                                  <p className="text-[11px] text-red-500">{errors[`metric-${index}-time_s`]}</p>
+                                )}
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-slate-600">Recupero post test (min)</Label>
+                                <Input
+                                  name="recovery_post_s"
+                                  type="number"
+                                  min={0}
+                                  step="0.1"
+                                  value={metric.recovery_post_s}
+                                  onChange={event => updateMetric(index, event)}
+                                  placeholder="Es. 7"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-slate-600">Intensità percepita (1-10)</Label>
+                                <Input
+                                  name="intensity"
+                                  type="number"
+                                  min={1}
+                                  max={10}
+                                  step={1}
+                                  value={metric.intensity}
+                                  onChange={event => updateMetric(index, event)}
+                                />
+                                <p className="text-[11px] text-slate-500">
+                                  {intensityNumber <= 3
+                                    ? 'Scarico o ritmo blando'
+                                    : intensityNumber <= 6
+                                    ? 'Intensità controllata'
+                                    : intensityNumber <= 8
+                                    ? 'Spinta elevata'
+                                    : 'Massimo sforzo'}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="grid gap-4 md:grid-cols-2">
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-slate-600">Contesto (es. fase, condizioni)</Label>
+                                <Input
+                                  name="metric_target"
+                                  value={metric.metric_target}
+                                  onChange={event => updateMetric(index, event)}
+                                  placeholder="Es. Finale, simulazione, condizioni meteo"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-slate-600">Note</Label>
+                                <Textarea
+                                  name="notes"
+                                  value={metric.notes}
+                                  onChange={event => updateMetric(index, event)}
+                                  placeholder="Sensazioni, feedback del coach..."
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="mt-4 grid gap-4 md:grid-cols-3">
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-slate-600">Data</Label>
+                                <Input
+                                  type="date"
+                                  name="date"
+                                  value={metric.date}
+                                  onChange={event => updateMetric(index, event)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-slate-600">Nome metrica</Label>
+                                <Input
+                                  name="metric_name"
+                                  value={metric.metric_name}
+                                  onChange={event => updateMetric(index, event)}
+                                  placeholder="Es. Peso corporeo, Test 30m"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-slate-600">Categoria</Label>
+                                <div className="flex flex-wrap gap-2">
+                                  {metricCategories.map(category => {
+                                    const Icon = metricCategoryIcons[category.value] ?? Activity;
+                                    const isActive = metric.category === category.value;
+                                    return (
+                                      <button
+                                        key={category.value}
+                                        type="button"
+                                        onClick={() => handleMetricCategorySelect(index, category.value)}
+                                        className={cn(
+                                          'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium transition',
+                                          isActive
+                                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                                            : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
+                                        )}
+                                        aria-pressed={isActive}
+                                      >
+                                        <Icon className="h-3.5 w-3.5" />
+                                        {category.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                <p className="text-[11px] text-slate-500">
+                                  {metricCategories.find(cat => cat.value === metric.category)?.description ??
+                                    'Abbina rapidamente la metrica all\'allenamento'}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 grid gap-4 md:grid-cols-4">
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-slate-600">Target / Test</Label>
+                                <Input
+                                  name="metric_target"
+                                  value={metric.metric_target}
+                                  onChange={event => updateMetric(index, event)}
+                                  placeholder="Es. 60m indoor"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-slate-600">Valore</Label>
+                                <Input
+                                  name="value"
+                                  type="number"
+                                  step="0.01"
+                                  value={metric.value}
+                                  onChange={event => updateMetric(index, event)}
+                                  className={cn(errors[`metric-${index}-value`] && 'border-red-500')}
+                                />
+                                {errors[`metric-${index}-value`] && (
+                                  <p className="text-[11px] text-red-500">{errors[`metric-${index}-value`]}</p>
+                                )}
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-slate-600">Unità</Label>
+                                <Input
+                                  name="unit"
+                                  value={metric.unit}
+                                  onChange={event => updateMetric(index, event)}
+                                  placeholder="kg, s, cm..."
+                                />
+                              </div>
+                              <div className="space-y-1 md:col-span-2">
+                                <Label className="text-xs font-semibold text-slate-600">Note</Label>
+                                <Textarea
+                                  name="notes"
+                                  value={metric.notes}
+                                  onChange={event => updateMetric(index, event)}
+                                  placeholder="Sensazioni, contesto del test..."
+                                />
+                              </div>
+                            </div>
+                          </>
                         )}
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-semibold text-slate-600">Unità</Label>
-                        <Input
-                          name="unit"
-                          value={metric.unit}
-                          onChange={event => updateMetric(index, event)}
-                          placeholder="kg, s, cm..."
-                        />
-                      </div>
-                      <div className="space-y-1 md:col-span-2">
-                        <Label className="text-xs font-semibold text-slate-600">Note</Label>
-                        <Textarea
-                          name="notes"
-                          value={metric.notes}
-                          onChange={event => updateMetric(index, event)}
-                          placeholder="Sensazioni, contesto del test..."
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={addMetric}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-slate-300 py-3 text-slate-600 hover:border-sky-300 hover:bg-sky-50"
-                >
-                  <PlusCircle className="h-4 w-4" /> Aggiungi un’altra metrica
-                </Button>
-              </div>
-            )}
-          </CardContent>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addMetric}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-slate-300 py-3 text-slate-600 hover:border-sky-300 hover:bg-sky-50"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    {isTestOrRaceSession ? 'Aggiungi un’altra prova' : 'Aggiungi un’altra metrica'}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
           </Card>
         </div>
       </div>
