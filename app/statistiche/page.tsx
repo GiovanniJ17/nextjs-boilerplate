@@ -35,7 +35,6 @@ const sessionTypeFilters = [
   { value: 'palestra', label: 'Palestra' },
   { value: 'test', label: 'Test' },
   { value: 'scarico', label: 'Scarico' },
-  { value: 'recupero', label: 'Recupero' },
   { value: 'altro', label: 'Altro' },
 ];
 
@@ -60,26 +59,13 @@ type SessionRow = {
 type ExerciseRow = {
   id: string;
   session_id: string | null;
-  discipline_type: string | null;
+  category: string | null;
   distance_m: number | null;
   sets: number | null;
-  repetitions: number | null;
+  reps: number | null;
   intensity: number | null;
   rest_between_sets_s: number | null;
-};
-
-type ResultRow = {
-  exercise_id: string | null;
   time_s: number | null;
-};
-
-type MetricRow = {
-  session_id: string | null;
-  value: number | null;
-  unit: string | null;
-  metric_name: string | null;
-  metric_target: string | null;
-  category: string | null;
 };
 
 type StatsSnapshot = {
@@ -91,7 +77,6 @@ type StatsSnapshot = {
   avgTime: number | null;
   avgIntensity: number | null;
   restAverage: number | null;
-  metricsCount: number;
   highIntensitySessions: number;
   lowIntensitySessions: number;
   typeBreakdown: { label: string; value: number }[];
@@ -168,54 +153,24 @@ export default function StatistichePage() {
     let exercises: ExerciseRow[] = [];
     if (sessionIds.length > 0) {
       const { data: exercisesData } = await supabase
-        .from('exercises')
-        .select('id, session_id, discipline_type, distance_m, sets, repetitions, intensity, rest_between_sets_s')
+        .from('training_exercises')
+        .select('id, session_id, category, distance_m, sets, reps, intensity, rest_between_sets_s, time_s')
         .in('session_id', sessionIds);
       if (exercisesData) {
         exercises = exercisesData as ExerciseRow[];
       }
     }
 
-    let results: ResultRow[] = [];
-    const exerciseIds = exercises.map(exercise => exercise.id);
-    if (exerciseIds.length > 0) {
-      const { data: resultsData } = await supabase
-        .from('exercise_results')
-        .select('exercise_id, time_s')
-        .in('exercise_id', exerciseIds);
-      if (resultsData) {
-        results = resultsData as ResultRow[];
-      }
-    }
-
-    let metrics: MetricRow[] = [];
-    if (sessionIds.length > 0) {
-      let metricsQuery = supabase
-        .from('metrics')
-        .select('session_id, value, unit, metric_name, metric_target, category')
-        .in('session_id', sessionIds);
-
-      if (fromDate) metricsQuery = metricsQuery.gte('date', fromDate);
-      if (toDate) metricsQuery = metricsQuery.lte('date', toDate);
-
-      const { data: metricsData } = await metricsQuery;
-      if (metricsData) {
-        metrics = metricsData as MetricRow[];
-      }
-    }
-
     const distanceFilteredExercises = exercises.filter(exercise =>
       matchesDistance(exercise.distance_m, distanceFilter)
     );
-    const filteredExerciseIds = new Set(distanceFilteredExercises.map(exercise => exercise.id));
-    const filteredResults = results.filter(result => result.exercise_id && filteredExerciseIds.has(result.exercise_id));
 
     const totalSessions = sessions.length;
     const totalDistance = distanceFilteredExercises.reduce((sum, exercise) => {
       const distance = exercise.distance_m || 0;
       const sets = exercise.sets || 0;
-      const repetitions = exercise.repetitions || 0;
-      return sum + distance * sets * repetitions;
+      const reps = exercise.reps || 0;
+      return sum + distance * sets * reps;
     }, 0);
     const avgDistancePerSession = totalSessions > 0 ? totalDistance / totalSessions : 0;
 
@@ -233,8 +188,8 @@ export default function StatistichePage() {
       ? restValues.reduce((sum, value) => sum + value, 0) / restValues.length
       : null;
 
-    const times = filteredResults
-      .map(result => result.time_s)
+    const times = distanceFilteredExercises
+      .map(exercise => exercise.time_s)
       .filter((value): value is number => typeof value === 'number' && !Number.isNaN(value));
 
     let bestTime: number | null = null;
@@ -242,18 +197,15 @@ export default function StatistichePage() {
 
     if (times.length) {
       bestTime = Math.min(...times);
-      const bestResult = filteredResults.find(result => result.time_s === bestTime);
-      if (bestResult?.exercise_id) {
-        const exercise = distanceFilteredExercises.find(ex => ex.id === bestResult.exercise_id);
-        if (exercise?.distance_m) {
-          bestTimeDistance = exercise.distance_m;
-        }
+      const bestExercise = distanceFilteredExercises.find(
+        exercise => typeof exercise.time_s === 'number' && exercise.time_s === bestTime
+      );
+      if (bestExercise?.distance_m) {
+        bestTimeDistance = bestExercise.distance_m;
       }
     }
 
     const avgTime = times.length ? times.reduce((sum, time) => sum + time, 0) / times.length : null;
-
-    const metricsCount = metrics.length;
 
     const highIntensitySessions = new Set(
       distanceFilteredExercises
@@ -279,14 +231,12 @@ export default function StatistichePage() {
       .sort((a, b) => b.value - a.value);
 
     const pbMap = new Map<number, number>();
-    for (const result of filteredResults) {
-      if (!result.exercise_id || typeof result.time_s !== 'number') continue;
-      const exercise = distanceFilteredExercises.find(ex => ex.id === result.exercise_id);
-      const distance = exercise?.distance_m;
-      if (!distance) continue;
-      const existing = pbMap.get(distance);
-      if (existing == null || result.time_s < existing) {
-        pbMap.set(distance, result.time_s);
+    for (const exercise of distanceFilteredExercises) {
+      if (typeof exercise.distance_m !== 'number') continue;
+      if (typeof exercise.time_s !== 'number' || Number.isNaN(exercise.time_s)) continue;
+      const existing = pbMap.get(exercise.distance_m);
+      if (existing == null || (exercise.time_s ?? Infinity) < existing) {
+        pbMap.set(exercise.distance_m, exercise.time_s);
       }
     }
     const pbByDistance = Array.from(pbMap.entries())
@@ -303,9 +253,6 @@ export default function StatistichePage() {
     if (avgDistancePerSession > 0) {
       insights.push(`Volume medio per sessione: ${Math.round(avgDistancePerSession)} m`);
     }
-    if (metricsCount > 0) {
-      insights.push(`${metricsCount} metriche monitorate nel periodo selezionato`);
-    }
     if (highIntensitySessions > lowIntensitySessions) {
       insights.push('Prevalenza di sedute ad alta intensità rispetto a quelle leggere');
     }
@@ -319,7 +266,6 @@ export default function StatistichePage() {
       avgTime,
       avgIntensity,
       restAverage,
-      metricsCount,
       highIntensitySessions,
       lowIntensitySessions,
       typeBreakdown,
@@ -414,9 +360,9 @@ export default function StatistichePage() {
         icon: Sparkles,
       },
       {
-        label: 'Metriche monitorate',
-        value: stats ? formatNumber(stats.metricsCount) : '—',
-        icon: Brain,
+        label: 'Sedute intense',
+        value: stats ? formatNumber(stats.highIntensitySessions) : '—',
+        icon: TrendingUp,
       },
     ],
     [stats]
@@ -807,9 +753,9 @@ export default function StatistichePage() {
                     accent="bg-emerald-100 text-emerald-600"
                   />
                   <SummaryCard
-                    title="Metriche monitorate"
-                    value={formatNumber(stats.metricsCount)}
-                    subtitle="Valori collegati alle sessioni"
+                    title="Sessioni leggere"
+                    value={formatNumber(stats.lowIntensitySessions)}
+                    subtitle="<= 4/10 di intensità"
                     icon={<FolderKanban className="h-5 w-5" />}
                     accent="bg-slate-200 text-slate-600"
                   />
