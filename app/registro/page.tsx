@@ -932,7 +932,6 @@ export default function RegistroPage() {
                       {exercises.length > 1 && (
                         <Button
                           type="button"
-                          variant="ghost"
                           className="text-xs text-slate-400 hover:text-red-500"
                           onClick={() => removeExercise(index)}
                         >

@@ -148,25 +148,6 @@ export default function StoricoPage() {
   const [activeQuickSearch, setActiveQuickSearch] = useState<string | null>(null);
   const [activeSmartRange, setActiveSmartRange] = useState<string>('');
 
-  useEffect(() => {
-    void loadBlocks();
-  }, []);
-
-  useEffect(() => {
-    void loadSessions();
-  }, [loadSessions]);
-
-  async function loadBlocks() {
-    const { data, error } = await supabase
-      .from('training_blocks')
-      .select('id, name, start_date, end_date')
-      .order('start_date', { ascending: false });
-
-    if (!error && data) {
-      setBlocks(data as TrainingBlock[]);
-    }
-  }
-
   const loadSessions = useCallback(async () => {
     setLoading(true);
 
@@ -200,6 +181,25 @@ export default function StoricoPage() {
 
     setLoading(false);
   }, [blockFilter, fromDate, toDate, typeFilter]);
+
+  useEffect(() => {
+    void loadBlocks();
+  }, []);
+
+  useEffect(() => {
+    void loadSessions();
+  }, [loadSessions]);
+
+  async function loadBlocks() {
+    const { data, error } = await supabase
+      .from('training_blocks')
+      .select('id, name, start_date, end_date')
+      .order('start_date', { ascending: false });
+
+    if (!error && data) {
+      setBlocks(data as TrainingBlock[]);
+    }
+  }
 
   const filteredSessions = useMemo(() => {
     if (!search.trim()) return sessions;
