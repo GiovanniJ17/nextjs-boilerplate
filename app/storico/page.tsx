@@ -18,6 +18,7 @@ import {
   Loader2,
   MapPin,
   NotebookText,
+  RotateCcw,
   Search,
   Sparkles,
   Target,
@@ -145,8 +146,8 @@ const sessionTypeOptions = [
 
 const smartRangeOptions = [
   { key: '14', label: 'Ultimi 14 giorni', days: 14 },
-  { key: '42', label: 'Ultime 6 settimane', days: 42 },
   { key: '90', label: 'Ultimi 90 giorni', days: 90 },
+  { key: '42', label: 'Ultime 6 settimane', days: 42 },
 ];
 
 const sessionTypeTokens: Record<string, { bg: string; text: string }> = {
@@ -393,6 +394,13 @@ export default function StoricoPage() {
   );
 
   function applySmartRange(rangeKey: string) {
+    if (activeSmartRange === rangeKey) {
+      setActiveSmartRange('');
+      setFromDate('');
+      setToDate('');
+      return;
+    }
+
     const option = smartRangeOptions.find(range => range.key === rangeKey);
     if (!option) {
       setActiveSmartRange('');
@@ -426,7 +434,6 @@ export default function StoricoPage() {
     setSearch('');
     setActiveQuickSearch(null);
     setActiveSmartRange('');
-    void loadSessions();
   }
 
   function handleQuickSearch(query: string) {
@@ -501,8 +508,7 @@ export default function StoricoPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs">
-            <span className="font-semibold text-slate-600">Intervalli rapidi</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs">
             {smartRangeOptions.map(option => {
               const isActive = activeSmartRange === option.key;
               return (
@@ -522,17 +528,6 @@ export default function StoricoPage() {
                 </button>
               );
             })}
-            <button
-              type="button"
-              onClick={() => {
-                setActiveSmartRange('');
-                setFromDate('');
-                setToDate('');
-              }}
-              className="rounded-full border border-transparent px-3 py-1 font-medium text-slate-500 transition hover:border-slate-200 hover:bg-white"
-            >
-              Rimuovi preset
-            </button>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -623,12 +618,9 @@ export default function StoricoPage() {
                 type="button"
                 variant="outline"
                 onClick={resetFilters}
-                className="rounded-full border-slate-200 text-xs"
+                className="flex items-center gap-2 rounded-full border-slate-200 text-xs"
               >
-                Reset
-              </Button>
-              <Button type="button" onClick={loadSessions} className="rounded-full text-xs">
-                Applica filtri
+                <RotateCcw className="h-3.5 w-3.5" /> Reset
               </Button>
             </div>
           </div>

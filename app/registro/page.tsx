@@ -8,7 +8,6 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  Droplets,
   Dumbbell,
   Flame,
   FolderPlus,
@@ -135,14 +134,6 @@ const disciplineTypes = [
   { value: 'altro', label: 'Altro' },
 ];
 
-const metricCategories = [
-  { value: 'prestazione', label: 'Prestazione', description: 'Tempi, carichi, misurazioni gara' },
-  { value: 'fisico', label: 'Fisico', description: 'Peso, misure corporee, stato muscolare' },
-  { value: 'recupero', label: 'Recupero', description: 'Qualità del sonno, HRV, percezione' },
-  { value: 'test', label: 'Test', description: 'Valutazioni periodiche e benchmark' },
-  { value: 'altro', label: 'Altro', description: 'Note e misurazioni extra' },
-];
-
 const sessionTypeIcons: Record<string, LucideIcon> = {
   pista: Activity,
   palestra: Dumbbell,
@@ -177,14 +168,6 @@ const disciplineIcons: Record<string, LucideIcon> = {
   mobilità: MoveRight,
   tecnica: Target,
   altro: PenSquare,
-};
-
-const metricCategoryIcons: Record<string, LucideIcon> = {
-  prestazione: Trophy,
-  fisico: Weight,
-  recupero: Droplets,
-  test: Target,
-  altro: NotebookPen,
 };
 
 const defaultExerciseResult: ExerciseResultForm = {
@@ -439,6 +422,26 @@ export default function RegistroPage() {
   useEffect(() => {
     void fetchBlocks();
   }, []);
+
+  useEffect(() => {
+    setMetrics(prev => {
+      if (isTestOrRaceSession) {
+        if (prev.length === 0) {
+          return [
+            {
+              ...defaultMetric,
+              category: 'test',
+              metric_name: 'Prova 1',
+            },
+          ];
+        }
+
+        return prev.map(metric => ({ ...metric, category: 'test' }));
+      }
+
+      return [];
+    });
+  }, [isTestOrRaceSession]);
 
   async function fetchBlocks() {
     setLoadingBlocks(true);
@@ -757,7 +760,14 @@ export default function RegistroPage() {
   }
 
   function addMetric() {
-    setMetrics(prev => [...prev, { ...defaultMetric }]);
+    setMetrics(prev => [
+      ...prev,
+      {
+        ...defaultMetric,
+        category: isTestOrRaceSession ? 'test' : defaultMetric.category,
+        metric_name: isTestOrRaceSession ? `Prova ${prev.length + 1}` : '',
+      },
+    ]);
   }
 
   function handleMetricCategorySelect(index: number, category: string) {
@@ -765,38 +775,6 @@ export default function RegistroPage() {
       const copy = [...prev];
       copy[index] = { ...copy[index], category };
       return copy;
-    });
-  }
-
-  function handleAddMetricFromSuggestion(suggestion: MetricSuggestion) {
-    setMetrics(prev => {
-      const existingIndex = prev.findIndex(metric =>
-        metric.metric_name.trim().toLowerCase() === suggestion.metric_name.toLowerCase()
-      );
-
-      if (existingIndex !== -1) {
-        const copy = [...prev];
-        copy[existingIndex] = {
-          ...copy[existingIndex],
-          category: suggestion.category,
-          metric_target: suggestion.metric_target ?? copy[existingIndex].metric_target,
-          unit: suggestion.unit ?? copy[existingIndex].unit,
-          notes: suggestion.notes ?? copy[existingIndex].notes,
-        };
-        return copy;
-      }
-
-      return [
-        ...prev,
-        {
-          ...defaultMetric,
-          metric_name: suggestion.metric_name,
-          category: suggestion.category,
-          metric_target: suggestion.metric_target ?? '',
-          unit: suggestion.unit ?? '',
-          notes: suggestion.notes ?? '',
-        },
-      ];
     });
   }
 
@@ -1363,7 +1341,7 @@ export default function RegistroPage() {
             )}
 
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-3">
                 <Label className="text-xs font-semibold text-slate-600">Tipo di sessione</Label>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {sessionTypes.map(type => {
@@ -2016,8 +1994,24 @@ export default function RegistroPage() {
                       </button>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="space-y-4">
+                    {metrics.map((metric, index) => {
+                      const intensityNumber = Number(metric.intensity) || 0;
+                      return (
+                        <div key={index} className="rounded-3xl border border-slate-200 bg-white/70 p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                              <Activity className="h-4 w-4 text-slate-500" /> Prova #{index + 1}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeMetric(index)}
+                              className="inline-flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-600"
+                            >
+                              <Trash2 className="h-3 w-3" /> Rimuovi
+                            </button>
+                          </div>
 
               {metrics.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-6 text-center text-sm text-slate-500">

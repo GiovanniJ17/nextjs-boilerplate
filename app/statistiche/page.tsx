@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,7 @@ import {
   FolderKanban,
   Loader2,
   Medal,
+  RotateCcw,
   Sparkles,
   Target,
   TrendingUp,
@@ -132,11 +133,6 @@ export default function StatistichePage() {
   const [activeTab, setActiveTab] = useState<'base' | 'advanced' | 'insights'>('base');
   const [rangePreset, setRangePreset] = useState<string>('');
 
-  useEffect(() => {
-    void Promise.all([loadStats(), loadBlocks()]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   async function loadBlocks() {
     const { data } = await supabase.from('training_blocks').select('id, name').order('start_date', {
       ascending: false,
@@ -146,7 +142,7 @@ export default function StatistichePage() {
     }
   }
 
-  async function loadStats() {
+  const loadStats = useCallback(async () => {
     setLoading(true);
 
     let sessionQuery = supabase
@@ -335,9 +331,24 @@ export default function StatistichePage() {
     });
 
     setLoading(false);
-  }
+  }, [blockFilter, distanceFilter, fromDate, toDate, typeFilter]);
+
+  useEffect(() => {
+    void loadBlocks();
+  }, []);
+
+  useEffect(() => {
+    void loadStats();
+  }, [loadStats]);
 
   function applyRangePreset(key: string) {
+    if (rangePreset === key) {
+      setRangePreset('');
+      setFromDate('');
+      setToDate('');
+      return;
+    }
+
     const today = new Date();
     let start: Date | null = null;
 
@@ -372,7 +383,6 @@ export default function StatistichePage() {
     setTypeFilter('');
     setBlockFilter('');
     setRangePreset('');
-    void loadStats();
   }
 
   const tabs = useMemo(
@@ -508,8 +518,7 @@ export default function StatistichePage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs">
-            <span className="font-semibold text-slate-600">Intervallo rapido</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs">
             {rangePresets.map(preset => {
               const isActive = rangePreset === preset.key;
               return (
@@ -529,17 +538,6 @@ export default function StatistichePage() {
                 </button>
               );
             })}
-            <button
-              type="button"
-              onClick={() => {
-                setRangePreset('');
-                setFromDate('');
-                setToDate('');
-              }}
-              className="rounded-full border border-transparent px-3 py-1 font-medium text-slate-500 transition hover:border-slate-200 hover:bg-white"
-            >
-              Rimuovi preset
-            </button>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -640,11 +638,13 @@ export default function StatistichePage() {
           </div>
 
           <div className="flex items-center justify-end gap-2">
-            <Button type="button" variant="outline" onClick={resetFilters} className="rounded-full text-xs">
-              Reset
-            </Button>
-            <Button type="button" onClick={loadStats} className="rounded-full text-xs">
-              Applica filtri
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetFilters}
+              className="flex items-center gap-2 rounded-full text-xs"
+            >
+              <RotateCcw className="h-3.5 w-3.5" /> Reset
             </Button>
           </div>
         </CardContent>
