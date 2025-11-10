@@ -213,44 +213,82 @@ export default function StatistichePage() {
     const filteredExerciseIds = new Set(distanceFilteredExercises.map(exercise => exercise.id));
     const filteredResults = results.filter(result => result.exercise_id && filteredExerciseIds.has(result.exercise_id));
 
+    const distanceFilteredMetrics = metrics.filter(metric => {
+      if (distanceFilter === 'all') return true;
+      if (metric.distance_m == null) return false;
+      return matchesDistance(metric.distance_m, distanceFilter);
+    });
+
     const totalSessions = sessions.length;
-    const totalDistance = distanceFilteredExercises.reduce((sum, exercise) => {
+    const totalExerciseDistance = distanceFilteredExercises.reduce((sum, exercise) => {
       const distance = exercise.distance_m || 0;
       const sets = exercise.sets || 0;
       const repetitions = exercise.repetitions || 0;
       return sum + distance * sets * repetitions;
     }, 0);
+    const totalMetricDistance = distanceFilteredMetrics.reduce(
+      (sum, metric) => sum + (metric.distance_m ?? 0),
+      0
+    );
+    const totalDistance = totalExerciseDistance + totalMetricDistance;
     const avgDistancePerSession = totalSessions > 0 ? totalDistance / totalSessions : 0;
 
-    const intensityValues = distanceFilteredExercises
+    const exerciseIntensityValues = distanceFilteredExercises
       .map(exercise => exercise.intensity)
       .filter((value): value is number => typeof value === 'number');
+    const metricIntensityValues = distanceFilteredMetrics
+      .map(metric => metric.intensity)
+      .filter((value): value is number => typeof value === 'number');
+    const intensityValues = [...exerciseIntensityValues, ...metricIntensityValues];
     const avgIntensity = intensityValues.length
       ? intensityValues.reduce((sum, value) => sum + value, 0) / intensityValues.length
       : null;
 
-    const restValues = distanceFilteredExercises
+    const exerciseRestValues = distanceFilteredExercises
       .map(exercise => exercise.rest_between_sets_s)
       .filter((value): value is number => typeof value === 'number');
+    const metricRestValues = distanceFilteredMetrics
+      .map(metric => metric.recovery_post_s)
+      .filter((value): value is number => typeof value === 'number');
+    const restValues = [...exerciseRestValues, ...metricRestValues];
     const restAverage = restValues.length
       ? restValues.reduce((sum, value) => sum + value, 0) / restValues.length
       : null;
 
-    const times = filteredResults
-      .map(result => result.time_s)
-      .filter((value): value is number => typeof value === 'number' && !Number.isNaN(value));
+    type PerformanceEntry = { time: number; distance: number | null };
+
+    const exerciseById = new Map(distanceFilteredExercises.map(exercise => [exercise.id, exercise]));
+
+    const exercisePerformances: PerformanceEntry[] = [];
+    for (const result of filteredResults) {
+      if (typeof result.time_s !== 'number' || Number.isNaN(result.time_s)) continue;
+      const exercise = result.exercise_id ? exerciseById.get(result.exercise_id) : undefined;
+      exercisePerformances.push({
+        time: result.time_s,
+        distance: exercise?.distance_m ?? null,
+      });
+    }
+
+    const metricPerformances: PerformanceEntry[] = [];
+    for (const metric of distanceFilteredMetrics) {
+      if (typeof metric.time_s !== 'number' || Number.isNaN(metric.time_s)) continue;
+      metricPerformances.push({
+        time: metric.time_s,
+        distance: metric.distance_m ?? null,
+      });
+    }
+
+    const performances = [...exercisePerformances, ...metricPerformances];
+    const times = performances.map(performance => performance.time);
 
     let bestTime: number | null = null;
     let bestTimeDistance: number | null = null;
 
     if (times.length) {
       bestTime = Math.min(...times);
-      const bestResult = filteredResults.find(result => result.time_s === bestTime);
-      if (bestResult?.exercise_id) {
-        const exercise = distanceFilteredExercises.find(ex => ex.id === bestResult.exercise_id);
-        if (exercise?.distance_m) {
-          bestTimeDistance = exercise.distance_m;
-        }
+      const bestPerformance = performances.find(performance => performance.time === bestTime);
+      if (bestPerformance) {
+        bestTimeDistance = bestPerformance.distance ?? null;
       }
     }
 
@@ -258,19 +296,31 @@ export default function StatistichePage() {
 
     const metricsCount = metrics.length;
 
-    const highIntensitySessions = new Set(
-      distanceFilteredExercises
-        .filter(exercise => (exercise.intensity || 0) >= 8)
-        .map(exercise => exercise.session_id)
-        .filter((value): value is string => Boolean(value))
-    ).size;
+    const highIntensitySessionIds = new Set<string>();
+    distanceFilteredExercises.forEach(exercise => {
+      if ((exercise.intensity || 0) >= 8 && exercise.session_id) {
+        highIntensitySessionIds.add(exercise.session_id);
+      }
+    });
+    distanceFilteredMetrics.forEach(metric => {
+      if ((metric.intensity || 0) >= 8 && metric.session_id) {
+        highIntensitySessionIds.add(metric.session_id);
+      }
+    });
+    const highIntensitySessions = highIntensitySessionIds.size;
 
-    const lowIntensitySessions = new Set(
-      distanceFilteredExercises
-        .filter(exercise => (exercise.intensity || 0) <= 4)
-        .map(exercise => exercise.session_id)
-        .filter((value): value is string => Boolean(value))
-    ).size;
+    const lowIntensitySessionIds = new Set<string>();
+    distanceFilteredExercises.forEach(exercise => {
+      if ((exercise.intensity || 0) <= 4 && exercise.session_id) {
+        lowIntensitySessionIds.add(exercise.session_id);
+      }
+    });
+    distanceFilteredMetrics.forEach(metric => {
+      if ((metric.intensity || 0) <= 4 && metric.session_id) {
+        lowIntensitySessionIds.add(metric.session_id);
+      }
+    });
+    const lowIntensitySessions = lowIntensitySessionIds.size;
 
     const typeBreakdownMap = sessions.reduce<Record<string, number>>((acc, session) => {
       const key = session.type ?? 'Altro';
@@ -282,14 +332,11 @@ export default function StatistichePage() {
       .sort((a, b) => b.value - a.value);
 
     const pbMap = new Map<number, number>();
-    for (const result of filteredResults) {
-      if (!result.exercise_id || typeof result.time_s !== 'number') continue;
-      const exercise = distanceFilteredExercises.find(ex => ex.id === result.exercise_id);
-      const distance = exercise?.distance_m;
-      if (!distance) continue;
-      const existing = pbMap.get(distance);
-      if (existing == null || result.time_s < existing) {
-        pbMap.set(distance, result.time_s);
+    for (const performance of performances) {
+      if (performance.distance == null) continue;
+      const existing = pbMap.get(performance.distance);
+      if (existing == null || performance.time < existing) {
+        pbMap.set(performance.distance, performance.time);
       }
     }
     const pbByDistance = Array.from(pbMap.entries())
@@ -297,8 +344,12 @@ export default function StatistichePage() {
       .sort((a, b) => a.distance - b.distance);
 
     const insights: string[] = [];
-    if (bestTime && bestTimeDistance) {
-      insights.push(`PB sui ${bestTimeDistance}m: ${bestTime.toFixed(2)}s`);
+    if (bestTime != null) {
+      if (bestTimeDistance != null) {
+        insights.push(`PB sui ${bestTimeDistance}m: ${bestTime.toFixed(2)}s`);
+      } else {
+        insights.push(`Tempo migliore registrato: ${bestTime.toFixed(2)}s`);
+      }
     }
     if (avgIntensity) {
       insights.push(`Intensità media registrata: ${avgIntensity.toFixed(1)}/10`);
