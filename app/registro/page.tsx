@@ -12,8 +12,9 @@ import {
   Flame,
   FolderPlus,
   Gauge,
-  ListPlus,
   Loader2,
+  ListPlus,
+  RefreshCcw,
   MapPin,
   MoveRight,
   NotebookPen,
@@ -1331,7 +1332,12 @@ export default function RegistroPage() {
                     onClick={() => void fetchBlocks()}
                     className="gap-2 border-transparent bg-transparent text-xs text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-sky-600"
                   >
-                    <Loader2 className={cn('h-3.5 w-3.5', loadingBlocks ? 'animate-spin' : '')} /> Aggiorna elenco
+                    {loadingBlocks ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCcw className="h-3.5 w-3.5" />
+                    )}
+                    Aggiorna elenco
                   </Button>
                 </div>
               </div>
@@ -1512,31 +1518,35 @@ export default function RegistroPage() {
         </div>
 
         <div ref={sectionRefs.exercises} className="scroll-mt-24">
-          <div className="relative">
-            {isTestOrRaceSession && (
-              <div className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center rounded-3xl bg-white/80 p-6 text-center">
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-slate-700">
-                    Per test e gare compila solo la sezione "Metriche & Test"
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Questa scheda resta disponibile per gli allenamenti standard.
-                  </p>
+          {isTestOrRaceSession ? (
+            <Card className="border-none bg-slate-50/70 shadow-lg">
+              <CardHeader className="flex flex-col items-center gap-3 pb-4 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
+                  <Target className="h-6 w-6" />
                 </div>
-              </div>
-            )}
-            <Card
-              className={cn(
-                'border-none shadow-lg',
-                isTestOrRaceSession && 'pointer-events-none opacity-50'
-              )}
-            >
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
-                <ListPlus className="h-5 w-5 text-sky-600" /> Esercizi e risultati
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+                <CardTitle className="text-lg text-slate-800">
+                  Esercizi e risultati disabilitati
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-center text-sm text-slate-600">
+                <p>
+                  Per le sessioni di tipo <span className="font-semibold text-slate-700">test</span> o{' '}
+                  <span className="font-semibold text-slate-700">gara</span> focalizzati sulla sezione «Metriche &amp;
+                  Test».
+                </p>
+                <p className="text-xs text-slate-500">
+                  Questa scheda resta disponibile e completa quando registri allenamenti standard.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-none shadow-lg">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
+                  <ListPlus className="h-5 w-5 text-sky-600" /> Esercizi e risultati
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
               {disciplineDistribution.length > 0 && (
                 <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-slate-700">
@@ -2012,18 +2022,18 @@ export default function RegistroPage() {
               );
             })}
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={addExercise}
-              className="group flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-slate-300 py-4 text-slate-600 hover:border-sky-300 hover:bg-sky-50"
-            >
-              <PlusCircle className="h-4 w-4 transition group-hover:text-sky-600" />
-              Aggiungi un altro esercizio
-            </Button>
-            </CardContent>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addExercise}
+                className="group flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-slate-300 py-4 text-slate-600 hover:border-sky-300 hover:bg-sky-50"
+              >
+                <PlusCircle className="h-4 w-4 transition group-hover:text-sky-600" />
+                Aggiungi un altro esercizio
+              </Button>
+              </CardContent>
             </Card>
-          </div>
+          )}
         </div>
 
         <div ref={sectionRefs.metrics} className="scroll-mt-24">
