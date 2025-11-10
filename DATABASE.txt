@@ -1,6 +1,4 @@
--- ==========================================
 -- Estensione per UUID (se non già attiva)
--- ==========================================
 create extension if not exists "uuid-ossp";
 
 -- ==========================================
@@ -8,24 +6,25 @@ create extension if not exists "uuid-ossp";
 -- ==========================================
 create table training_blocks (
   id uuid primary key default uuid_generate_v4(),
-  name text not null,
+  name text not null,                 -- es: "Preparazione indoor Gennaio"
   start_date date not null,
   end_date date not null,
-  goal text,
+  goal text,                          -- es: "Migliorare velocità sui 60m"
   notes text,
   created_at timestamp with time zone default now()
 );
 
 -- ==========================================
--- 2. Sessioni di allenamento (giornate)
+-- 2. Sessioni giornaliere
 -- ==========================================
 create table training_sessions (
   id uuid primary key default uuid_generate_v4(),
   block_id uuid references training_blocks(id) on delete set null,
   date date not null,
-  type text check (type in ('pista', 'palestra', 'test', 'scarico', 'recupero', 'altro')),
-  phase text, -- es: accumulo, intensificazione, tapering, gara
+  type text check (type in ('pista', 'palestra', 'test', 'scarico', 'altro')),
+  title text,                         -- es: "Test 150m e 60m"
   location text,
+  phase text,                         -- es: "accumulo", "intensificazione", "gara"
   notes text,
   created_at timestamp with time zone default now()
 );
@@ -33,59 +32,24 @@ create table training_sessions (
 create index idx_training_sessions_date on training_sessions(date);
 
 -- ==========================================
--- 3. Esercizi (pista o palestra)
+-- 3. Dettagli esercizi (con risultati integrati)
 -- ==========================================
-create table exercises (
+create table training_exercises (
   id uuid primary key default uuid_generate_v4(),
   session_id uuid references training_sessions(id) on delete cascade,
-  name text not null,                          -- es: "Sprint 150m" o "Squat"
-  discipline_type text check (discipline_type in ('sprint', 'forza', 'mobilità', 'tecnica', 'altro')),
-  distance_m int,                              -- solo per lavori in pista
+  name text not null,                      -- es: "150m", "Squat", "3x100m"
+  category text check (category in ('sprint', 'forza', 'mobilità', 'tecnica', 'altro')),
   sets int default 1,
-  repetitions int default 1,
+  reps int default 1,
+  distance_m int,                          -- opzionale (solo se serve)
   rest_between_reps_s int,
   rest_between_sets_s int,
-  rest_after_exercise_s int,                   -- recupero dopo l’esercizio
   intensity numeric(3,1) check (intensity >= 0 and intensity <= 10),
-  effort_type text check (effort_type in ('basso', 'medio', 'alto', 'massimo')),
+  effort text check (effort in ('basso', 'medio', 'alto', 'massimo')),
+  time_s numeric(6,2),                     -- es: 10.34 (tempo di una ripetuta o media)
+  weight_kg numeric(6,2),                  -- per i lavori di forza
   notes text,
   created_at timestamp with time zone default now()
 );
 
-create index idx_exercises_session on exercises(session_id);
-
--- ==========================================
--- 4. Risultati esercizi (tempi, carichi, ecc.)
--- ==========================================
-create table exercise_results (
-  id uuid primary key default uuid_generate_v4(),
-  exercise_id uuid references exercises(id) on delete cascade,
-  attempt_number int default 1,                -- tentativo nella singola serie
-  repetition_number int,                       -- utile per distinguere ripetute (es: 100m #3 su 4)
-  time_s numeric(6,2),                         -- tempo in secondi
-  weight_kg numeric(6,2),                      -- carico usato in kg
-  rpe numeric(3,1) check (rpe >= 0 and rpe <= 10),
-  notes text,
-  created_at timestamp with time zone default now()
-);
-
-create index idx_results_exercise on exercise_results(exercise_id);
-
--- ==========================================
--- 5. Metriche generali (test, peso, prestazioni, ecc.)
--- ==========================================
-create table metrics (
-  id uuid primary key default uuid_generate_v4(),
-  date date not null,
-  metric_name text not null,                   -- es: "Peso corporeo", "Test 60m"
-  category text check (category in ('prestazione', 'fisico', 'recupero', 'test', 'altro')),
-  metric_target text,                          -- es: "100m", "Salto verticale"
-  value numeric(8,2) not null,
-  unit text,                                   -- es: "kg", "s", "cm"
-  session_id uuid references training_sessions(id) on delete set null,  -- collegamento opzionale
-  notes text,
-  created_at timestamp with time zone default now()
-);
-
-create index idx_metrics_date on metrics(date);
-create index idx_metrics_session on metrics(session_id);
+create index idx_exercises_session on training_exercises(session_id);
