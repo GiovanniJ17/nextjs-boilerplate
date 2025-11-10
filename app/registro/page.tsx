@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
@@ -197,6 +198,19 @@ const metricCategoryIcons: Record<string, LucideIcon> = {
   test: Target,
   altro: StickyNote,
 };
+
+function buildRangeBackground(value: string | number, min = 1, max = 10): CSSProperties {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  const safeMin = Number.isFinite(min) ? min : 0;
+  const safeMax = Number.isFinite(max) ? max : 1;
+  const range = Math.max(safeMax - safeMin, 1);
+  const clamped = Math.min(Math.max(Number.isFinite(parsed) ? parsed : safeMin, safeMin), safeMax);
+  const progress = ((clamped - safeMin) / range) * 100;
+
+  return {
+    background: `linear-gradient(to right, rgb(14 165 233) 0%, rgb(14 165 233) ${progress}%, rgb(226 232 240) ${progress}%, rgb(226 232 240) 100%)`,
+  };
+}
 
 const locationIcons: Record<string, LucideIcon> = {
   'pista-indoor': Activity,
@@ -1851,10 +1865,12 @@ export default function RegistroPage() {
                           type="range"
                           min={1}
                           max={10}
+                          step={1}
                           name="intensity"
                           value={exercise.intensity}
                           onChange={event => handleExerciseChange(index, event)}
-                          className="mt-2 w-full"
+                          className="range-input mt-2"
+                          style={buildRangeBackground(exercise.intensity)}
                         />
                         <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
                           <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-1 text-sky-700">
@@ -1901,6 +1917,11 @@ export default function RegistroPage() {
                         </button>
                       </div>
                     </div>
+
+                    <p className="mt-4 text-xs text-slate-500">
+                      Registra qui i tentativi dell'esercizio. Compila tempo e RPE per le ripetute in pista e usa carico e
+                      ripetizioni quando lavori in palestra: i campi non necessari possono rimanere vuoti.
+                    </p>
 
                     {highlightCards.length > 0 && (
                       <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
@@ -2002,74 +2023,111 @@ export default function RegistroPage() {
                               </div>
                             )}
 
-                            <div className="mt-3 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
-                            <div className="space-y-1">
-                              <Label className="text-[11px] text-slate-500">Tentativo</Label>
-                              <Input
-                                name="attempt_number"
-                                type="number"
-                                min={1}
-                                value={result.attempt_number}
-                                onChange={event => handleResultChange(index, resultIndex, event)}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-[11px] text-slate-500">Ripetizione</Label>
-                              <Input
-                                name="repetition_number"
-                                type="number"
-                                min={1}
-                                value={result.repetition_number}
-                                onChange={event => handleResultChange(index, resultIndex, event)}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-[11px] text-slate-500">Tempo (s)</Label>
-                              <Input
-                                name="time_s"
-                                type="number"
-                                step="0.01"
-                                min={0}
-                                value={result.time_s}
-                                onChange={event => handleResultChange(index, resultIndex, event)}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-[11px] text-slate-500">Carico (kg)</Label>
-                              <Input
-                                name="weight_kg"
-                                type="number"
-                                step="0.5"
-                                min={0}
-                                value={result.weight_kg}
-                                onChange={event => handleResultChange(index, resultIndex, event)}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-[11px] text-slate-500">RPE</Label>
-                              <Input
-                                name="rpe"
-                                type="number"
-                                step="0.1"
-                                min={0}
-                                max={10}
-                                value={result.rpe}
-                                onChange={event => handleResultChange(index, resultIndex, event)}
-                              />
-                            </div>
-                            <div className="space-y-1 md:col-span-3 xl:col-span-2">
-                              <Label className="text-[11px] text-slate-500">Note</Label>
-                              <Input
-                                name="notes"
-                                value={result.notes}
-                                onChange={event => handleResultChange(index, resultIndex, event)}
-                                placeholder="Condizioni, feedback..."
-                              />
+                            <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Identificatori</p>
+                                <p className="mt-1 text-[11px] text-slate-500">
+                                  Numeri di riferimento utili per distinguere tentativi su pista e serie in palestra.
+                                </p>
+                                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                  <div className="space-y-1">
+                                    <Label className="text-[11px] text-slate-500">Tentativo</Label>
+                                    <Input
+                                      name="attempt_number"
+                                      type="number"
+                                      min={1}
+                                      value={result.attempt_number}
+                                      onChange={event => handleResultChange(index, resultIndex, event)}
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[11px] text-slate-500">Ripetizione / serie</Label>
+                                    <Input
+                                      name="repetition_number"
+                                      type="number"
+                                      min={1}
+                                      value={result.repetition_number}
+                                      onChange={event => handleResultChange(index, resultIndex, event)}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Ripetute su pista</p>
+                                <p className="mt-1 text-[11px] text-slate-500">
+                                  Inserisci il tempo cronometrato e la percezione dello sforzo per ogni prova di corsa.
+                                </p>
+                                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                  <div className="space-y-1">
+                                    <Label className="text-[11px] text-slate-500">Tempo (s)</Label>
+                                    <Input
+                                      name="time_s"
+                                      type="number"
+                                      step="0.01"
+                                      min={0}
+                                      value={result.time_s}
+                                      onChange={event => handleResultChange(index, resultIndex, event)}
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[11px] text-slate-500">RPE</Label>
+                                    <Input
+                                      name="rpe"
+                                      type="number"
+                                      step="0.1"
+                                      min={0}
+                                      max={10}
+                                      value={result.rpe}
+                                      onChange={event => handleResultChange(index, resultIndex, event)}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Serie in palestra</p>
+                                <p className="mt-1 text-[11px] text-slate-500">
+                                  Registra il carico utilizzato per le sessioni di forza. Il numero di ripetizioni è indicato nel
+                                  pannello Identificatori.
+                                </p>
+                                <div className="mt-3 space-y-3">
+                                  <div className="space-y-1">
+                                    <Label className="text-[11px] text-slate-500">Carico (kg)</Label>
+                                    <Input
+                                      name="weight_kg"
+                                      type="number"
+                                      step="0.5"
+                                      min={0}
+                                      value={result.weight_kg}
+                                      onChange={event => handleResultChange(index, resultIndex, event)}
+                                    />
+                                  </div>
+                                  <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-3 py-2 text-[11px] text-slate-500">
+                                    Ripetizioni completate: <span className="font-semibold text-slate-700">{result.repetition_number || '—'}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Note e contesto</p>
+                                <p className="mt-1 text-[11px] text-slate-500">
+                                  Annotazioni rapide su condizioni, variazioni tecniche o feedback del coach.
+                                </p>
+                                <div className="mt-3 space-y-1">
+                                  <Label className="text-[11px] text-slate-500">Note</Label>
+                                  <Textarea
+                                    name="notes"
+                                    value={result.notes}
+                                    onChange={event => handleResultChange(index, resultIndex, event)}
+                                    placeholder="Condizioni, feedback, adattamenti..."
+                                  />
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
