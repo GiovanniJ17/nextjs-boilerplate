@@ -14,31 +14,34 @@ export function MainNav() {
   const pathname = usePathname();
 
   return (
-    <header className="animate-header sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
-      <div className="mx-auto flex max-w-5xl justify-center px-4 py-3">
-        <nav className="rounded-full border border-slate-200 bg-white/95 p-1 shadow-sm">
-          <ul className="flex gap-1 text-sm">
-            {tabs.map(tab => {
-              const active = pathname === tab.href;
+    <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/95 backdrop-blur-sm shadow-sm">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-center">
+          {/* Navigation */}
+          <nav className="flex items-center">
+            <ul className="flex items-center gap-1 rounded-lg bg-slate-100/80 p-1">
+              {tabs.map(tab => {
+                const active = pathname === tab.href;
 
-              return (
-                <li key={tab.href}>
-                  <Link
-                    href={tab.href}
-                    className={cn(
-                      "rounded-full px-4 py-1.5 transition-colors duration-200",
-                      active
-                        ? "bg-sky-600 text-white shadow-[0_14px_30px_-18px_rgba(14,165,233,0.8)]"
-                        : "text-slate-600 hover:bg-slate-100"
-                    )}
-                  >
-                    {tab.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+                return (
+                  <li key={tab.href}>
+                    <Link
+                      href={tab.href}
+                      className={cn(
+                        "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-all duration-200",
+                        active
+                          ? "bg-white text-sky-600 shadow-sm"
+                          : "text-slate-600 hover:bg-white/60 hover:text-slate-900"
+                      )}
+                    >
+                      {tab.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        </div>
       </div>
     </header>
   );
