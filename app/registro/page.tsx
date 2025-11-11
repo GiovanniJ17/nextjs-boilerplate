@@ -142,8 +142,8 @@ const disciplineTypes = [
 
 const metricCategories: MetricCategory[] = [
   {
-    value: 'gara',
-    label: 'Gara',
+    value: 'prestazione',
+    label: 'Prestazione',
     description: 'Cronometraggi ufficiali, piazzamenti e riferimenti di competizione.',
   },
   {
@@ -152,9 +152,19 @@ const metricCategories: MetricCategory[] = [
     description: 'Prove di valutazione interne con cronometro o sensori.',
   },
   {
-    value: 'massimale',
-    label: 'Massimale',
+    value: 'fisico',
+    label: 'Fisico',
     description: 'Valori di forza o potenza registrati in palestra come riferimento.',
+  },
+  {
+    value: 'recupero',
+    label: 'Recupero',
+    description: 'Indicatori di recupero post allenamento o gare impegnative.',
+  },
+  {
+    value: 'altro',
+    label: 'Altro',
+    description: 'Qualsiasi informazione extra collegata al focus della sessione.',
   },
 ];
 
@@ -176,9 +186,11 @@ const locationOptions = [
 ];
 
 const metricCategoryIcons: Record<string, LucideIcon> = {
-  gara: Trophy,
+  prestazione: Trophy,
   test: Target,
-  massimale: Gauge,
+  fisico: Gauge,
+  recupero: Wind,
+  altro: NotebookPen,
 };
 
 function buildRangeBackground(value: string | number, min = 1, max = 10): CSSProperties {
@@ -285,13 +297,13 @@ const metricPlaybook: Record<string, MetricSuggestion[]> = {
   test: [
     {
       metric_name: 'Test CMJ',
-      category: 'massimale',
+      category: 'fisico',
       unit: 'cm',
       hint: 'Collega i valori di forza esplosiva al ciclo di test.',
     },
     {
       metric_name: 'Tempo prova ufficiale',
-      category: 'gara',
+      category: 'prestazione',
       unit: 's',
       hint: 'Segna il riferimento cronometrico principale del test.',
     },
@@ -299,7 +311,7 @@ const metricPlaybook: Record<string, MetricSuggestion[]> = {
   gara: [
     {
       metric_name: 'Tempo ufficiale',
-      category: 'gara',
+      category: 'prestazione',
       unit: 's',
       hint: 'Registra il crono finale della gara.',
     },
@@ -313,7 +325,7 @@ const metricPlaybook: Record<string, MetricSuggestion[]> = {
   scarico: [
     {
       metric_name: 'HRV mattutina',
-      category: 'test',
+      category: 'recupero',
       unit: 'ms',
       hint: 'Controlla lo stato di recupero nei giorni di scarico.',
     },
@@ -321,7 +333,7 @@ const metricPlaybook: Record<string, MetricSuggestion[]> = {
   recupero: [
     {
       metric_name: 'Sensazione gambe',
-      category: 'test',
+      category: 'recupero',
       unit: '1-10',
       hint: 'Registra come rispondono le gambe dopo il lavoro in pista.',
     },
@@ -329,7 +341,7 @@ const metricPlaybook: Record<string, MetricSuggestion[]> = {
   altro: [
     {
       metric_name: 'Nota chiave',
-      category: 'test',
+      category: 'altro',
       hint: 'Qualsiasi informazione extra collegata al focus.',
     },
   ],
