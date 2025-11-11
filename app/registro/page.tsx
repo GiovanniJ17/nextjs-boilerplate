@@ -17,6 +17,7 @@ import {
   MapPin,
   MoveRight,
   NotebookPen,
+  Package,
   PenSquare,
   PlusCircle,
   RefreshCcw,
@@ -28,6 +29,7 @@ import {
   Trash2,
   Trophy,
   Wind,
+  X,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
@@ -56,7 +58,7 @@ type SessionFormState = {
 };
 
 type ExerciseResultForm = {
-  attempt_number: string;
+  set_number: string;  // Rinominato da attempt_number
   repetition_number: string;
   time_s: string;
   weight_kg: string;
@@ -72,10 +74,18 @@ type ExerciseForm = {
   repetitions: string;
   rest_between_reps_s: string;
   rest_between_sets_s: string;
-  rest_after_exercise_s: string;
   intensity: string;
   notes: string;
   results: ExerciseResultForm[];
+};
+
+type ExerciseBlockForm = {
+  id: string; // ID temporaneo per React keys
+  block_number: number;
+  name: string;
+  rest_after_block_s: string;
+  notes: string;
+  exercises: ExerciseForm[];
 };
 
 type MetricForm = {
@@ -224,7 +234,7 @@ const disciplineIcons: Record<string, LucideIcon> = {
 };
 
 const defaultExerciseResult: ExerciseResultForm = {
-  attempt_number: '1',
+  set_number: '1',
   repetition_number: '1',
   time_s: '',
   weight_kg: '',
@@ -240,10 +250,18 @@ const defaultExercise: ExerciseForm = {
   repetitions: '1',
   rest_between_reps_s: '',
   rest_between_sets_s: '',
-  rest_after_exercise_s: '',
   intensity: '6',
   notes: '',
   results: [],
+};
+
+const defaultExerciseBlock: ExerciseBlockForm = {
+  id: crypto.randomUUID(),
+  block_number: 1,
+  name: 'Blocco 1',
+  rest_after_block_s: '',
+  notes: '',
+  exercises: [{ ...defaultExercise }],
 };
 
 const defaultSession: SessionFormState = {
@@ -471,7 +489,7 @@ function groupResultsBySeries(results: ExerciseResultForm[]): ExerciseSeriesGrou
   const groupMap = new Map<number, ExerciseSeriesGroup['entries']>();
 
   results.forEach((result, index) => {
-    const seriesNumber = parseIntegerInput(result.attempt_number) ?? 1;
+    const seriesNumber = parseIntegerInput(result.set_number) ?? 1;
     const repetitionNumber = parseIntegerInput(result.repetition_number) ?? index + 1;
 
     if (!groupMap.has(seriesNumber)) {
@@ -501,7 +519,7 @@ function normalizeExerciseResults(results: ExerciseResultForm[]) {
     group.entries.forEach((entry, repIndex) => {
       normalized.push({
         ...entry.result,
-        attempt_number: String(groupIndex + 1),
+        set_number: String(groupIndex + 1),
         repetition_number: String(repIndex + 1),
       });
     });
@@ -512,7 +530,9 @@ function normalizeExerciseResults(results: ExerciseResultForm[]) {
 
 export default function RegistroPage() {
   const [sessionForm, setSessionForm] = useState<SessionFormState>(defaultSession);
-  const [exercises, setExercises] = useState<ExerciseForm[]>([{ ...defaultExercise }]);
+  const [exerciseBlocks, setExerciseBlocks] = useState<ExerciseBlockForm[]>([
+    { ...defaultExerciseBlock }
+  ]);
   const [metrics, setMetrics] = useState<MetricForm[]>([]);
   const [trainingBlocks, setTrainingBlocks] = useState<TrainingBlock[]>([]);
   const [loading, setLoading] = useState(false);
@@ -578,34 +598,42 @@ export default function RegistroPage() {
   }
 
   const volumePreview = useMemo(() => {
-    return exercises.reduce((acc, ex) => {
-      const distance = parseIntegerInput(ex.distance_m) || 0;
-      const sets = parseIntegerInput(ex.sets) || 0;
-      const reps = parseIntegerInput(ex.repetitions) || 0;
-      if (!distance || !sets || !reps) return acc;
-      return acc + distance * sets * reps;
+    return exerciseBlocks.reduce((blockAcc, block) => {
+      const blockVolume = block.exercises.reduce((exAcc, ex) => {
+        const distance = parseIntegerInput(ex.distance_m) || 0;
+        const sets = parseIntegerInput(ex.sets) || 0;
+        const reps = parseIntegerInput(ex.repetitions) || 0;
+        if (!distance || !sets || !reps) return exAcc;
+        return exAcc + distance * sets * reps;
+      }, 0);
+      return blockAcc + blockVolume;
     }, 0);
-  }, [exercises]);
+  }, [exerciseBlocks]);
 
   const totalResults = useMemo(() => {
-    return exercises.reduce((acc, ex) => acc + ex.results.length, 0);
-  }, [exercises]);
+    return exerciseBlocks.reduce((blockAcc, block) => {
+      const blockResults = block.exercises.reduce((exAcc, ex) => exAcc + ex.results.length, 0);
+      return blockAcc + blockResults;
+    }, 0);
+  }, [exerciseBlocks]);
 
   const disciplineDistribution = useMemo(() => {
     const counter = new Map<string, number>();
-    for (const exercise of exercises) {
-      const key = exercise.discipline_type || 'altro';
-      counter.set(key, (counter.get(key) ?? 0) + 1);
+    for (const block of exerciseBlocks) {
+      for (const exercise of block.exercises) {
+        const key = exercise.discipline_type || 'altro';
+        counter.set(key, (counter.get(key) ?? 0) + 1);
+      }
     }
 
-    const total = exercises.length || 1;
+    const total = exerciseBlocks.reduce((sum, block) => sum + block.exercises.length, 0) || 1;
     return Array.from(counter.entries()).map(([key, value]) => ({
       key,
       label: disciplineTypes.find(type => type.value === key)?.label ?? key,
       value,
       percentage: Math.round((value / total) * 100),
     }));
-  }, [exercises]);
+  }, [exerciseBlocks]);
 
   const metricSuggestions = useMemo(() => {
     if (isTestOrRaceSession) {
@@ -623,25 +651,29 @@ export default function RegistroPage() {
       }
     }
 
-    for (const exercise of exercises) {
-      const library = disciplineMetricPlaybook[exercise.discipline_type] ?? [];
-      for (const suggestion of library) {
-        const key = `${suggestion.metric_name}-${suggestion.category}`;
-        if (!collected.has(key)) {
-          collected.set(key, suggestion);
+    for (const block of exerciseBlocks) {
+      for (const exercise of block.exercises) {
+        const library = disciplineMetricPlaybook[exercise.discipline_type] ?? [];
+        for (const suggestion of library) {
+          const key = `${suggestion.metric_name}-${suggestion.category}`;
+          if (!collected.has(key)) {
+            collected.set(key, suggestion);
+          }
         }
       }
     }
 
     return Array.from(collected.values());
-  }, [exercises, isTestOrRaceSession, sessionForm.type]);
+  }, [exerciseBlocks, isTestOrRaceSession, sessionForm.type]);
 
   const stepProgress = useMemo<StepDefinition[]>(() => {
     const detailsComplete = Boolean(sessionForm.date && sessionForm.type && sessionForm.location);
     const exercisesComplete =
       isTestOrRaceSession ||
-      (exercises.length > 0 &&
-        exercises.every(ex => ex.name.trim() && ex.discipline_type && ex.sets && ex.repetitions));
+      (exerciseBlocks.length > 0 &&
+        exerciseBlocks.every(block => 
+          block.exercises.every(ex => ex.name.trim() && ex.discipline_type && ex.sets && ex.repetitions)
+        ));
     const metricsComplete = metrics.length === 0
       ? true
       : metrics.every(metric => {
@@ -682,16 +714,21 @@ export default function RegistroPage() {
     }
 
     return base;
-  }, [exercises, isTestOrRaceSession, metrics, sessionForm.date, sessionForm.location, sessionForm.type]);
+  }, [exerciseBlocks, isTestOrRaceSession, metrics, sessionForm.date, sessionForm.location, sessionForm.type]);
 
   const completedSteps = stepProgress.filter(step => step.status === 'done').length;
   const progressValue =
     stepProgress.length > 0 ? Math.round((completedSteps / stepProgress.length) * 100) : 0;
   const progressBarWidth = progressValue === 0 ? '6%' : `${progressValue}%`;
 
+  const totalExercises = useMemo(
+    () => exerciseBlocks.reduce((sum, block) => sum + block.exercises.length, 0),
+    [exerciseBlocks]
+  );
+
   const summaryStats = useMemo(
     () => [
-      { icon: Flag, label: 'Ripetute', value: exercises.length },
+      { icon: Flag, label: 'Ripetute', value: totalExercises },
       { icon: Timer, label: 'Tentativi', value: totalResults },
       {
         icon: Ruler,
@@ -700,7 +737,7 @@ export default function RegistroPage() {
       },
       { icon: NotebookPen, label: 'Metriche collegate', value: metrics.length },
     ],
-    [exercises.length, metrics.length, numberFormatter, totalResults, volumePreview]
+    [totalExercises, metrics.length, numberFormatter, totalResults, volumePreview]
   );
 
   function handleScrollToSection(section: StepKey) {
@@ -800,145 +837,224 @@ export default function RegistroPage() {
     clearError(name);
   }
 
+  // Block management functions
+  function addBlock() {
+    setExerciseBlocks(prev => {
+      const newBlockNumber = prev.length + 1;
+      return [
+        ...prev,
+        {
+          ...defaultExerciseBlock,
+          id: crypto.randomUUID(),
+          block_number: newBlockNumber,
+          name: `Blocco ${newBlockNumber}`,
+          exercises: [{ ...defaultExercise }],
+        },
+      ];
+    });
+  }
+
+  function removeBlock(blockId: string) {
+    setExerciseBlocks(prev => {
+      const filtered = prev.filter(b => b.id !== blockId);
+      // Rinumera i blocchi rimanenti
+      return filtered.map((block, idx) => ({
+        ...block,
+        block_number: idx + 1,
+        name: block.name.startsWith('Blocco ') ? `Blocco ${idx + 1}` : block.name,
+      }));
+    });
+  }
+
+  function handleBlockChange(
+    blockId: string,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) {
+    const { name, value } = e.target;
+    setExerciseBlocks(prev => {
+      return prev.map(block => {
+        if (block.id !== blockId) return block;
+        return { ...block, [name]: value };
+      });
+    });
+  }
+
+  // Exercise management functions (now work within blocks)
   function handleExerciseChange(
-    index: number,
+    blockId: string,
+    exerciseIndex: number,
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) {
     const { name, value } = e.target;
-    setExercises(prev => {
-      const copy = [...prev];
-      const next = { ...copy[index] };
-      if (name === 'intensity') {
-        const parsedValue = parseDecimalInput(value);
-        const clamped = Math.max(1, Math.min(10, parsedValue ?? 0));
-        next.intensity = String(clamped);
-      } else {
-        (next as Record<string, string | ExerciseResultForm[]>)[name] = value;
-      }
-      copy[index] = next;
-      return copy;
+    setExerciseBlocks(prev => {
+      return prev.map(block => {
+        if (block.id !== blockId) return block;
+        
+        const exercises = [...block.exercises];
+        const exercise = { ...exercises[exerciseIndex] };
+        
+        if (name === 'intensity') {
+          const parsedValue = parseDecimalInput(value);
+          const clamped = Math.max(1, Math.min(10, parsedValue ?? 0));
+          exercise.intensity = String(clamped);
+        } else {
+          (exercise as Record<string, string | ExerciseResultForm[]>)[name] = value;
+        }
+        
+        exercises[exerciseIndex] = exercise;
+        return { ...block, exercises };
+      });
     });
 
-    const errorKeyMap: Record<string, string | null> = {
-      name: `exercise-${index}-name`,
-      discipline_type: `exercise-${index}-discipline`,
-      sets: `exercise-${index}-sets`,
-      repetitions: `exercise-${index}-repetitions`,
-    };
-    const targetKey = errorKeyMap[name];
-    if (targetKey) {
-      clearError(targetKey);
-    }
+    clearError(`exercise-${blockId}-${exerciseIndex}-name`);
   }
 
-  function handleDisciplineSelect(index: number, value: string) {
-    setExercises(prev => {
-      const copy = [...prev];
-      const next = { ...copy[index], discipline_type: value };
-      copy[index] = next;
-      return copy;
+  function handleDisciplineSelect(blockId: string, exerciseIndex: number, value: string) {
+    setExerciseBlocks(prev => {
+      return prev.map(block => {
+        if (block.id !== blockId) return block;
+        
+        const exercises = [...block.exercises];
+        exercises[exerciseIndex] = { ...exercises[exerciseIndex], discipline_type: value };
+        return { ...block, exercises };
+      });
     });
-    clearError(`exercise-${index}-discipline`);
+    clearError(`exercise-${blockId}-${exerciseIndex}-discipline`);
   }
 
   function handleResultChange(
+    blockId: string,
     exerciseIndex: number,
     resultIndex: number,
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
     const { name, value } = e.target;
-    setExercises(prev => {
-      const copy = [...prev];
-      const ex = { ...copy[exerciseIndex] };
-      const results = [...ex.results];
-      const target = { ...results[resultIndex] } as Record<string, string>;
-      target[name] = value;
-      results[resultIndex] = target as ExerciseResultForm;
-      ex.results = results;
-      copy[exerciseIndex] = ex;
-      return copy;
-    });
-  }
-
-  function addExercise() {
-    setExercises(prev => [
-      ...prev,
-      { ...defaultExercise },
-    ]);
-  }
-
-  function removeExercise(index: number) {
-    setExercises(prev => prev.filter((_, i) => i !== index));
-  }
-
-  function addSeries(exerciseIndex: number) {
-    setExercises(prev => {
-      const copy = [...prev];
-      const ex = { ...copy[exerciseIndex] };
-      const normalized = normalizeExerciseResults(ex.results);
-      const currentSeries = groupResultsBySeries(normalized);
-      const nextSeriesNumber = currentSeries.length + 1;
-      const repetitionsTarget = Math.max(parseIntegerInput(ex.repetitions) ?? 1, 1);
-
-      const newEntries = Array.from({ length: repetitionsTarget }, (_, repIndex) => ({
-        ...defaultExerciseResult,
-        attempt_number: String(nextSeriesNumber),
-        repetition_number: String(repIndex + 1),
-      }));
-
-      ex.results = [...normalized, ...newEntries];
-      copy[exerciseIndex] = ex;
-      return copy;
-    });
-  }
-
-  function addRepetition(exerciseIndex: number, seriesNumber: number) {
-    setExercises(prev => {
-      const copy = [...prev];
-      const ex = { ...copy[exerciseIndex] };
-      const normalized = normalizeExerciseResults(ex.results);
-      const groups = groupResultsBySeries(normalized);
-      const targetGroup = groups.find(group => group.seriesNumber === seriesNumber);
-
-      if (!targetGroup) {
-        return prev;
-      }
-
-      const nextRepNumber = targetGroup.entries.length + 1;
-      const newResult: ExerciseResultForm = {
-        ...defaultExerciseResult,
-        attempt_number: String(seriesNumber),
-        repetition_number: String(nextRepNumber),
-      };
-
-      ex.results = normalizeExerciseResults([...normalized, newResult]);
-      copy[exerciseIndex] = ex;
-      return copy;
-    });
-  }
-
-  function removeResult(exerciseIndex: number, resultIndex: number) {
-    setExercises(prev => {
-      const copy = [...prev];
-      const ex = { ...copy[exerciseIndex] };
-      const filtered = ex.results.filter((_, i) => i !== resultIndex);
-      ex.results = normalizeExerciseResults(filtered);
-      copy[exerciseIndex] = ex;
-      return copy;
-    });
-  }
-
-  function removeSeries(exerciseIndex: number, seriesNumber: number) {
-    setExercises(prev => {
-      const copy = [...prev];
-      const ex = { ...copy[exerciseIndex] };
-      const filtered = ex.results.filter(result => {
-        const attempt = parseIntegerInput(result.attempt_number) ?? 0;
-        return attempt !== seriesNumber;
+    setExerciseBlocks(prev => {
+      return prev.map(block => {
+        if (block.id !== blockId) return block;
+        
+        const exercises = [...block.exercises];
+        const exercise = { ...exercises[exerciseIndex] };
+        const results = [...exercise.results];
+        const target = { ...results[resultIndex] } as Record<string, string>;
+        target[name] = value;
+        results[resultIndex] = target as ExerciseResultForm;
+        exercise.results = results;
+        exercises[exerciseIndex] = exercise;
+        
+        return { ...block, exercises };
       });
-      ex.results = normalizeExerciseResults(filtered);
-      copy[exerciseIndex] = ex;
-      return copy;
+    });
+  }
+
+  function addExercise(blockId: string) {
+    setExerciseBlocks(prev => {
+      return prev.map(block => {
+        if (block.id !== blockId) return block;
+        return {
+          ...block,
+          exercises: [...block.exercises, { ...defaultExercise }],
+        };
+      });
+    });
+  }
+
+  function removeExercise(blockId: string, exerciseIndex: number) {
+    setExerciseBlocks(prev => {
+      return prev.map(block => {
+        if (block.id !== blockId) return block;
+        return {
+          ...block,
+          exercises: block.exercises.filter((_, i) => i !== exerciseIndex),
+        };
+      });
+    });
+  }
+
+  function addSeries(blockId: string, exerciseIndex: number) {
+    setExerciseBlocks(prev => {
+      return prev.map(block => {
+        if (block.id !== blockId) return block;
+        
+        const exercises = [...block.exercises];
+        const exercise = { ...exercises[exerciseIndex] };
+        const normalized = normalizeExerciseResults(exercise.results);
+        const currentSeries = groupResultsBySeries(normalized);
+        const nextSeriesNumber = currentSeries.length + 1;
+        const repetitionsTarget = Math.max(parseIntegerInput(exercise.repetitions) ?? 1, 1);
+
+        const newEntries = Array.from({ length: repetitionsTarget }, (_, repIndex) => ({
+          ...defaultExerciseResult,
+          set_number: String(nextSeriesNumber),
+          repetition_number: String(repIndex + 1),
+        }));
+
+        exercise.results = [...normalized, ...newEntries];
+        exercises[exerciseIndex] = exercise;
+        return { ...block, exercises };
+      });
+    });
+  }
+
+  function addRepetition(blockId: string, exerciseIndex: number, seriesNumber: number) {
+    setExerciseBlocks(prev => {
+      return prev.map(block => {
+        if (block.id !== blockId) return block;
+        
+        const exercises = [...block.exercises];
+        const exercise = { ...exercises[exerciseIndex] };
+        const normalized = normalizeExerciseResults(exercise.results);
+        const groups = groupResultsBySeries(normalized);
+        const targetGroup = groups.find(group => group.seriesNumber === seriesNumber);
+
+        if (!targetGroup) {
+          return block;
+        }
+
+        const nextRepNumber = targetGroup.entries.length + 1;
+        const newResult: ExerciseResultForm = {
+          ...defaultExerciseResult,
+          set_number: String(seriesNumber),
+          repetition_number: String(nextRepNumber),
+        };
+
+        exercise.results = normalizeExerciseResults([...normalized, newResult]);
+        exercises[exerciseIndex] = exercise;
+        return { ...block, exercises };
+      });
+    });
+  }
+
+  function removeResult(blockId: string, exerciseIndex: number, resultIndex: number) {
+    setExerciseBlocks(prev => {
+      return prev.map(block => {
+        if (block.id !== blockId) return block;
+        
+        const exercises = [...block.exercises];
+        const exercise = { ...exercises[exerciseIndex] };
+        const filtered = exercise.results.filter((_, i) => i !== resultIndex);
+        exercise.results = normalizeExerciseResults(filtered);
+        exercises[exerciseIndex] = exercise;
+        return { ...block, exercises };
+      });
+    });
+  }
+
+  function removeSeries(blockId: string, exerciseIndex: number, seriesNumber: number) {
+    setExerciseBlocks(prev => {
+      return prev.map(block => {
+        if (block.id !== blockId) return block;
+        
+        const exercises = [...block.exercises];
+        const exercise = { ...exercises[exerciseIndex] };
+        const filtered = exercise.results.filter(result => {
+          const setNum = parseIntegerInput(result.set_number) ?? 0;
+          return setNum !== seriesNumber;
+        });
+        exercise.results = normalizeExerciseResults(filtered);
+        exercises[exerciseIndex] = exercise;
+        return { ...block, exercises };
+      });
     });
   }
 
@@ -1012,28 +1128,32 @@ export default function RegistroPage() {
     setMetrics(prev => prev.filter((_, i) => i !== index));
   }
 
-  function duplicateLastSeries(exerciseIndex: number) {
-    setExercises(prev => {
-      const copy = [...prev];
-      const ex = { ...copy[exerciseIndex] };
-      const normalized = normalizeExerciseResults(ex.results);
-      const groups = groupResultsBySeries(normalized);
+  function duplicateLastSeries(blockId: string, exerciseIndex: number) {
+    setExerciseBlocks(prev => {
+      return prev.map(block => {
+        if (block.id !== blockId) return block;
+        
+        const exercises = [...block.exercises];
+        const exercise = { ...exercises[exerciseIndex] };
+        const normalized = normalizeExerciseResults(exercise.results);
+        const groups = groupResultsBySeries(normalized);
 
-      if (groups.length === 0) {
-        return prev;
-      }
+        if (groups.length === 0) {
+          return block;
+        }
 
-      const lastGroup = groups[groups.length - 1];
-      const nextSeriesNumber = groups.length + 1;
-      const duplicatedResults = lastGroup.entries.map(entry => ({
-        ...entry.result,
-        attempt_number: String(nextSeriesNumber),
-        repetition_number: String(entry.repetitionNumber),
-      }));
+        const lastGroup = groups[groups.length - 1];
+        const nextSeriesNumber = groups.length + 1;
+        const duplicatedResults = lastGroup.entries.map(entry => ({
+          ...entry.result,
+          set_number: String(nextSeriesNumber),
+          repetition_number: String(entry.repetitionNumber),
+        }));
 
-      ex.results = normalizeExerciseResults([...normalized, ...duplicatedResults]);
-      copy[exerciseIndex] = ex;
-      return copy;
+        exercise.results = normalizeExerciseResults([...normalized, ...duplicatedResults]);
+        exercises[exerciseIndex] = exercise;
+        return { ...block, exercises };
+      });
     });
   }
 
@@ -1045,11 +1165,14 @@ export default function RegistroPage() {
     if (!sessionForm.location) validation.location = 'Indica il luogo della sessione';
 
     if (!isTestOrRaceSession) {
-      exercises.forEach((ex, index) => {
-        if (!ex.name.trim()) validation[`exercise-${index}-name`] = 'Nome obbligatorio';
-        if (!ex.discipline_type) validation[`exercise-${index}-discipline`] = 'Seleziona la disciplina';
-        if (!ex.sets) validation[`exercise-${index}-sets`] = 'Inserisci le serie';
-        if (!ex.repetitions) validation[`exercise-${index}-repetitions`] = 'Inserisci le ripetizioni';
+      exerciseBlocks.forEach((block) => {
+        block.exercises.forEach((ex, index) => {
+          const errorPrefix = `exercise-${block.id}-${index}`;
+          if (!ex.name.trim()) validation[`${errorPrefix}-name`] = 'Nome obbligatorio';
+          if (!ex.discipline_type) validation[`${errorPrefix}-discipline`] = 'Seleziona la disciplina';
+          if (!ex.sets) validation[`${errorPrefix}-sets`] = 'Inserisci le serie';
+          if (!ex.repetitions) validation[`${errorPrefix}-repetitions`] = 'Inserisci le ripetizioni';
+        });
       });
     }
 
@@ -1127,8 +1250,8 @@ export default function RegistroPage() {
       }
       
       if (!isTestOrRaceSession) {
-        const exerciseErrors = exercises.some((ex, idx) => 
-          !ex.name.trim() || !ex.discipline_type || !ex.sets || !ex.repetitions
+        const exerciseErrors = exerciseBlocks.some(block =>
+          block.exercises.some(ex => !ex.name.trim() || !ex.discipline_type || !ex.sets || !ex.repetitions)
         );
         if (exerciseErrors) {
           missingFields.push('Ripetute e risultati');
@@ -1136,7 +1259,7 @@ export default function RegistroPage() {
         }
       }
       
-      const metricErrors = metrics.some((metric, idx) => {
+      const metricErrors = metrics.some((metric) => {
         if (!metric.metric_name.trim()) return false;
         if (isTestOrRaceSession) {
           return !metric.distance_m || !metric.time_s;
@@ -1188,56 +1311,79 @@ export default function RegistroPage() {
       }
 
       if (!isTestOrRaceSession) {
-        for (const ex of exercises) {
-          const intensityNumber = parseDecimalInput(ex.intensity);
-          const effortType = mapIntensityToEffort(Number.isFinite(intensityNumber) ? intensityNumber : null);
-
-          const { data: insertedExercise, error: exerciseError } = await supabase
-            .from('exercises')
+        // Inserisci i blocchi di esercizi
+        for (const block of exerciseBlocks) {
+          const { data: insertedBlock, error: blockError } = await supabase
+            .from('exercise_blocks')
             .insert([
               {
                 session_id: session.id,
-                name: ex.name,
-                discipline_type: ex.discipline_type,
-                distance_m: parseIntegerInput(ex.distance_m),
-                sets: parseIntegerInput(ex.sets),
-                repetitions: parseIntegerInput(ex.repetitions),
-                rest_between_reps_s: parseIntegerInput(ex.rest_between_reps_s),
-                rest_between_sets_s: parseIntegerInput(ex.rest_between_sets_s),
-                rest_after_exercise_s: parseIntegerInput(ex.rest_after_exercise_s),
-                intensity: parseDecimalInput(ex.intensity),
-                effort_type: effortType,
-                notes: ex.notes || null,
+                block_number: block.block_number,
+                name: block.name,
+                rest_after_block_s: parseIntegerInput(block.rest_after_block_s),
+                notes: block.notes || null,
               },
             ])
             .select()
             .single();
 
-          if (exerciseError || !insertedExercise) {
-            throw exerciseError ?? new Error('Errore inserimento esercizio');
+          if (blockError || !insertedBlock) {
+            throw blockError ?? new Error('Errore inserimento blocco esercizi');
           }
 
-          for (const [idx, res] of ex.results.entries()) {
-            const hasValues = [res.time_s, res.weight_kg, res.rpe, res.notes].some(
-              value => Boolean(value && value.trim())
-            );
+          // Inserisci gli esercizi di questo blocco
+          for (const [exerciseIdx, ex] of block.exercises.entries()) {
+            const intensityNumber = parseDecimalInput(ex.intensity);
+            const effortType = mapIntensityToEffort(Number.isFinite(intensityNumber) ? intensityNumber : null);
 
-            if (!hasValues) continue;
+            const { data: insertedExercise, error: exerciseError } = await supabase
+              .from('exercises')
+              .insert([
+                {
+                  block_id: insertedBlock.id,
+                  exercise_number: exerciseIdx + 1,
+                  name: ex.name,
+                  discipline_type: ex.discipline_type,
+                  distance_m: parseIntegerInput(ex.distance_m),
+                  sets: parseIntegerInput(ex.sets),
+                  repetitions: parseIntegerInput(ex.repetitions),
+                  rest_between_reps_s: parseIntegerInput(ex.rest_between_reps_s),
+                  rest_between_sets_s: parseIntegerInput(ex.rest_between_sets_s),
+                  intensity: parseDecimalInput(ex.intensity),
+                  effort_type: effortType,
+                  notes: ex.notes || null,
+                },
+              ])
+              .select()
+              .single();
 
-            const { error: resultError } = await supabase.from('exercise_results').insert([
-              {
-                exercise_id: insertedExercise.id,
-                attempt_number: parseIntegerInput(res.attempt_number) ?? idx + 1,
-                repetition_number: parseIntegerInput(res.repetition_number),
-                time_s: parseDecimalInput(res.time_s),
-                weight_kg: parseDecimalInput(res.weight_kg),
-                rpe: parseDecimalInput(res.rpe),
-                notes: res.notes || null,
-              },
-            ]);
+            if (exerciseError || !insertedExercise) {
+              throw exerciseError ?? new Error('Errore inserimento esercizio');
+            }
 
-            if (resultError) {
-              throw resultError;
+            // Inserisci i risultati dell'esercizio
+            for (const [idx, res] of ex.results.entries()) {
+              const hasValues = [res.time_s, res.weight_kg, res.rpe, res.notes].some(
+                value => Boolean(value && value.trim())
+              );
+
+              if (!hasValues) continue;
+
+              const { error: resultError } = await supabase.from('exercise_results').insert([
+                {
+                  exercise_id: insertedExercise.id,
+                  set_number: parseIntegerInput(res.set_number) ?? idx + 1,
+                  repetition_number: parseIntegerInput(res.repetition_number),
+                  time_s: parseDecimalInput(res.time_s),
+                  weight_kg: parseDecimalInput(res.weight_kg),
+                  rpe: parseDecimalInput(res.rpe),
+                  notes: res.notes || null,
+                },
+              ]);
+
+              if (resultError) {
+                throw resultError;
+              }
             }
           }
         }
@@ -1280,7 +1426,13 @@ export default function RegistroPage() {
         description: 'La sessione è stata aggiunta allo storico.',
       });
       setSessionForm(defaultSession);
-      setExercises([{ ...defaultExercise, results: [{ ...defaultExerciseResult }] }]);
+      setExerciseBlocks([
+        {
+          ...defaultExerciseBlock,
+          id: crypto.randomUUID(),
+          exercises: [{ ...defaultExercise, results: [{ ...defaultExerciseResult }] }],
+        },
+      ]);
       setMetrics([]);
       setErrors({});
       setUsingCustomLocation(false);
@@ -1809,7 +1961,60 @@ export default function RegistroPage() {
                 </div>
               )}
 
-              {exercises.map((exercise, index) => {
+              {exerciseBlocks.map((block) => (
+                <div key={block.id} className="space-y-6">
+                  {/* Block Header */}
+                  <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/50 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-5 w-5 text-sky-600" />
+                        <Input
+                          value={block.name}
+                          onChange={(e) => handleBlockChange(block.id, e)}
+                          name="name"
+                          placeholder="Nome blocco"
+                          className="h-8 w-48 border-sky-200 bg-white text-sm font-semibold"
+                        />
+                      </div>
+                      {exerciseBlocks.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeBlock(block.id)}
+                          className="h-8 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <Label className="text-xs text-slate-600">Recupero dopo blocco (sec)</Label>
+                        <Input
+                          type="number"
+                          value={block.rest_after_block_s}
+                          onChange={(e) => handleBlockChange(block.id, e)}
+                          name="rest_after_block_s"
+                          placeholder="Es: 180"
+                          className="h-9"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-slate-600">Note blocco</Label>
+                        <Input
+                          value={block.notes}
+                          onChange={(e) => handleBlockChange(block.id, e)}
+                          name="notes"
+                          placeholder="Es: Velocità massimale"
+                          className="h-9"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Exercises in this block */}
+                  {block.exercises.map((exercise, index) => {
                 const DisciplineIcon = disciplineIcons[exercise.discipline_type] ?? Flag;
                 const intensityNumber = parseDecimalInput(exercise.intensity);
                 const effortType = mapIntensityToEffort(intensityNumber);
@@ -1928,10 +2133,10 @@ export default function RegistroPage() {
                         <p className="text-xs text-slate-500">{exercise.name || 'Dettagli ripetuta'}</p>
                       </div>
                     </div>
-                    {exercises.length > 1 && (
+                    {block.exercises.length > 1 && (
                       <button
                         type="button"
-                        onClick={() => removeExercise(index)}
+                        onClick={() => removeExercise(block.id, index)}
                         className="inline-flex items-center gap-1 rounded-full border border-red-200 px-3 py-1 text-xs font-medium text-red-500 transition hover:bg-red-50"
                       >
                         <Trash2 className="h-3 w-3" /> Rimuovi
@@ -1945,9 +2150,9 @@ export default function RegistroPage() {
                       <Input
                         name="name"
                         value={exercise.name}
-                        onChange={event => handleExerciseChange(index, event)}
+                        onChange={event => handleExerciseChange(block.id, index, event)}
                         placeholder="Es. 4×60m blocchi, 3×150m progressivi"
-                        className={cn(errors[`exercise-${index}-name`] && 'border-red-500')}
+                        className={cn(errors[`exercise-${block.id}-${index}-name`] && 'border-red-500')}
                       />
                     </div>
 
@@ -1961,7 +2166,7 @@ export default function RegistroPage() {
                             <button
                               key={type.value}
                               type="button"
-                              onClick={() => handleDisciplineSelect(index, type.value)}
+                              onClick={() => handleDisciplineSelect(block.id, index, type.value)}
                               className={cn(
                                 'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition',
                                 isActive
@@ -1988,7 +2193,7 @@ export default function RegistroPage() {
                         type="number"
                         min={0}
                         value={exercise.distance_m}
-                        onChange={event => handleExerciseChange(index, event)}
+                        onChange={event => handleExerciseChange(block.id, index, event)}
                         placeholder="Es. 150"
                       />
                     </div>
@@ -2000,8 +2205,8 @@ export default function RegistroPage() {
                         type="number"
                         min={0}
                         value={exercise.sets}
-                        onChange={event => handleExerciseChange(index, event)}
-                        className={cn(errors[`exercise-${index}-sets`] && 'border-red-500')}
+                        onChange={event => handleExerciseChange(block.id, index, event)}
+                        className={cn(errors[`exercise-${block.id}-${index}-sets`] && 'border-red-500')}
                       />
                     </div>
 
@@ -2012,8 +2217,8 @@ export default function RegistroPage() {
                         type="number"
                         min={0}
                         value={exercise.repetitions}
-                        onChange={event => handleExerciseChange(index, event)}
-                        className={cn(errors[`exercise-${index}-repetitions`] && 'border-red-500')}
+                        onChange={event => handleExerciseChange(block.id, index, event)}
+                        className={cn(errors[`exercise-${block.id}-${index}-repetitions`] && 'border-red-500')}
                       />
                     </div>
 
@@ -2024,7 +2229,7 @@ export default function RegistroPage() {
                         type="number"
                         min={0}
                         value={exercise.rest_between_reps_s}
-                        onChange={event => handleExerciseChange(index, event)}
+                        onChange={event => handleExerciseChange(block.id, index, event)}
                         placeholder="60"
                       />
                     </div>
@@ -2036,20 +2241,8 @@ export default function RegistroPage() {
                         type="number"
                         min={0}
                         value={exercise.rest_between_sets_s}
-                        onChange={event => handleExerciseChange(index, event)}
+                        onChange={event => handleExerciseChange(block.id, index, event)}
                         placeholder="180"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label className="text-xs font-semibold text-slate-600">Recupero finale (s)</Label>
-                      <Input
-                        name="rest_after_exercise_s"
-                        type="number"
-                        min={0}
-                        value={exercise.rest_after_exercise_s}
-                        onChange={event => handleExerciseChange(index, event)}
-                        placeholder="300"
                       />
                     </div>
 
@@ -2063,7 +2256,7 @@ export default function RegistroPage() {
                           step={1}
                           name="intensity"
                           value={exercise.intensity}
-                          onChange={event => handleExerciseChange(index, event)}
+                          onChange={event => handleExerciseChange(block.id, index, event)}
                           className="range-input mt-2"
                           style={buildRangeBackground(exercise.intensity)}
                         />
@@ -2114,7 +2307,7 @@ export default function RegistroPage() {
                     <Textarea
                       name="notes"
                       value={exercise.notes}
-                      onChange={event => handleExerciseChange(index, event)}
+                      onChange={event => handleExerciseChange(block.id, index, event)}
                       placeholder="Dettagli su esecuzione, appunti tecnici, feedback..."
                     />
                   </div>
@@ -2127,7 +2320,7 @@ export default function RegistroPage() {
                         <div className="flex flex-wrap items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => duplicateLastSeries(index)}
+                            onClick={() => duplicateLastSeries(block.id, index)}
                             className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100"
                             disabled={seriesGroups.length === 0}
                           >
@@ -2135,7 +2328,7 @@ export default function RegistroPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => addSeries(index)}
+                            onClick={() => addSeries(block.id, index)}
                             className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
                           >
                             <ListPlus className="h-3 w-3" /> Aggiungi serie
@@ -2189,7 +2382,7 @@ export default function RegistroPage() {
                           </div>
                           <button
                             type="button"
-                            onClick={() => addSeries(index)}
+                            onClick={() => addSeries(block.id, index)}
                             className="mt-4 inline-flex items-center gap-2 rounded-full bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700"
                           >
                             <PlusCircle className="h-3 w-3" /> Aggiungi la prima serie
@@ -2207,14 +2400,14 @@ export default function RegistroPage() {
                                 <div className="flex flex-wrap items-center gap-2">
                                   <button
                                     type="button"
-                                    onClick={() => addRepetition(index, group.seriesNumber)}
+                                    onClick={() => addRepetition(block.id, index, group.seriesNumber)}
                                     className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
                                   >
                                     <ListPlus className="h-3 w-3" /> Aggiungi ripetizione
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => removeSeries(index, group.seriesNumber)}
+                                    onClick={() => removeSeries(block.id, index, group.seriesNumber)}
                                     className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-medium text-rose-500 transition hover:bg-rose-50"
                                   >
                                     <Trash2 className="h-3 w-3" /> Rimuovi serie
@@ -2282,7 +2475,7 @@ export default function RegistroPage() {
                                                 step="0.01"
                                                 min={0}
                                                 value={entry.result.time_s}
-                                                onChange={event => handleResultChange(index, entry.resultIndex, event)}
+                                                onChange={event => handleResultChange(block.id, index, entry.resultIndex, event)}
                                               />
                                               {isBestTime && (
                                                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
@@ -2299,7 +2492,7 @@ export default function RegistroPage() {
                                                 step="0.5"
                                                 min={0}
                                                 value={entry.result.weight_kg}
-                                                onChange={event => handleResultChange(index, entry.resultIndex, event)}
+                                                onChange={event => handleResultChange(block.id, index, entry.resultIndex, event)}
                                               />
                                               {numericRecovery == null && exercise.rest_between_reps_s && (
                                                 <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
@@ -2317,7 +2510,7 @@ export default function RegistroPage() {
                                                 min={0}
                                                 max={10}
                                                 value={entry.result.rpe}
-                                                onChange={event => handleResultChange(index, entry.resultIndex, event)}
+                                                onChange={event => handleResultChange(block.id, index, entry.resultIndex, event)}
                                               />
                                               {isEasiestRpe && (
                                                 <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-700">
@@ -2330,7 +2523,7 @@ export default function RegistroPage() {
                                             <Textarea
                                               name="notes"
                                               value={entry.result.notes}
-                                              onChange={event => handleResultChange(index, entry.resultIndex, event)}
+                                              onChange={event => handleResultChange(block.id, index, entry.resultIndex, event)}
                                               placeholder="Condizioni, feedback, adattamenti..."
                                               rows={2}
                                             />
@@ -2338,7 +2531,7 @@ export default function RegistroPage() {
                                           <td className="px-3 py-3 align-top text-right">
                                             <button
                                               type="button"
-                                              onClick={() => removeResult(index, entry.resultIndex)}
+                                              onClick={() => removeResult(block.id, index, entry.resultIndex)}
                                               className="inline-flex items-center gap-1 text-xs font-medium text-rose-500 hover:text-rose-600"
                                             >
                                               <Trash2 className="h-3 w-3" /> Rimuovi
@@ -2359,14 +2552,28 @@ export default function RegistroPage() {
               );
             })}
 
+                  {/* Add Exercise to Block Button */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => addExercise(block.id)}
+                    className="group flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-slate-300 py-3 text-sm text-slate-600 hover:border-sky-300 hover:bg-sky-50"
+                  >
+                    <PlusCircle className="h-4 w-4 transition group-hover:text-sky-600" />
+                    Aggiungi esercizio al blocco
+                  </Button>
+                </div>
+              ))}
+
+              {/* Add New Block Button */}
               <Button
                 type="button"
                 variant="outline"
-                onClick={addExercise}
-                className="group flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-slate-300 py-4 text-slate-600 hover:border-sky-300 hover:bg-sky-50"
+                onClick={addBlock}
+                className="group flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-sky-300 bg-sky-50/50 py-4 text-sky-700 hover:border-sky-400 hover:bg-sky-100"
               >
-                <PlusCircle className="h-4 w-4 transition group-hover:text-sky-600" />
-                Aggiungi un altro blocco di ripetute
+                <Package className="h-5 w-5 transition group-hover:text-sky-600" />
+                Aggiungi nuovo blocco di ripetute
               </Button>
               </CardContent>
             </Card>
