@@ -85,9 +85,18 @@ type SessionRow = {
   block_id: string | null;
 };
 
-type ExerciseRow = {
+type ExerciseBlockRow = {
   id: string;
   session_id: string | null;
+  block_number: number | null;
+  name: string | null;
+  rest_after_block_s: number | null;
+};
+
+type ExerciseRow = {
+  id: string;
+  block_id: string | null;
+  exercise_number: number | null;
   discipline_type: string | null;
   distance_m: number | null;
   sets: number | null;
@@ -209,13 +218,33 @@ export default function StatistichePage() {
     const sessionIds = sessions.map(session => session.id);
 
     let exercises: ExerciseRow[] = [];
+    let blocks: ExerciseBlockRow[] = [];
+    const blockIdToSessionId = new Map<string, string>();
+    
     if (sessionIds.length > 0) {
-      const { data: exercisesData } = await supabase
-        .from('exercises')
-        .select('id, session_id, discipline_type, distance_m, sets, repetitions, intensity, rest_between_sets_s')
-        .in('session_id', sessionIds);
-      if (exercisesData) {
-        exercises = exercisesData as ExerciseRow[];
+      const { data: blocksData } = await supabase
+        .from('exercise_blocks')
+        .select('id, session_id, block_number, name, rest_after_block_s')
+        .in('session_id', sessionIds)
+        .order('block_number', { ascending: true });
+      
+      if (blocksData && blocksData.length > 0) {
+        blocks = blocksData as ExerciseBlockRow[];
+        blocks.forEach(block => {
+          if (block.session_id) {
+            blockIdToSessionId.set(block.id, block.session_id);
+          }
+        });
+        
+        const blockIds = blocks.map(block => block.id);
+        const { data: exercisesData } = await supabase
+          .from('exercises')
+          .select('id, block_id, exercise_number, discipline_type, distance_m, sets, repetitions, intensity, rest_between_sets_s')
+          .in('block_id', blockIds)
+          .order('exercise_number', { ascending: true });
+        if (exercisesData) {
+          exercises = exercisesData as ExerciseRow[];
+        }
       }
     }
 
@@ -340,8 +369,9 @@ export default function StatistichePage() {
 
     const highIntensitySessionIds = new Set<string>();
     distanceFilteredExercises.forEach(exercise => {
-      if ((exercise.intensity || 0) >= 8 && exercise.session_id) {
-        highIntensitySessionIds.add(exercise.session_id);
+      if ((exercise.intensity || 0) >= 8 && exercise.block_id) {
+        const sessionId = blockIdToSessionId.get(exercise.block_id);
+        if (sessionId) highIntensitySessionIds.add(sessionId);
       }
     });
     distanceFilteredMetrics.forEach(metric => {
@@ -353,8 +383,9 @@ export default function StatistichePage() {
 
     const lowIntensitySessionIds = new Set<string>();
     distanceFilteredExercises.forEach(exercise => {
-      if ((exercise.intensity || 0) <= 4 && exercise.session_id) {
-        lowIntensitySessionIds.add(exercise.session_id);
+      if ((exercise.intensity || 0) <= 4 && exercise.block_id) {
+        const sessionId = blockIdToSessionId.get(exercise.block_id);
+        if (sessionId) lowIntensitySessionIds.add(sessionId);
       }
     });
     distanceFilteredMetrics.forEach(metric => {
@@ -430,7 +461,10 @@ export default function StatistichePage() {
       weekData.sessions.add(session.id);
       
       // Calcola volume per questa sessione
-      const sessionExercises = distanceFilteredExercises.filter(ex => ex.session_id === session.id);
+      const sessionExercises = distanceFilteredExercises.filter(ex => {
+        if (!ex.block_id) return false;
+        return blockIdToSessionId.get(ex.block_id) === session.id;
+      });
       const sessionVolume = sessionExercises.reduce((sum, ex) => {
         return sum + (ex.distance_m || 0) * (ex.sets || 0) * (ex.repetitions || 0);
       }, 0);
@@ -458,8 +492,9 @@ export default function StatistichePage() {
       // Trova la data associata alla performance
       let perfDate = '';
       const exercise = exerciseById.get(performance.time.toString()); // Questo è un workaround
-      if (exercise?.session_id) {
-        const session = sessions.find(s => s.id === exercise.session_id);
+      if (exercise?.block_id) {
+        const sessionId = blockIdToSessionId.get(exercise.block_id);
+        const session = sessions.find(s => s.id === sessionId);
         if (session?.date) perfDate = session.date;
       }
       
@@ -583,28 +618,37 @@ export default function StatistichePage() {
       if (prevSessions && prevSessions.length > 0) {
         const prevSessionIds = prevSessions.map((s: any) => s.id);
         
-        const { data: prevExercises } = await supabase
-          .from('exercises')
-          .select('distance_m, sets, repetitions, intensity')
+        const { data: prevBlocks } = await supabase
+          .from('exercise_blocks')
+          .select('id')
           .in('session_id', prevSessionIds);
 
-        if (prevExercises) {
-          const prevVolume = (prevExercises as any[]).reduce((sum, ex) => 
-            sum + (ex.distance_m || 0) * (ex.sets || 0) * (ex.repetitions || 0), 0
-          );
+        if (prevBlocks && prevBlocks.length > 0) {
+          const prevBlockIds = (prevBlocks as any[]).map(b => b.id);
           
-          const prevIntensities = (prevExercises as any[])
-            .map(ex => ex.intensity)
-            .filter((v): v is number => typeof v === 'number');
-          const prevAvgIntensity = prevIntensities.length
-            ? prevIntensities.reduce((sum, v) => sum + v, 0) / prevIntensities.length
-            : 0;
+          const { data: prevExercises } = await supabase
+            .from('exercises')
+            .select('distance_m, sets, repetitions, intensity')
+            .in('block_id', prevBlockIds);
 
-          comparisonPreviousPeriod = {
-            sessions: prevSessions.length,
-            volume: prevVolume,
-            avgIntensity: prevAvgIntensity,
-          };
+          if (prevExercises) {
+            const prevVolume = (prevExercises as any[]).reduce((sum, ex) => 
+              sum + (ex.distance_m || 0) * (ex.sets || 0) * (ex.repetitions || 0), 0
+            );
+            
+            const prevIntensities = (prevExercises as any[])
+              .map(ex => ex.intensity)
+              .filter((v): v is number => typeof v === 'number');
+            const prevAvgIntensity = prevIntensities.length
+              ? prevIntensities.reduce((sum, v) => sum + v, 0) / prevIntensities.length
+              : 0;
+
+            comparisonPreviousPeriod = {
+              sessions: prevSessions.length,
+              volume: prevVolume,
+              avgIntensity: prevAvgIntensity,
+            };
+          }
         }
       }
     }
@@ -618,7 +662,10 @@ export default function StatistichePage() {
       
       const sessionPerformances = performances.filter(p => {
         // Trova se questa performance appartiene a questa sessione
-        const exercise = Array.from(exerciseById.values()).find(ex => ex.session_id === session.id);
+        const exercise = Array.from(exerciseById.values()).find(ex => {
+          if (!ex.block_id) return false;
+          return blockIdToSessionId.get(ex.block_id) === session.id;
+        });
         return exercise != null;
       });
 
