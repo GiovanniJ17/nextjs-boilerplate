@@ -1113,9 +1113,55 @@ export default function RegistroPage() {
 
   async function handleSubmit() {
     if (!validateForms()) {
-      notifyError('Controlla i campi evidenziati', {
-        description: 'Alcuni dati obbligatori non sono ancora completi.',
+      const missingFields: string[] = [];
+      let firstErrorSection: StepKey | null = null;
+      
+      // Verifica quali sezioni hanno errori
+      if (!sessionForm.date || !sessionForm.type || !sessionForm.location) {
+        const missing = [];
+        if (!sessionForm.date) missing.push('Data');
+        if (!sessionForm.type) missing.push('Tipo di sessione');
+        if (!sessionForm.location) missing.push('Luogo');
+        missingFields.push(`Dettagli sessione: ${missing.join(', ')}`);
+        if (!firstErrorSection) firstErrorSection = 'details';
+      }
+      
+      if (!isTestOrRaceSession) {
+        const exerciseErrors = exercises.some((ex, idx) => 
+          !ex.name.trim() || !ex.discipline_type || !ex.sets || !ex.repetitions
+        );
+        if (exerciseErrors) {
+          missingFields.push('Ripetute e risultati');
+          if (!firstErrorSection) firstErrorSection = 'exercises';
+        }
+      }
+      
+      const metricErrors = metrics.some((metric, idx) => {
+        if (!metric.metric_name.trim()) return false;
+        if (isTestOrRaceSession) {
+          return !metric.distance_m || !metric.time_s;
+        }
+        return !metric.value;
       });
+      
+      if (metricErrors) {
+        missingFields.push('Metriche & Test');
+        if (!firstErrorSection) firstErrorSection = 'metrics';
+      }
+      
+      const detailMessage = missingFields.length > 0 
+        ? `Completa: ${missingFields.join(' • ')}`
+        : 'Alcuni dati obbligatori non sono ancora completi.';
+      
+      notifyError('Controlla i campi evidenziati', {
+        description: detailMessage,
+      });
+      
+      // Scroll alla prima sezione con errori
+      if (firstErrorSection) {
+        handleScrollToSection(firstErrorSection);
+      }
+      
       return;
     }
 
