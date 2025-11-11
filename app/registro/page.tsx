@@ -1287,9 +1287,38 @@ export default function RegistroPage() {
       setCustomLocation('');
       setShowBlockForm(false);
     } catch (error) {
-      console.error(error);
+      console.error('Errore salvataggio:', error);
+      
+      // Estrai informazioni dettagliate dall'errore
+      let errorMessage = 'Riprova più tardi o verifica la connessione.';
+      
+      if (error && typeof error === 'object') {
+        const dbError = error as any;
+        
+        // Errori comuni di Supabase
+        if (dbError.message) {
+          console.error('Dettaglio errore:', dbError.message);
+          
+          // Errori di validazione o constraint del database
+          if (dbError.code === '23505') {
+            errorMessage = 'Questa sessione è già stata registrata.';
+          } else if (dbError.code === '23503') {
+            errorMessage = 'Riferimento non valido. Verifica che il blocco selezionato esista.';
+          } else if (dbError.code === '23502') {
+            errorMessage = 'Alcuni campi obbligatori del database sono mancanti.';
+          } else if (dbError.message.includes('JWT') || dbError.message.includes('auth')) {
+            errorMessage = 'Sessione scaduta. Ricarica la pagina e riprova.';
+          } else if (dbError.message.includes('Network') || dbError.message.includes('fetch')) {
+            errorMessage = 'Errore di connessione. Verifica la tua connessione internet.';
+          } else {
+            // Mostra il messaggio di errore originale se disponibile
+            errorMessage = `Errore database: ${dbError.message}`;
+          }
+        }
+      }
+      
       notifyError('Si è verificato un errore durante il salvataggio', {
-        description: 'Riprova più tardi o verifica la connessione.',
+        description: errorMessage,
       });
     } finally {
       setLoading(false);
