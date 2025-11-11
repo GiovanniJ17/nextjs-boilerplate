@@ -32,35 +32,52 @@ create table training_sessions (
 create index idx_training_sessions_date on training_sessions(date);
 
 -- ==========================================
--- 3. Dettagli esercizi (con risultati integrati)
+-- 3. Blocchi di esercizi (gruppi di esercizi in sequenza)
+-- ==========================================
+create table exercise_blocks (
+  id uuid primary key default uuid_generate_v4(),
+  session_id uuid references training_sessions(id) on delete cascade,
+  block_number int not null,              -- ordine del blocco nella sessione (1, 2, 3...)
+  name text,                              -- es: "Riscaldamento", "Parte principale", "Serie velocità"
+  rest_after_block_s int,                 -- recupero dopo questo blocco (prima del prossimo)
+  notes text,
+  created_at timestamp with time zone default now()
+);
+
+create index idx_exercise_blocks_session on exercise_blocks(session_id);
+create index idx_exercise_blocks_order on exercise_blocks(session_id, block_number);
+
+-- ==========================================
+-- 4. Dettagli esercizi (all'interno dei blocchi)
 -- ==========================================
 create table exercises (
   id uuid primary key default uuid_generate_v4(),
-  session_id uuid references training_sessions(id) on delete cascade,
-  name text not null,                      -- es: "150m", "Squat", "3x100m"
+  block_id uuid references exercise_blocks(id) on delete cascade,
+  exercise_number int not null,            -- ordine dell'esercizio nel blocco (1, 2, 3...)
+  name text not null,                      -- es: "3x80m", "Squat", "100m"
   discipline_type text check (discipline_type in ('accelerazioni', 'partenze', 'allunghi', 'resistenza', 'tecnica', 'mobilità')),
   distance_m int,
   sets int default 1,
   repetitions int default 1,
-  rest_between_reps_s int,
-  rest_between_sets_s int,
-  rest_after_exercise_s int,
+  rest_between_reps_s int,                 -- recupero tra ripetizioni dentro la serie
+  rest_between_sets_s int,                 -- recupero tra serie
   intensity numeric(3,1) check (intensity >= 0 and intensity <= 10),
   effort_type text check (effort_type in ('basso', 'medio', 'alto', 'massimo')),
   notes text,
   created_at timestamp with time zone default now()
 );
 
-create index idx_exercises_session on exercises(session_id);
+create index idx_exercises_block on exercises(block_id);
+create index idx_exercises_order on exercises(block_id, exercise_number);
 
 -- ==========================================
--- 4. Risultati puntuali degli esercizi
+-- 5. Risultati puntuali degli esercizi
 -- ==========================================
 create table exercise_results (
   id uuid primary key default uuid_generate_v4(),
   exercise_id uuid references exercises(id) on delete cascade,
-  attempt_number int,
-  repetition_number int,
+  set_number int,                          -- numero della serie (1, 2, 3...)
+  repetition_number int,                   -- numero della ripetizione (1, 2, 3...)
   time_s numeric(6,2),
   weight_kg numeric(6,2),
   rpe numeric(3,1) check (rpe >= 0 and rpe <= 10),
@@ -69,9 +86,10 @@ create table exercise_results (
 );
 
 create index idx_results_exercise on exercise_results(exercise_id);
+create index idx_results_order on exercise_results(exercise_id, set_number, repetition_number);
 
 -- ==========================================
--- 5. Metriche, test e gare associati alla sessione
+-- 6. Metriche, test e gare associati alla sessione
 -- ==========================================
 create table metrics (
   id uuid primary key default uuid_generate_v4(),
