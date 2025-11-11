@@ -17,11 +17,37 @@ import {
   Sparkles,
   Target,
   TrendingUp,
+  TrendingDown,
+  Calendar,
+  Clock,
+  Zap,
+  AlertTriangle,
+  CheckCircle2,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  LineChart,
+  Line,
+  BarChart as RechartsBarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  Area,
+  AreaChart,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 
 const distanceOptions = [
   { value: 'all', label: 'Tutte le distanze' },
@@ -103,6 +129,22 @@ type StatsSnapshot = {
   typeBreakdown: { label: string; value: number }[];
   pbByDistance: { distance: number; time: number }[];
   insights: string[];
+  // Nuovi campi per analisi avanzate
+  weeklyVolume: { week: string; volume: number; sessions: number }[];
+  timeProgressionByDistance: { [distance: number]: { date: string; time: number }[] };
+  intensityDistribution: { range: string; count: number }[];
+  avgSpeed: number | null;
+  trainingDensity: number;
+  workload: number;
+  optimalRecovery: number | null;
+  improvementTrend: number | null;
+  comparisonPreviousPeriod: {
+    sessions: number;
+    volume: number;
+    avgIntensity: number;
+  } | null;
+  performanceByDayOfWeek: { day: string; avgTime: number | null; count: number }[];
+  alerts: { type: 'warning' | 'info' | 'success'; message: string }[];
 };
 
 function matchesDistance(distance: number | null, filter: string) {
@@ -130,7 +172,7 @@ export default function StatistichePage() {
   const [blocks, setBlocks] = useState<TrainingBlock[]>([]);
   const [stats, setStats] = useState<StatsSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'base' | 'advanced' | 'insights'>('base');
+  const [activeTab, setActiveTab] = useState<'base' | 'graphs' | 'advanced' | 'insights'>('base');
   const [rangePreset, setRangePreset] = useState<string>('');
 
   async function loadBlocks() {
@@ -364,6 +406,297 @@ export default function StatistichePage() {
       insights.push('Prevalenza di sedute ad alta intensità rispetto a quelle leggere');
     }
 
+    // ============================================
+    // NUOVI CALCOLI PER ANALISI AVANZATE
+    // ============================================
+
+    // 1. Volume settimanale
+    const weeklyVolumeMap = new Map<string, { volume: number; sessions: Set<string> }>();
+    sessions.forEach(session => {
+      if (!session.date) return;
+      const date = new Date(session.date);
+      // Calcola il lunedì della settimana
+      const monday = new Date(date);
+      const day = monday.getDay();
+      const diff = monday.getDate() - day + (day === 0 ? -6 : 1);
+      monday.setDate(diff);
+      const weekKey = monday.toISOString().split('T')[0];
+      
+      if (!weeklyVolumeMap.has(weekKey)) {
+        weeklyVolumeMap.set(weekKey, { volume: 0, sessions: new Set() });
+      }
+      
+      const weekData = weeklyVolumeMap.get(weekKey)!;
+      weekData.sessions.add(session.id);
+      
+      // Calcola volume per questa sessione
+      const sessionExercises = distanceFilteredExercises.filter(ex => ex.session_id === session.id);
+      const sessionVolume = sessionExercises.reduce((sum, ex) => {
+        return sum + (ex.distance_m || 0) * (ex.sets || 0) * (ex.repetitions || 0);
+      }, 0);
+      weekData.volume += sessionVolume;
+    });
+
+    const weeklyVolume = Array.from(weeklyVolumeMap.entries())
+      .map(([week, data]) => ({
+        week: new Date(week).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
+        volume: data.volume,
+        sessions: data.sessions.size,
+      }))
+      .sort((a, b) => new Date(a.week).getTime() - new Date(b.week).getTime())
+      .slice(-8); // Ultime 8 settimane
+
+    // 2. Progressione tempi per distanza (per grafici)
+    const timeProgressionByDistance: { [distance: number]: { date: string; time: number }[] } = {};
+    
+    for (const performance of performances) {
+      if (performance.distance == null) continue;
+      if (!timeProgressionByDistance[performance.distance]) {
+        timeProgressionByDistance[performance.distance] = [];
+      }
+      
+      // Trova la data associata alla performance
+      let perfDate = '';
+      const exercise = exerciseById.get(performance.time.toString()); // Questo è un workaround
+      if (exercise?.session_id) {
+        const session = sessions.find(s => s.id === exercise.session_id);
+        if (session?.date) perfDate = session.date;
+      }
+      
+      if (perfDate) {
+        timeProgressionByDistance[performance.distance].push({
+          date: perfDate,
+          time: performance.time,
+        });
+      }
+    }
+
+    // Ordina per data
+    Object.keys(timeProgressionByDistance).forEach(distance => {
+      timeProgressionByDistance[Number(distance)].sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+    });
+
+    // 3. Distribuzione intensità
+    const intensityRanges = [
+      { range: '1-3 (Leggero)', min: 1, max: 3 },
+      { range: '4-6 (Medio)', min: 4, max: 6 },
+      { range: '7-8 (Alto)', min: 7, max: 8 },
+      { range: '9-10 (Massimo)', min: 9, max: 10 },
+    ];
+
+    const intensityDistribution = intensityRanges.map(range => ({
+      range: range.range,
+      count: intensityValues.filter(v => v >= range.min && v <= range.max).length,
+    }));
+
+    // 4. Velocità media (m/s)
+    const speedCalculations = performances
+      .filter(p => p.distance && p.time)
+      .map(p => p.distance! / p.time);
+    const avgSpeed = speedCalculations.length
+      ? speedCalculations.reduce((sum, s) => sum + s, 0) / speedCalculations.length
+      : null;
+
+    // 5. Densità allenamento (sessioni per settimana)
+    const dateRange = sessions.reduce((range, s) => {
+      if (!s.date) return range;
+      const date = new Date(s.date).getTime();
+      return {
+        min: range.min ? Math.min(range.min, date) : date,
+        max: range.max ? Math.max(range.max, date) : date,
+      };
+    }, { min: 0, max: 0 });
+
+    const weeks = dateRange.min && dateRange.max
+      ? Math.max(1, (dateRange.max - dateRange.min) / (7 * 24 * 60 * 60 * 1000))
+      : 1;
+    const trainingDensity = totalSessions / weeks;
+
+    // 6. Carico di lavoro (volume × intensità media)
+    const workload = avgIntensity ? (totalDistance * avgIntensity) / 10 : 0;
+
+    // 7. Recupero ottimale (recupero medio delle migliori performance)
+    const topPerformances = performances
+      .filter(p => p.time && p.time < (avgTime || Infinity))
+      .slice(0, 10); // Top 10 performance
+
+    const topPerformanceRecoveries: number[] = [];
+    topPerformances.forEach(perf => {
+      const exercise = Array.from(exerciseById.values()).find(ex => {
+        const exResults = filteredResults.filter(r => r.exercise_id === ex.id);
+        return exResults.some(r => r.time_s === perf.time);
+      });
+      if (exercise?.rest_between_sets_s) {
+        topPerformanceRecoveries.push(exercise.rest_between_sets_s);
+      }
+    });
+
+    const optimalRecovery = topPerformanceRecoveries.length
+      ? topPerformanceRecoveries.reduce((sum, r) => sum + r, 0) / topPerformanceRecoveries.length
+      : null;
+
+    // 8. Trend di miglioramento (% miglioramento PB nelle ultime settimane)
+    let improvementTrend: number | null = null;
+    if (pbByDistance.length > 0 && timeProgressionByDistance) {
+      const improvementPercentages: number[] = [];
+      
+      Object.entries(timeProgressionByDistance).forEach(([distance, progression]) => {
+        if (progression.length >= 2) {
+          const recent = progression.slice(-3); // Ultime 3 performance
+          const first = recent[0].time;
+          const last = recent[recent.length - 1].time;
+          const improvement = ((first - last) / first) * 100;
+          if (!isNaN(improvement)) improvementPercentages.push(improvement);
+        }
+      });
+
+      if (improvementPercentages.length > 0) {
+        improvementTrend = improvementPercentages.reduce((sum, p) => sum + p, 0) / improvementPercentages.length;
+      }
+    }
+
+    // 9. Confronto con periodo precedente
+    let comparisonPreviousPeriod: StatsSnapshot['comparisonPreviousPeriod'] = null;
+    if (fromDate && toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      const periodDays = Math.ceil((to.getTime() - from.getTime()) / (24 * 60 * 60 * 1000));
+      
+      const prevFrom = new Date(from);
+      prevFrom.setDate(from.getDate() - periodDays);
+      const prevTo = new Date(from);
+      prevTo.setDate(from.getDate() - 1);
+
+      let prevQuery = supabase
+        .from('training_sessions')
+        .select('id, date')
+        .gte('date', prevFrom.toISOString().split('T')[0])
+        .lte('date', prevTo.toISOString().split('T')[0]);
+
+      if (typeFilter) prevQuery = prevQuery.eq('type', typeFilter);
+      if (blockFilter) prevQuery = prevQuery.eq('block_id', blockFilter);
+
+      const { data: prevSessions } = await prevQuery;
+      
+      if (prevSessions && prevSessions.length > 0) {
+        const prevSessionIds = prevSessions.map((s: any) => s.id);
+        
+        const { data: prevExercises } = await supabase
+          .from('exercises')
+          .select('distance_m, sets, repetitions, intensity')
+          .in('session_id', prevSessionIds);
+
+        if (prevExercises) {
+          const prevVolume = (prevExercises as any[]).reduce((sum, ex) => 
+            sum + (ex.distance_m || 0) * (ex.sets || 0) * (ex.repetitions || 0), 0
+          );
+          
+          const prevIntensities = (prevExercises as any[])
+            .map(ex => ex.intensity)
+            .filter((v): v is number => typeof v === 'number');
+          const prevAvgIntensity = prevIntensities.length
+            ? prevIntensities.reduce((sum, v) => sum + v, 0) / prevIntensities.length
+            : 0;
+
+          comparisonPreviousPeriod = {
+            sessions: prevSessions.length,
+            volume: prevVolume,
+            avgIntensity: prevAvgIntensity,
+          };
+        }
+      }
+    }
+
+    // 10. Performance per giorno della settimana
+    const performanceByDay = new Map<number, { times: number[]; count: number }>();
+    
+    sessions.forEach(session => {
+      if (!session.date) return;
+      const dayOfWeek = new Date(session.date).getDay();
+      
+      const sessionPerformances = performances.filter(p => {
+        // Trova se questa performance appartiene a questa sessione
+        const exercise = Array.from(exerciseById.values()).find(ex => ex.session_id === session.id);
+        return exercise != null;
+      });
+
+      if (!performanceByDay.has(dayOfWeek)) {
+        performanceByDay.set(dayOfWeek, { times: [], count: 0 });
+      }
+
+      const dayData = performanceByDay.get(dayOfWeek)!;
+      dayData.count += 1;
+      sessionPerformances.forEach(p => {
+        if (p.time) dayData.times.push(p.time);
+      });
+    });
+
+    const dayNames = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
+    const performanceByDayOfWeek = Array.from(performanceByDay.entries())
+      .map(([day, data]) => ({
+        day: dayNames[day],
+        avgTime: data.times.length ? data.times.reduce((sum, t) => sum + t, 0) / data.times.length : null,
+        count: data.count,
+      }))
+      .sort((a, b) => dayNames.indexOf(a.day) - dayNames.indexOf(b.day));
+
+    // 11. Alert e suggerimenti intelligenti
+    const alerts: StatsSnapshot['alerts'] = [];
+
+    // Alert sovrallenamento
+    if (trainingDensity > 5) {
+      alerts.push({
+        type: 'warning',
+        message: `Stai allenandoti ${trainingDensity.toFixed(1)} volte a settimana. Considera di includere più giorni di recupero.`,
+      });
+    }
+
+    // Alert intensità troppo alta
+    const highIntensityPercentage = (highIntensitySessions / totalSessions) * 100;
+    if (highIntensityPercentage > 70) {
+      alerts.push({
+        type: 'warning',
+        message: `${highIntensityPercentage.toFixed(0)}% delle sessioni sono ad alta intensità. Bilancia con sedute più leggere.`,
+      });
+    }
+
+    // Congratulazioni miglioramento
+    if (improvementTrend && improvementTrend > 2) {
+      alerts.push({
+        type: 'success',
+        message: `Ottimo! I tuoi tempi stanno migliorando in media del ${improvementTrend.toFixed(1)}%. Continua così!`,
+      });
+    }
+
+    // Suggerimento recupero
+    if (optimalRecovery && restAverage && Math.abs(restAverage - optimalRecovery) > 60) {
+      alerts.push({
+        type: 'info',
+        message: `Le tue migliori performance hanno recuperi medi di ${Math.round(optimalRecovery)}s. Attuale: ${Math.round(restAverage)}s.`,
+      });
+    }
+
+    // Confronto periodo precedente
+    if (comparisonPreviousPeriod) {
+      const volumeChange = ((totalDistance - comparisonPreviousPeriod.volume) / comparisonPreviousPeriod.volume) * 100;
+      if (Math.abs(volumeChange) > 20) {
+        alerts.push({
+          type: volumeChange > 0 ? 'info' : 'warning',
+          message: `Volume ${volumeChange > 0 ? 'aumentato' : 'diminuito'} del ${Math.abs(volumeChange).toFixed(0)}% rispetto al periodo precedente.`,
+        });
+      }
+    }
+
+    // Densità troppo bassa
+    if (trainingDensity < 2 && totalSessions > 0) {
+      alerts.push({
+        type: 'info',
+        message: `Stai allenandoti solo ${trainingDensity.toFixed(1)} volte a settimana. Considera di aumentare la frequenza.`,
+      });
+    }
+
     setStats({
       totalSessions,
       totalDistance,
@@ -379,6 +712,18 @@ export default function StatistichePage() {
       typeBreakdown,
       pbByDistance,
       insights,
+      // Nuove metriche
+      weeklyVolume,
+      timeProgressionByDistance,
+      intensityDistribution,
+      avgSpeed,
+      trainingDensity,
+      workload,
+      optimalRecovery,
+      improvementTrend,
+      comparisonPreviousPeriod,
+      performanceByDayOfWeek,
+      alerts,
     });
 
     setLoading(false);
@@ -438,9 +783,10 @@ export default function StatistichePage() {
 
   const tabs = useMemo(
     () => [
-      { key: 'base', label: 'Statistiche Base' },
-      { key: 'advanced', label: 'Statistiche Avanzate' },
-      { key: 'insights', label: 'Curiosità & Insights' },
+      { key: 'base', label: 'Panoramica' },
+      { key: 'graphs', label: 'Grafici' },
+      { key: 'advanced', label: 'Analisi Avanzate' },
+      { key: 'insights', label: 'Insights & Consigli' },
     ],
     []
   );
@@ -841,60 +1187,385 @@ export default function StatistichePage() {
                 </div>
               )}
 
-              {activeTab === 'advanced' && (
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  <SummaryCard
-                    title="Intensità media"
-                    value={stats.avgIntensity ? `${stats.avgIntensity.toFixed(1)}/10` : 'N/D'}
-                    subtitle="Basata sulle sedute filtrate"
-                    icon={<Sparkles className="h-5 w-5" />}
-                    accent="bg-violet-100 text-violet-600"
-                  />
-                  <SummaryCard
-                    title="Sessioni ad alta intensità"
-                    value={formatNumber(stats.highIntensitySessions)}
-                    subtitle=">= 8/10 di intensità"
-                    icon={<TrendingUp className="h-5 w-5" />}
-                    accent="bg-rose-100 text-rose-600"
-                  />
-                  <SummaryCard
-                    title="Recupero medio tra serie"
-                    value={stats.restAverage ? `${Math.round(stats.restAverage)} s` : 'N/D'}
-                    subtitle="Calcolato sulle ripetute selezionate"
-                    icon={<Brain className="h-5 w-5" />}
-                    accent="bg-emerald-100 text-emerald-600"
-                  />
-                  <SummaryCard
-                    title="Metriche monitorate"
-                    value={formatNumber(stats.metricsCount)}
-                    subtitle="Valori collegati alle sessioni"
-                    icon={<FolderKanban className="h-5 w-5" />}
-                    accent="bg-slate-200 text-slate-600"
-                  />
-                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <h3 className="text-sm font-semibold text-slate-700">Ripartizione sessioni</h3>
-                    <ul className="mt-3 space-y-2 text-xs text-slate-600">
-                      {stats.typeBreakdown.length === 0 ? (
-                        <li>Nessuna sessione registrata</li>
-                      ) : (
-                        stats.typeBreakdown.map(item => (
-                          <li
-                            key={item.label}
-                            className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2"
-                          >
-                            <span className="capitalize">{item.label}</span>
-                            <span className="font-semibold">{item.value}</span>
-                          </li>
-                        ))
-                      )}
-                    </ul>
+              {activeTab === 'graphs' && (
+                <div className="space-y-6">
+                  {/* Alert e suggerimenti in evidenza */}
+                  {stats.alerts.length > 0 && (
+                    <div className="space-y-2">
+                      {stats.alerts.map((alert, idx) => (
+                        <div
+                          key={idx}
+                          className={cn(
+                            'flex items-start gap-3 rounded-2xl border p-4 text-sm',
+                            alert.type === 'warning' && 'border-amber-200 bg-amber-50 text-amber-900',
+                            alert.type === 'success' && 'border-emerald-200 bg-emerald-50 text-emerald-900',
+                            alert.type === 'info' && 'border-sky-200 bg-sky-50 text-sky-900'
+                          )}
+                        >
+                          {alert.type === 'warning' && <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" />}
+                          {alert.type === 'success' && <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-emerald-600" />}
+                          {alert.type === 'info' && <Sparkles className="h-5 w-5 flex-shrink-0 text-sky-600" />}
+                          <p>{alert.message}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Grafico Volume Settimanale */}
+                  <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                      <BarChart3 className="h-5 w-5 text-sky-600" />
+                      Volume Settimanale
+                    </h3>
+                    {stats.weeklyVolume.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <RechartsBarChart data={stats.weeklyVolume}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                          <XAxis dataKey="week" tick={{ fontSize: 12 }} stroke="#64748b" />
+                          <YAxis tick={{ fontSize: 12 }} stroke="#64748b" />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#fff',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                            }}
+                            formatter={(value: any) => [`${value} m`, 'Volume']}
+                          />
+                          <Bar dataKey="volume" fill="#0ea5e9" radius={[8, 8, 0, 0]} />
+                        </RechartsBarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <p className="py-12 text-center text-sm text-slate-500">
+                        Non ci sono dati sufficienti per visualizzare il grafico
+                      </p>
+                    )}
                   </div>
-                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <h3 className="text-sm font-semibold text-slate-700">Volume medio per sessione</h3>
-                    <p className="mt-2 text-3xl font-semibold text-slate-800">
-                      {stats.avgDistancePerSession ? `${Math.round(stats.avgDistancePerSession)} m` : 'N/D'}
-                    </p>
-                    <p className="text-xs text-slate-500">Calcolato sulle sessioni filtrate</p>
+
+                  {/* Grafico Distribuzione Intensità */}
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                        <Zap className="h-5 w-5 text-violet-600" />
+                        Distribuzione Intensità
+                      </h3>
+                      {stats.intensityDistribution.some(d => d.count > 0) ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                          <PieChart>
+                            <Pie
+                              data={stats.intensityDistribution.filter(d => d.count > 0)}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              label={(entry: any) => `${entry.range}: ${((entry.percent || 0) * 100).toFixed(0)}%`}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="count"
+                            >
+                              {stats.intensityDistribution.filter(d => d.count > 0).map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={['#94a3b8', '#60a5fa', '#f59e0b', '#ef4444'][index % 4]} />
+                              ))}
+                            </Pie>
+                            <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px' }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <p className="py-12 text-center text-sm text-slate-500">
+                          Registra l'intensità delle sessioni per visualizzare la distribuzione
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Performance per giorno della settimana */}
+                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                        <Calendar className="h-5 w-5 text-indigo-600" />
+                        Performance per Giorno
+                      </h3>
+                      {stats.performanceByDayOfWeek.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                          <RechartsBarChart data={stats.performanceByDayOfWeek}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                            <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="#64748b" angle={-45} textAnchor="end" height={80} />
+                            <YAxis tick={{ fontSize: 12 }} stroke="#64748b" />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: '#fff',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '12px',
+                                fontSize: '12px',
+                              }}
+                              formatter={(value: any) => value ? [`${value.toFixed(2)} s`, 'Tempo medio'] : ['N/D', 'Tempo medio']}
+                            />
+                            <Bar dataKey="avgTime" fill="#6366f1" radius={[8, 8, 0, 0]} />
+                          </RechartsBarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <p className="py-12 text-center text-sm text-slate-500">
+                          Aggiungi più sessioni per analizzare i pattern settimanali
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Grafici progressione tempi per distanza */}
+                  {Object.keys(stats.timeProgressionByDistance).length > 0 && (
+                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                        <TrendingUp className="h-5 w-5 text-emerald-600" />
+                        Progressione Tempi per Distanza
+                      </h3>
+                      <div className="grid gap-6 lg:grid-cols-2">
+                        {Object.entries(stats.timeProgressionByDistance)
+                          .slice(0, 4)
+                          .map(([distance, progression]) => (
+                            <div key={distance}>
+                              <p className="mb-2 text-sm font-semibold text-slate-700">{distance}m</p>
+                              {progression.length > 1 ? (
+                                <ResponsiveContainer width="100%" height={200}>
+                                  <AreaChart data={progression}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                    <XAxis
+                                      dataKey="date"
+                                      tick={{ fontSize: 10 }}
+                                      stroke="#64748b"
+                                      tickFormatter={(value) => new Date(value).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+                                    />
+                                    <YAxis tick={{ fontSize: 12 }} stroke="#64748b" domain={['dataMin - 0.5', 'dataMax + 0.5']} />
+                                    <Tooltip
+                                      contentStyle={{
+                                        backgroundColor: '#fff',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '12px',
+                                        fontSize: '12px',
+                                      }}
+                                      labelFormatter={(value) => new Date(value).toLocaleDateString('it-IT')}
+                                      formatter={(value: any) => [`${value.toFixed(2)} s`, 'Tempo']}
+                                    />
+                                    <Area type="monotone" dataKey="time" stroke="#10b981" fill="#d1fae5" />
+                                  </AreaChart>
+                                </ResponsiveContainer>
+                              ) : (
+                                <p className="py-8 text-center text-xs text-slate-500">
+                                  Servono almeno 2 performance per visualizzare il trend
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'advanced' && (
+                <div className="space-y-6">
+                  {/* Metriche avanzate principali */}
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <SummaryCard
+                      title="Velocità media"
+                      value={stats.avgSpeed ? `${stats.avgSpeed.toFixed(2)} m/s` : 'N/D'}
+                      subtitle={stats.avgSpeed ? `≈ ${(stats.avgSpeed * 3.6).toFixed(1)} km/h` : 'Registra tempi per calcolare'}
+                      icon={<Zap className="h-5 w-5" />}
+                      accent="bg-amber-100 text-amber-600"
+                    />
+                    <SummaryCard
+                      title="Densità allenamento"
+                      value={`${stats.trainingDensity.toFixed(1)} /settimana`}
+                      subtitle="Frequenza media sessioni"
+                      icon={<Calendar className="h-5 w-5" />}
+                      accent="bg-sky-100 text-sky-600"
+                    />
+                    <SummaryCard
+                      title="Carico di lavoro"
+                      value={formatNumber(Math.round(stats.workload))}
+                      subtitle="Volume × Intensità"
+                      icon={<Activity className="h-5 w-5" />}
+                      accent="bg-violet-100 text-violet-600"
+                    />
+                    <SummaryCard
+                      title="Recupero ottimale"
+                      value={stats.optimalRecovery ? `${Math.round(stats.optimalRecovery)} s` : 'N/D'}
+                      subtitle="Medio nelle migliori performance"
+                      icon={<Clock className="h-5 w-5" />}
+                      accent="bg-emerald-100 text-emerald-600"
+                    />
+                  </div>
+
+                  {/* Trend di miglioramento */}
+                  {stats.improvementTrend !== null && (
+                    <div className="rounded-3xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 p-6 shadow-sm">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="flex items-center gap-2 text-lg font-semibold text-emerald-900">
+                            <TrendingUp className="h-6 w-6 text-emerald-600" />
+                            Trend di Miglioramento
+                          </h3>
+                          <p className="mt-2 text-sm text-emerald-700">
+                            Analisi dell'andamento delle tue performance recenti
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <div className="flex items-center gap-2">
+                            {stats.improvementTrend > 0 ? (
+                              <ArrowUpRight className="h-8 w-8 text-emerald-600" />
+                            ) : stats.improvementTrend < 0 ? (
+                              <ArrowDownRight className="h-8 w-8 text-rose-600" />
+                            ) : (
+                              <Minus className="h-8 w-8 text-slate-600" />
+                            )}
+                            <span className={cn(
+                              "text-3xl font-bold",
+                              stats.improvementTrend > 0 ? "text-emerald-700" : stats.improvementTrend < 0 ? "text-rose-700" : "text-slate-700"
+                            )}>
+                              {Math.abs(stats.improvementTrend).toFixed(1)}%
+                            </span>
+                          </div>
+                          <p className="text-xs text-emerald-600">
+                            {stats.improvementTrend > 0 ? 'Miglioramento' : stats.improvementTrend < 0 ? 'Peggioramento' : 'Stabile'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Confronto con periodo precedente */}
+                  {stats.comparisonPreviousPeriod && (
+                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                        <BarChart className="h-5 w-5 text-indigo-600" />
+                        Confronto con Periodo Precedente
+                      </h3>
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <div className="rounded-2xl bg-slate-50 p-4">
+                          <p className="text-xs font-semibold text-slate-600">Sessioni</p>
+                          <div className="mt-2 flex items-end gap-2">
+                            <p className="text-2xl font-bold text-slate-800">{stats.totalSessions}</p>
+                            <div className="flex items-center gap-1 text-xs">
+                              {stats.totalSessions > stats.comparisonPreviousPeriod.sessions ? (
+                                <>
+                                  <ArrowUpRight className="h-4 w-4 text-emerald-600" />
+                                  <span className="font-semibold text-emerald-600">
+                                    +{stats.totalSessions - stats.comparisonPreviousPeriod.sessions}
+                                  </span>
+                                </>
+                              ) : stats.totalSessions < stats.comparisonPreviousPeriod.sessions ? (
+                                <>
+                                  <ArrowDownRight className="h-4 w-4 text-rose-600" />
+                                  <span className="font-semibold text-rose-600">
+                                    {stats.totalSessions - stats.comparisonPreviousPeriod.sessions}
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-slate-500">Invariato</span>
+                              )}
+                            </div>
+                          </div>
+                          <p className="mt-1 text-[11px] text-slate-500">
+                            Precedente: {stats.comparisonPreviousPeriod.sessions}
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl bg-slate-50 p-4">
+                          <p className="text-xs font-semibold text-slate-600">Volume (m)</p>
+                          <div className="mt-2 flex items-end gap-2">
+                            <p className="text-2xl font-bold text-slate-800">{formatNumber(stats.totalDistance)}</p>
+                            <div className="flex items-center gap-1 text-xs">
+                              {stats.totalDistance > stats.comparisonPreviousPeriod.volume ? (
+                                <>
+                                  <ArrowUpRight className="h-4 w-4 text-emerald-600" />
+                                  <span className="font-semibold text-emerald-600">
+                                    {(((stats.totalDistance - stats.comparisonPreviousPeriod.volume) / stats.comparisonPreviousPeriod.volume) * 100).toFixed(0)}%
+                                  </span>
+                                </>
+                              ) : stats.totalDistance < stats.comparisonPreviousPeriod.volume ? (
+                                <>
+                                  <ArrowDownRight className="h-4 w-4 text-rose-600" />
+                                  <span className="font-semibold text-rose-600">
+                                    {(((stats.totalDistance - stats.comparisonPreviousPeriod.volume) / stats.comparisonPreviousPeriod.volume) * 100).toFixed(0)}%
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-slate-500">Invariato</span>
+                              )}
+                            </div>
+                          </div>
+                          <p className="mt-1 text-[11px] text-slate-500">
+                            Precedente: {formatNumber(stats.comparisonPreviousPeriod.volume)}
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl bg-slate-50 p-4">
+                          <p className="text-xs font-semibold text-slate-600">Intensità media</p>
+                          <div className="mt-2 flex items-end gap-2">
+                            <p className="text-2xl font-bold text-slate-800">
+                              {stats.avgIntensity ? stats.avgIntensity.toFixed(1) : 'N/D'}
+                            </p>
+                            {stats.avgIntensity && (
+                              <div className="flex items-center gap-1 text-xs">
+                                {stats.avgIntensity > stats.comparisonPreviousPeriod.avgIntensity ? (
+                                  <>
+                                    <ArrowUpRight className="h-4 w-4 text-amber-600" />
+                                    <span className="font-semibold text-amber-600">
+                                      +{(stats.avgIntensity - stats.comparisonPreviousPeriod.avgIntensity).toFixed(1)}
+                                    </span>
+                                  </>
+                                ) : stats.avgIntensity < stats.comparisonPreviousPeriod.avgIntensity ? (
+                                  <>
+                                    <ArrowDownRight className="h-4 w-4 text-sky-600" />
+                                    <span className="font-semibold text-sky-600">
+                                      {(stats.avgIntensity - stats.comparisonPreviousPeriod.avgIntensity).toFixed(1)}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span className="text-slate-500">Invariato</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <p className="mt-1 text-[11px] text-slate-500">
+                            Precedente: {stats.comparisonPreviousPeriod.avgIntensity.toFixed(1)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Altre metriche avanzate */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <h3 className="text-sm font-semibold text-slate-700">Distribuzione Intensità</h3>
+                      <div className="mt-3 space-y-2">
+                        {stats.intensityDistribution.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2 text-xs">
+                            <span>{item.range}</span>
+                            <span className="font-semibold">{item.count} sessioni</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <h3 className="text-sm font-semibold text-slate-700">Riepilogo Avanzato</h3>
+                      <ul className="mt-3 space-y-2 text-xs text-slate-600">
+                        <li className="flex items-center justify-between rounded-2xl bg-sky-50 px-3 py-2">
+                          <span>Sessioni alta intensità</span>
+                          <span className="font-semibold text-sky-700">{stats.highIntensitySessions}</span>
+                        </li>
+                        <li className="flex items-center justify-between rounded-2xl bg-emerald-50 px-3 py-2">
+                          <span>Sessioni bassa intensità</span>
+                          <span className="font-semibold text-emerald-700">{stats.lowIntensitySessions}</span>
+                        </li>
+                        <li className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2">
+                          <span>Recupero medio</span>
+                          <span className="font-semibold">{stats.restAverage ? `${Math.round(stats.restAverage)}s` : 'N/D'}</span>
+                        </li>
+                        <li className="flex items-center justify-between rounded-2xl bg-violet-50 px-3 py-2">
+                          <span>Metriche totali</span>
+                          <span className="font-semibold text-violet-700">{stats.metricsCount}</span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               )}
