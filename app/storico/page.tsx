@@ -35,7 +35,7 @@ import { notifyError, notifySuccess } from '@/lib/notifications';
 
 type ExerciseResult = {
   id: string;
-  attempt_number: number | null;
+  set_number: number | null;
   repetition_number: number | null;
   time_s: number | null;
   weight_kg: number | null;
@@ -45,6 +45,7 @@ type ExerciseResult = {
 
 type Exercise = {
   id: string;
+  exercise_number: number | null;
   name: string | null;
   discipline_type: string | null;
   distance_m: number | null;
@@ -52,11 +53,19 @@ type Exercise = {
   repetitions: number | null;
   rest_between_reps_s: number | null;
   rest_between_sets_s: number | null;
-  rest_after_exercise_s: number | null;
   intensity: number | null;
   effort_type: string | null;
   notes: string | null;
   results: ExerciseResult[];
+};
+
+type ExerciseBlock = {
+  id: string;
+  block_number: number | null;
+  name: string | null;
+  rest_after_block_s: number | null;
+  notes: string | null;
+  exercises: Exercise[];
 };
 
 type Metric = {
@@ -88,7 +97,7 @@ type TrainingSession = {
   location: string | null;
   notes: string | null;
   block: TrainingBlock | null;
-  exercises: Exercise[];
+  exercise_blocks: ExerciseBlock[];
   metrics: Metric[];
 };
 
@@ -240,9 +249,12 @@ export default function StoricoPage() {
       .select(
         `id, date, type, phase, location, notes, block_id,
          block:training_blocks (id, name, start_date, end_date),
-         exercises:exercises (
-           id, name, discipline_type, distance_m, sets, repetitions, rest_between_reps_s, rest_between_sets_s, rest_after_exercise_s, intensity, effort_type, notes,
-           results:exercise_results (id, attempt_number, repetition_number, time_s, weight_kg, rpe, notes)
+         exercise_blocks:exercise_blocks (
+           id, block_number, name, rest_after_block_s, notes,
+           exercises:exercises (
+             id, exercise_number, name, discipline_type, distance_m, sets, repetitions, rest_between_reps_s, rest_between_sets_s, intensity, effort_type, notes,
+             results:exercise_results (id, set_number, repetition_number, time_s, weight_kg, rpe, notes)
+           )
          ),
          metrics:metrics (id, metric_name, category, metric_target, value, unit, notes, distance_m, time_s, recovery_post_s, intensity)
         `
@@ -260,9 +272,12 @@ export default function StoricoPage() {
     if (!error && data) {
       const casted = (data as unknown as TrainingSession[]).map(session => ({
         ...session,
-        exercises: (session.exercises || []).map(exercise => ({
-          ...exercise,
-          results: exercise?.results ? (exercise.results as ExerciseResult[]) : [],
+        exercise_blocks: (session.exercise_blocks || []).map(block => ({
+          ...block,
+          exercises: (block.exercises || []).map(exercise => ({
+            ...exercise,
+            results: exercise?.results ? (exercise.results as ExerciseResult[]) : [],
+          })),
         })),
         metrics: session.metrics || [],
       }));
@@ -296,18 +311,22 @@ export default function StoricoPage() {
     sessions.forEach(session => {
       if (session.type === 'test') testsCount += 1;
       if (session.location) locationSet.add(session.location);
-      totalExercises += session.exercises?.length ?? 0;
-      session.exercises.forEach(exercise => {
-        const distance = exercise.distance_m || 0;
-        const sets = exercise.sets || 0;
-        const reps = exercise.repetitions || 0;
-        if (distance && sets && reps) {
-          totalVolume += distance * sets * reps;
-        }
-        exercise.results.forEach(result => {
-          if (result.rpe != null) {
-            rpeValues.push(result.rpe);
+      
+      // Conta esercizi attraverso i blocchi
+      session.exercise_blocks.forEach(block => {
+        totalExercises += block.exercises?.length ?? 0;
+        block.exercises.forEach(exercise => {
+          const distance = exercise.distance_m || 0;
+          const sets = exercise.sets || 0;
+          const reps = exercise.repetitions || 0;
+          if (distance && sets && reps) {
+            totalVolume += distance * sets * reps;
           }
+          exercise.results.forEach(result => {
+            if (result.rpe != null) {
+              rpeValues.push(result.rpe);
+            }
+          });
         });
       });
     });
@@ -331,13 +350,15 @@ export default function StoricoPage() {
     let exercisesTotal = 0;
 
     for (const session of sessions) {
-      for (const exercise of session.exercises) {
-        const key = exercise.discipline_type ?? 'altro';
-        disciplineCounter.set(key, (disciplineCounter.get(key) ?? 0) + 1);
-        exercisesTotal += 1;
-        if (exercise.intensity != null) {
-          intensitySum += Number(exercise.intensity);
-          intensityCount += 1;
+      for (const block of session.exercise_blocks) {
+        for (const exercise of block.exercises) {
+          const key = exercise.discipline_type ?? 'altro';
+          disciplineCounter.set(key, (disciplineCounter.get(key) ?? 0) + 1);
+          exercisesTotal += 1;
+          if (exercise.intensity != null) {
+            intensitySum += Number(exercise.intensity);
+            intensityCount += 1;
+          }
         }
       }
     }
@@ -490,7 +511,10 @@ export default function StoricoPage() {
         session.phase,
         session.notes,
         session.block?.name,
-        ...session.exercises.map(exercise => exercise.name || ''),
+        ...session.exercise_blocks.flatMap(block => [
+          block.name || '',
+          ...block.exercises.map(exercise => exercise.name || ''),
+        ]),
         ...session.metrics.map(
           metric => `${metric.metric_name ?? ''} ${metric.notes ?? ''} ${metric.metric_target ?? ''}`
         ),
@@ -738,15 +762,27 @@ export default function StoricoPage() {
               {filteredSessions.map(session => {
                 const isOpen = openSession === session.id;
                 const totalMetrics = session.metrics?.length ?? 0;
-                const totalExercises = session.exercises?.length ?? 0;
-                const totalVolume = session.exercises.reduce((sum, exercise) => {
-                  const distance = exercise.distance_m || 0;
-                  const sets = exercise.sets || 0;
-                  const reps = exercise.repetitions || 0;
-                  if (!distance || !sets || !reps) return sum;
-                  return sum + distance * sets * reps;
+                
+                // Calcola esercizi attraverso i blocchi
+                const totalExercises = session.exercise_blocks.reduce(
+                  (sum, block) => sum + (block.exercises?.length ?? 0),
+                  0
+                );
+                
+                const totalVolume = session.exercise_blocks.reduce((blockSum, block) => {
+                  return blockSum + block.exercises.reduce((exSum, exercise) => {
+                    const distance = exercise.distance_m || 0;
+                    const sets = exercise.sets || 0;
+                    const reps = exercise.repetitions || 0;
+                    if (!distance || !sets || !reps) return exSum;
+                    return exSum + distance * sets * reps;
+                  }, 0);
                 }, 0);
-                const allResults = session.exercises.flatMap(exercise => exercise.results ?? []);
+                
+                const allResults = session.exercise_blocks.flatMap(block =>
+                  block.exercises.flatMap(exercise => exercise.results ?? [])
+                );
+                
                 const timeValues = allResults
                   .map(result => (result.time_s != null ? Number(result.time_s) : null))
                   .filter((value): value is number => value != null && Number.isFinite(value));
@@ -776,9 +812,11 @@ export default function StoricoPage() {
 
                 const disciplineBadges = (() => {
                   const map = new Map<string, number>();
-                  session.exercises.forEach(exercise => {
-                    const key = exercise.discipline_type ?? 'altro';
-                    map.set(key, (map.get(key) ?? 0) + 1);
+                  session.exercise_blocks.forEach(block => {
+                    block.exercises.forEach(exercise => {
+                      const key = exercise.discipline_type ?? 'altro';
+                      map.set(key, (map.get(key) ?? 0) + 1);
+                    });
                   });
 
                   return Array.from(map.entries())
@@ -913,103 +951,149 @@ export default function StoricoPage() {
                         <div className="border-t border-slate-100 px-5 pb-5">
                           <div className="grid gap-4 py-4 lg:grid-cols-2">
                             <div className="space-y-3">
-                              <h3 className="text-sm font-semibold text-slate-700">Esercizi</h3>
-                              {session.exercises.length === 0 ? (
-                                <p className="text-xs text-slate-500">Nessun esercizio registrato.</p>
+                              <h3 className="text-sm font-semibold text-slate-700">Blocchi ed Esercizi</h3>
+                              {session.exercise_blocks.length === 0 ? (
+                                <p className="text-xs text-slate-500">Nessun blocco registrato.</p>
                               ) : (
-                                session.exercises.map(exercise => {
-                                  const disciplineLabel = humanDiscipline(exercise.discipline_type);
-                                  const effortLabel = formatEffort(exercise.effort_type);
-                                  return (
+                                session.exercise_blocks
+                                  .sort((a, b) => (a.block_number ?? 0) - (b.block_number ?? 0))
+                                  .map(block => (
                                     <div
-                                      key={exercise.id}
-                                      className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-xs text-slate-600"
+                                      key={block.id}
+                                      className="space-y-2 rounded-3xl border-2 border-sky-200 bg-sky-50/30 p-3"
                                     >
-                                      <div className="flex flex-wrap items-start justify-between gap-2 text-sm font-semibold text-slate-700">
-                                        <div>
-                                          <p>{exercise.name ?? 'Esercizio'}</p>
-                                          <p className="text-[11px] text-slate-500">{disciplineLabel}</p>
+                                      {/* Block Header */}
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                          <FolderKanban className="h-4 w-4 text-sky-600" />
+                                          <span className="text-sm font-semibold text-sky-700">
+                                            {block.name || `Blocco ${block.block_number}`}
+                                          </span>
                                         </div>
-                                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-                                          {exercise.intensity && (
-                                            <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-medium text-slate-600">
-                                              <Gauge className="h-3 w-3" /> {exercise.intensity}/10 {effortLabel !== '—' && `(${effortLabel})`}
-                                            </span>
-                                          )}
-                                          {formatDistance(exercise) !== '—' && (
-                                            <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-medium text-slate-600">
-                                              <BarChart3 className="h-3 w-3" /> {formatDistance(exercise)}
-                                            </span>
-                                          )}
-                                        </div>
+                                        {block.rest_after_block_s != null && (
+                                          <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-medium text-sky-600">
+                                            <Clock3 className="h-3 w-3" /> Recupero: {block.rest_after_block_s}s
+                                          </span>
+                                        )}
                                       </div>
-                                      <div className="mt-3 grid gap-2 md:grid-cols-2">
-                                        <div className="rounded-xl bg-white px-3 py-2">
-                                          <p className="text-[10px] uppercase text-slate-500">Serie × Ripetizioni</p>
-                                          <p className="text-sm font-semibold text-slate-700">
-                                            {exercise.sets ?? '—'} × {exercise.repetitions ?? '—'}
-                                          </p>
-                                        </div>
-                                        <div className="rounded-xl bg-white px-3 py-2">
-                                          <p className="text-[10px] uppercase text-slate-500">Recuperi</p>
-                                          <p className="text-sm font-semibold text-slate-700">
-                                            {exercise.rest_between_reps_s ?? '—'}s / {exercise.rest_between_sets_s ?? '—'}s
-                                          </p>
-                                        </div>
-                                      </div>
-                                      {exercise.notes && <p className="mt-3 text-xs text-slate-500">{exercise.notes}</p>}
+                                      
+                                      {block.notes && (
+                                        <p className="text-xs text-slate-600">{block.notes}</p>
+                                      )}
 
-                                      {exercise.results.length > 0 && (
-                                        <div className="mt-3 space-y-2">
-                                          <p className="text-[11px] font-semibold uppercase text-slate-500">Risultati</p>
-                                          <div className="grid gap-2 md:grid-cols-2">
-                                            {exercise.results.map(result => {
-                                              const resultItems: { label: string; value: string }[] = [];
-                                              if (result.time_s != null) {
-                                                resultItems.push({ label: 'Tempo', value: `${result.time_s}s` });
-                                              }
-                                              if (result.weight_kg != null) {
-                                                resultItems.push({ label: 'Carico', value: `${result.weight_kg}kg` });
-                                              }
-                                              if (result.repetition_number != null) {
-                                                resultItems.push({ label: 'Ripetizione', value: `#${result.repetition_number}` });
-                                              }
-
+                                      {/* Exercises in Block */}
+                                      {block.exercises.length === 0 ? (
+                                        <p className="text-xs italic text-slate-500">Nessun esercizio in questo blocco.</p>
+                                      ) : (
+                                        <div className="space-y-2">
+                                          {block.exercises
+                                            .sort((a, b) => (a.exercise_number ?? 0) - (b.exercise_number ?? 0))
+                                            .map(exercise => {
+                                              const disciplineLabel = humanDiscipline(exercise.discipline_type);
+                                              const effortLabel = formatEffort(exercise.effort_type);
                                               return (
                                                 <div
-                                                  key={result.id}
-                                                  className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-500"
+                                                  key={exercise.id}
+                                                  className="rounded-2xl border border-slate-200 bg-white p-3 text-xs text-slate-600"
                                                 >
-                                                  <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
-                                                    <span>Tentativo #{result.attempt_number ?? '—'}</span>
-                                                    {result.rpe != null && (
-                                                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-600">
-                                                        <Gauge className="h-3 w-3" /> RPE {result.rpe}
-                                                      </span>
-                                                    )}
+                                                  <div className="flex flex-wrap items-start justify-between gap-2 text-sm font-semibold text-slate-700">
+                                                    <div>
+                                                      <p>{exercise.name ?? 'Esercizio'}</p>
+                                                      <p className="text-[11px] text-slate-500">{disciplineLabel}</p>
+                                                    </div>
+                                                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                                                      {exercise.intensity && (
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600">
+                                                          <Gauge className="h-3 w-3" /> {exercise.intensity}/10{' '}
+                                                          {effortLabel !== '—' && `(${effortLabel})`}
+                                                        </span>
+                                                      )}
+                                                      {formatDistance(exercise) !== '—' && (
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600">
+                                                          <BarChart3 className="h-3 w-3" /> {formatDistance(exercise)}
+                                                        </span>
+                                                      )}
+                                                    </div>
                                                   </div>
-                                                  <div className="mt-2 grid grid-cols-2 gap-2">
-                                                    {resultItems.map(item => (
-                                                      <span
-                                                        key={item.label}
-                                                        className="rounded-lg bg-slate-50 px-2 py-1 text-[10px] font-medium text-slate-600"
-                                                      >
-                                                        {item.label}: {item.value}
-                                                      </span>
-                                                    ))}
+                                                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                                                    <div className="rounded-xl bg-slate-50 px-3 py-2">
+                                                      <p className="text-[10px] uppercase text-slate-500">Serie × Ripetizioni</p>
+                                                      <p className="text-sm font-semibold text-slate-700">
+                                                        {exercise.sets ?? '—'} × {exercise.repetitions ?? '—'}
+                                                      </p>
+                                                    </div>
+                                                    <div className="rounded-xl bg-slate-50 px-3 py-2">
+                                                      <p className="text-[10px] uppercase text-slate-500">Recuperi</p>
+                                                      <p className="text-sm font-semibold text-slate-700">
+                                                        {exercise.rest_between_reps_s ?? '—'}s /{' '}
+                                                        {exercise.rest_between_sets_s ?? '—'}s
+                                                      </p>
+                                                    </div>
                                                   </div>
-                                                  {result.notes && (
-                                                    <p className="mt-2 text-[10px] text-slate-500">Note: {result.notes}</p>
+                                                  {exercise.notes && (
+                                                    <p className="mt-3 text-xs text-slate-500">{exercise.notes}</p>
+                                                  )}
+
+                                                  {exercise.results.length > 0 && (
+                                                    <div className="mt-3 space-y-2">
+                                                      <p className="text-[11px] font-semibold uppercase text-slate-500">Risultati</p>
+                                                      <div className="grid gap-2 md:grid-cols-2">
+                                                        {exercise.results.map(result => {
+                                                          const resultItems: { label: string; value: string }[] = [];
+                                                          if (result.time_s != null) {
+                                                            resultItems.push({ label: 'Tempo', value: `${result.time_s}s` });
+                                                          }
+                                                          if (result.weight_kg != null) {
+                                                            resultItems.push({ label: 'Carico', value: `${result.weight_kg}kg` });
+                                                          }
+                                                          if (result.repetition_number != null) {
+                                                            resultItems.push({
+                                                              label: 'Ripetizione',
+                                                              value: `#${result.repetition_number}`,
+                                                            });
+                                                          }
+
+                                                          return (
+                                                            <div
+                                                              key={result.id}
+                                                              className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-500"
+                                                            >
+                                                              <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
+                                                                <span>Serie #{result.set_number ?? '—'}</span>
+                                                                {result.rpe != null && (
+                                                                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-600">
+                                                                    <Gauge className="h-3 w-3" /> RPE {result.rpe}
+                                                                  </span>
+                                                                )}
+                                                              </div>
+                                                              <div className="mt-2 grid grid-cols-2 gap-2">
+                                                                {resultItems.map(item => (
+                                                                  <span
+                                                                    key={item.label}
+                                                                    className="rounded-lg bg-white px-2 py-1 text-[10px] font-medium text-slate-600"
+                                                                  >
+                                                                    {item.label}: {item.value}
+                                                                  </span>
+                                                                ))}
+                                                              </div>
+                                                              {result.notes && (
+                                                                <p className="mt-2 text-[10px] text-slate-500">
+                                                                  Note: {result.notes}
+                                                                </p>
+                                                              )}
+                                                            </div>
+                                                          );
+                                                        })}
+                                                      </div>
+                                                    </div>
                                                   )}
                                                 </div>
                                               );
                                             })}
-                                          </div>
                                         </div>
                                       )}
                                     </div>
-                                  );
-                                })
+                                  ))
                               )}
                             </div>
 
