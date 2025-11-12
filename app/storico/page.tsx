@@ -815,7 +815,9 @@ export default function StoricoPage() {
                 if (bestTime != null) {
                   highlightBadges.push({ icon: Clock3, label: 'Miglior tempo', value: `${bestTime.toFixed(2)}s` });
                 }
-                if (bestWeight != null) {
+                // Show weight badge only for gym/strength sessions, not for track sessions
+                const isGymSession = session.type === 'palestra' || session.type === 'forza';
+                if (bestWeight != null && isGymSession) {
                   highlightBadges.push({ icon: Weight, label: 'Carico massimo', value: `${bestWeight.toFixed(1)}kg` });
                 }
                 if (averageRpeSession != null) {
