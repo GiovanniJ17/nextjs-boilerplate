@@ -7,6 +7,7 @@ import {
   Activity,
   Calendar,
   CheckCircle2,
+  ChevronDown,
   Clock,
   Flame,
   Flag,
@@ -554,6 +555,9 @@ export default function RegistroPage() {
   const [customLocation, setCustomLocation] = useState('');
 
   const isTestOrRaceSession = sessionForm.type === 'test' || sessionForm.type === 'gara';
+
+  // Mobile accordion state
+  const [expandedSection, setExpandedSection] = useState<'details' | 'exercises' | 'metrics' | null>('details');
 
   const sectionRefs = {
     details: useRef<HTMLDivElement | null>(null),
@@ -1558,14 +1562,29 @@ export default function RegistroPage() {
       </div>
 
       <div className="grid gap-4">
+        {/* Dettagli sessione */}
         <div ref={sectionRefs.details} className="scroll-mt-24">
           <Card className="border-slate-200 shadow-sm">
-            <CardHeader className="pb-2.5">
-              <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
-                <NotebookPen className="h-5 w-5 text-sky-600" strokeWidth={2} /> Dettagli sessione
+            <CardHeader 
+              className="pb-2.5 cursor-pointer md:cursor-default"
+              onClick={() => setExpandedSection(prev => prev === 'details' ? null : 'details')}
+            >
+              <CardTitle className="flex items-center justify-between text-lg text-slate-800">
+                <span className="flex items-center gap-2">
+                  <NotebookPen className="h-5 w-5 text-sky-600" strokeWidth={2} /> Dettagli sessione
+                </span>
+                <ChevronDown 
+                  className={cn(
+                    "h-5 w-5 text-slate-400 transition-transform md:hidden",
+                    expandedSection === 'details' && "rotate-180"
+                  )} 
+                />
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 space-y-4">
+            <CardContent className={cn(
+              "p-4 space-y-4",
+              expandedSection !== 'details' && "hidden md:block"
+            )}>
             {/* Blocco + Data */}
             <div className="grid gap-4 lg:grid-cols-12">
               <div className="lg:col-span-8 space-y-1.5">
@@ -1845,19 +1864,37 @@ export default function RegistroPage() {
           </Card>
         </div>
 
+        {/* Ripetute */}
         <div ref={sectionRefs.exercises} className="scroll-mt-24">
           {isTestOrRaceSession ? (
-            <Card className="border-none bg-slate-50/70 shadow-lg">
-              <CardHeader className="flex flex-col items-center gap-3 pb-4 text-center">
+            <Card className="border-slate-200 shadow-sm">
+              <CardHeader 
+                className="pb-2.5 cursor-pointer md:cursor-default"
+                onClick={() => setExpandedSection(prev => prev === 'exercises' ? null : 'exercises')}
+              >
+                <CardTitle className="flex items-center justify-between text-lg text-slate-800">
+                  <span className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-sky-600" strokeWidth={2} /> Ripetute
+                  </span>
+                  <ChevronDown 
+                    className={cn(
+                      "h-5 w-5 text-slate-400 transition-transform md:hidden",
+                      expandedSection === 'exercises' && "rotate-180"
+                    )} 
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent className={cn(
+                "flex flex-col items-center gap-3 pb-4 text-center",
+                expandedSection !== 'exercises' && "hidden md:flex"
+              )}>
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
                   <Target className="h-5 w-5" strokeWidth={2} />
                 </div>
-                <CardTitle className="text-lg text-slate-800">
+                <p className="text-lg text-slate-800 font-semibold">
                   Ripetute e risultati disabilitati
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-center text-sm text-slate-600">
-                <p>
+                </p>
+                <p className="text-sm text-slate-600">
                   Per le sessioni di tipo <span className="font-semibold text-slate-700">test</span> o{' '}
                   <span className="font-semibold text-slate-700">gara</span> focalizzati sulla sezione «Metriche &amp;
                   Test».
@@ -1869,12 +1906,26 @@ export default function RegistroPage() {
             </Card>
           ) : (
             <Card className="border-slate-200 shadow-sm">
-              <CardHeader className="pb-2.5">
-                <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
-                  <ListPlus className="h-5 w-5 text-sky-600" strokeWidth={2} /> Ripetute e risultati
+              <CardHeader 
+                className="pb-2.5 cursor-pointer md:cursor-default"
+                onClick={() => setExpandedSection(prev => prev === 'exercises' ? null : 'exercises')}
+              >
+                <CardTitle className="flex items-center justify-between text-lg text-slate-800">
+                  <span className="flex items-center gap-2">
+                    <Package className="h-5 w-5 text-sky-600" strokeWidth={2} /> Ripetute
+                  </span>
+                  <ChevronDown 
+                    className={cn(
+                      "h-5 w-5 text-slate-400 transition-transform md:hidden",
+                      expandedSection === 'exercises' && "rotate-180"
+                    )} 
+                  />
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className={cn(
+                "space-y-4 p-4",
+                expandedSection !== 'exercises' && "hidden md:block"
+              )}>
               {disciplineDistribution.length > 0 && (
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3.5">
                   <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-slate-700">
@@ -2530,14 +2581,29 @@ export default function RegistroPage() {
           )}
         </div>
 
+        {/* Metriche */}
         <div ref={sectionRefs.metrics} className="scroll-mt-24">
           <Card className="border-slate-200 shadow-sm">
-            <CardHeader className="pb-2.5">
-              <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
-                <Target className="h-5 w-5 text-sky-600" strokeWidth={2} /> Metriche e test
+            <CardHeader 
+              className="pb-2.5 cursor-pointer md:cursor-default"
+              onClick={() => setExpandedSection(prev => prev === 'metrics' ? null : 'metrics')}
+            >
+              <CardTitle className="flex items-center justify-between text-lg text-slate-800">
+                <span className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-sky-600" strokeWidth={2} /> Metriche e test
+                </span>
+                <ChevronDown 
+                  className={cn(
+                    "h-5 w-5 text-slate-400 transition-transform md:hidden",
+                    expandedSection === 'metrics' && "rotate-180"
+                  )} 
+                />
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className={cn(
+              "space-y-4 p-4",
+              expandedSection !== 'metrics' && "hidden md:block"
+            )}>
               {metrics.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-5 text-center text-sm text-slate-500">
                   <p>
