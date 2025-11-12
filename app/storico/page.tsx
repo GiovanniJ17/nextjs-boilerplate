@@ -397,11 +397,6 @@ export default function StoricoPage() {
         value: focusStats?.focusDiscipline ?? '—',
       },
       {
-        icon: Sparkles,
-        label: 'Sessioni test',
-        value: historicalStats.testsCount.toLocaleString('it-IT'),
-      },
-      {
         icon: Gauge,
         label: 'Intensità media',
         value:
@@ -410,14 +405,9 @@ export default function StoricoPage() {
             : '—',
       },
       {
-        icon: Droplets,
-        label: 'RPE medio',
-        value: historicalStats.averageRpe ? historicalStats.averageRpe.toFixed(1) : '—',
-      },
-      {
-        icon: MapPin,
-        label: 'Luoghi diversi',
-        value: historicalStats.uniqueLocations.toLocaleString('it-IT'),
+        icon: Sparkles,
+        label: 'Sessioni test',
+        value: historicalStats.testsCount.toLocaleString('it-IT'),
       },
     ],
     [focusStats, historicalStats]
@@ -555,8 +545,8 @@ export default function StoricoPage() {
           </div>
         </div>
         
-        {/* Stats in hero */}
-        <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {/* Stats in hero - 5 cards on one row */}
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           {heroStats.map(stat => {
             const Icon = stat.icon;
             return (
