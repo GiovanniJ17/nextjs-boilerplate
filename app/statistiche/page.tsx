@@ -80,6 +80,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  ComposedChart,
 } from 'recharts';
 import { 
   pageTransition, 
@@ -1661,7 +1662,7 @@ export default function StatistichePage() {
                       Volume Settimanale
                     </h3>
                     {stats.weeklyVolume.length > 0 ? (
-                      <ResponsiveContainer width="100%" height={300}>
+                      <ResponsiveContainer width="100%" height={350}>
                         <RechartsBarChart data={stats.weeklyVolume}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                           <XAxis dataKey="week" tick={{ fontSize: 12 }} stroke="#64748b" />
@@ -1669,13 +1670,36 @@ export default function StatistichePage() {
                           <Tooltip
                             contentStyle={{
                               backgroundColor: '#fff',
-                              border: '1px solid #e2e8f0',
+                              border: '2px solid #e2e8f0',
                               borderRadius: '12px',
-                              fontSize: '12px',
+                              fontSize: '13px',
+                              padding: '12px',
                             }}
-                            formatter={(value: any) => [`${value} m`, 'Volume']}
+                            formatter={(value: any, name: string) => {
+                              if (name === 'volume') return [`${(Number(value) / 1000).toFixed(1)} km`, 'Volume'];
+                              if (name === 'sessions') return [value, 'Sessioni'];
+                              return [value, name];
+                            }}
                           />
-                          <Bar dataKey="volume" fill="#0ea5e9" radius={[8, 8, 0, 0]} />
+                          <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '15px' }} />
+                          <defs>
+                            <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.3}/>
+                            </linearGradient>
+                          </defs>
+                          <Bar 
+                            dataKey="volume" 
+                            fill="url(#colorVolume)" 
+                            radius={[8, 8, 0, 0]}
+                            name="Volume (m)"
+                          />
+                          <Bar 
+                            dataKey="sessions" 
+                            fill="#8b5cf6" 
+                            radius={[8, 8, 0, 0]}
+                            name="Sessioni"
+                          />
                         </RechartsBarChart>
                       </ResponsiveContainer>
                     ) : (
@@ -1699,17 +1723,40 @@ export default function StatistichePage() {
                               data={stats.intensityDistribution.filter(d => d.count > 0)}
                               cx="50%"
                               cy="50%"
-                              labelLine={false}
-                              label={(entry: any) => `${entry.range}: ${((entry.percent || 0) * 100).toFixed(0)}%`}
-                              outerRadius={80}
+                              labelLine={{
+                                stroke: '#64748b',
+                                strokeWidth: 1,
+                              }}
+                              label={(entry: any) => {
+                                const percent = ((entry.percent || 0) * 100).toFixed(0);
+                                return `${entry.range} (${percent}%)`;
+                              }}
+                              outerRadius={90}
                               fill="#8884d8"
                               dataKey="count"
                             >
                               {stats.intensityDistribution.filter(d => d.count > 0).map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={['#94a3b8', '#60a5fa', '#f59e0b', '#ef4444'][index % 4]} />
+                                <Cell 
+                                  key={`cell-${index}`} 
+                                  fill={['#10b981', '#60a5fa', '#f59e0b', '#ef4444'][index % 4]}
+                                  stroke="#fff"
+                                  strokeWidth={2}
+                                />
                               ))}
                             </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px' }} />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: '#fff',
+                                border: '2px solid #e2e8f0',
+                                borderRadius: '12px',
+                                fontSize: '13px',
+                                padding: '12px',
+                              }}
+                              formatter={(value: any, name: string, props: any) => [
+                                `${value} sessioni (${((props.percent || 0) * 100).toFixed(1)}%)`,
+                                props.payload.range
+                              ]}
+                            />
                           </PieChart>
                         </ResponsiveContainer>
                       ) : (
@@ -1795,6 +1842,339 @@ export default function StatistichePage() {
                               )}
                             </div>
                           ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* NUOVI GRAFICI AVANZATI */}
+                  
+                  {/* Grafico RPE Distribution */}
+                  {stats.rpeDistribution.length > 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                        <Gauge className="h-5 w-5 text-amber-600" strokeWidth={2} />
+                        Distribuzione RPE (Sforzo Percepito)
+                      </h3>
+                      <ResponsiveContainer width="100%" height={350}>
+                        <RechartsBarChart 
+                          data={stats.rpeDistribution}
+                          layout="vertical"
+                          margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                          <XAxis type="number" tick={{ fontSize: 12 }} stroke="#64748b" />
+                          <YAxis 
+                            type="category" 
+                            dataKey="rpe" 
+                            tick={{ fontSize: 12 }} 
+                            stroke="#64748b"
+                            tickFormatter={(value) => `RPE ${value}/10`}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#fff',
+                              border: '2px solid #e2e8f0',
+                              borderRadius: '12px',
+                              fontSize: '13px',
+                              padding: '12px',
+                            }}
+                            formatter={(value: any, name: string) => {
+                              if (name === 'count') return [value, 'Sessioni'];
+                              if (name === 'percentage') return [`${value.toFixed(1)}%`, 'Percentuale'];
+                              return [value, name];
+                            }}
+                          />
+                          <Bar dataKey="count" radius={[0, 8, 8, 0]}>
+                            {stats.rpeDistribution.map((entry, index) => (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={
+                                  entry.rpe <= 3 ? '#10b981' :
+                                  entry.rpe <= 6 ? '#f59e0b' :
+                                  entry.rpe <= 8 ? '#fb923c' : '#ef4444'
+                                } 
+                              />
+                            ))}
+                          </Bar>
+                        </RechartsBarChart>
+                      </ResponsiveContainer>
+                      {stats.avgRPE && (
+                        <div className="mt-4 text-center">
+                          <p className="text-sm text-slate-600">RPE Medio</p>
+                          <p className="text-3xl font-bold text-amber-700">{stats.avgRPE.toFixed(1)}/10</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Grafico Training Load (Acute:Chronic Ratio) */}
+                  {stats.trainingLoad.length > 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                        <Activity className="h-5 w-5 text-violet-600" strokeWidth={2} />
+                        Carico Allenamento (A:C Ratio)
+                      </h3>
+                      <ResponsiveContainer width="100%" height={350}>
+                        <LineChart 
+                          data={stats.trainingLoad.slice(-30)}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                          <XAxis 
+                            dataKey="date" 
+                            tick={{ fontSize: 11 }}
+                            stroke="#64748b"
+                            tickFormatter={(value) => new Date(value).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+                          />
+                          <YAxis 
+                            tick={{ fontSize: 12 }} 
+                            stroke="#64748b"
+                            domain={[0, 2]}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#fff',
+                              border: '2px solid #e2e8f0',
+                              borderRadius: '12px',
+                              fontSize: '13px',
+                              padding: '12px',
+                            }}
+                            labelFormatter={(value) => new Date(value).toLocaleDateString('it-IT')}
+                            formatter={(value: any, name: string) => {
+                              if (name === 'ratio') {
+                                const ratio = Number(value);
+                                let status = 'Moderato';
+                                if (ratio >= 0.8 && ratio <= 1.3) status = 'Ottimale';
+                                else if (ratio > 1.5) status = 'Alto Rischio';
+                                return [`${value.toFixed(2)} (${status})`, 'A:C Ratio'];
+                              }
+                              if (name === 'acuteLoad') return [`${value.toFixed(0)}`, 'Carico Acuto (7gg)'];
+                              if (name === 'chronicLoad') return [`${value.toFixed(0)}`, 'Carico Cronico (28gg)'];
+                              return [value, name];
+                            }}
+                          />
+                          <Legend 
+                            wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }}
+                            iconType="line"
+                          />
+                          {/* Zone colorate */}
+                          <defs>
+                            <linearGradient id="colorOptimal" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                            </linearGradient>
+                            <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1}/>
+                              <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <Line 
+                            type="monotone" 
+                            dataKey="ratio" 
+                            stroke="#8b5cf6" 
+                            strokeWidth={3}
+                            dot={{ fill: '#8b5cf6', r: 4 }}
+                            activeDot={{ r: 6 }}
+                            name="A:C Ratio"
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="acuteLoad" 
+                            stroke="#60a5fa" 
+                            strokeWidth={2}
+                            strokeDasharray="5 5"
+                            dot={false}
+                            name="Carico Acuto"
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="chronicLoad" 
+                            stroke="#94a3b8" 
+                            strokeWidth={2}
+                            strokeDasharray="5 5"
+                            dot={false}
+                            name="Carico Cronico"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                      <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+                        <div className="rounded-lg bg-emerald-50 p-2 border border-emerald-200">
+                          <p className="font-semibold text-emerald-700">0.8 - 1.3</p>
+                          <p className="text-emerald-600">Zona Ottimale</p>
+                        </div>
+                        <div className="rounded-lg bg-amber-50 p-2 border border-amber-200">
+                          <p className="font-semibold text-amber-700">1.3 - 1.5</p>
+                          <p className="text-amber-600">Zona Moderata</p>
+                        </div>
+                        <div className="rounded-lg bg-rose-50 p-2 border border-rose-200">
+                          <p className="font-semibold text-rose-700">&gt; 1.5</p>
+                          <p className="text-rose-600">Rischio Infortuni</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Grafico Performance Trends Multi-Distanza */}
+                  {stats.performanceTrends.length > 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                        <LineChartIcon className="h-5 w-5 text-indigo-600" strokeWidth={2} />
+                        Trend Performance per Distanza
+                      </h3>
+                      <div className="space-y-4">
+                        {stats.performanceTrends.slice(0, 6).map((trend, idx) => {
+                          const percentage = Math.abs(trend.changePercentage);
+                          const barColor = 
+                            trend.trend === 'improving' ? '#10b981' :
+                            trend.trend === 'declining' ? '#ef4444' : '#94a3b8';
+                          
+                          return (
+                            <div key={idx} className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-slate-800">{trend.distance}m</span>
+                                  {trend.trend === 'improving' && (
+                                    <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                      <TrendingUp className="h-3 w-3" />
+                                      Miglioramento
+                                    </span>
+                                  )}
+                                  {trend.trend === 'declining' && (
+                                    <span className="flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
+                                      <TrendingDown className="h-3 w-3" />
+                                      In calo
+                                    </span>
+                                  )}
+                                  {trend.trend === 'stable' && (
+                                    <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                                      <Minus className="h-3 w-3" />
+                                      Stabile
+                                    </span>
+                                  )}
+                                </div>
+                                <span className={cn(
+                                  "text-sm font-bold",
+                                  trend.trend === 'improving' ? "text-emerald-700" :
+                                  trend.trend === 'declining' ? "text-rose-700" : "text-slate-700"
+                                )}>
+                                  {trend.changePercentage > 0 ? '+' : ''}{trend.changePercentage.toFixed(1)}%
+                                </span>
+                              </div>
+                              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                                <div
+                                  className="h-full rounded-full transition-all duration-500"
+                                  style={{ 
+                                    width: `${Math.min(percentage * 10, 100)}%`,
+                                    backgroundColor: barColor,
+                                  }}
+                                />
+                              </div>
+                              <div className="flex justify-between text-xs text-slate-500">
+                                <span>Recente: {trend.recentAvg.toFixed(2)}s</span>
+                                <span>Precedente: {trend.previousAvg.toFixed(2)}s</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Grafico Progressi Mensili Combinato */}
+                  {stats.monthlyProgress.length > 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                        <Calendar className="h-5 w-5 text-blue-600" strokeWidth={2} />
+                        Progressi Mensili
+                      </h3>
+                      <ResponsiveContainer width="100%" height={350}>
+                        <ComposedChart 
+                          data={stats.monthlyProgress.slice(-12)}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                          <XAxis 
+                            dataKey="month" 
+                            tick={{ fontSize: 11 }}
+                            stroke="#64748b"
+                          />
+                          <YAxis 
+                            yAxisId="left"
+                            tick={{ fontSize: 12 }} 
+                            stroke="#64748b"
+                            label={{ value: 'Distanza (km)', angle: -90, position: 'insideLeft', style: { fontSize: 12 } }}
+                          />
+                          <YAxis 
+                            yAxisId="right"
+                            orientation="right"
+                            tick={{ fontSize: 12 }} 
+                            stroke="#64748b"
+                            label={{ value: 'Sessioni', angle: 90, position: 'insideRight', style: { fontSize: 12 } }}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#fff',
+                              border: '2px solid #e2e8f0',
+                              borderRadius: '12px',
+                              fontSize: '13px',
+                              padding: '12px',
+                            }}
+                            formatter={(value: any, name: string) => {
+                              if (name === 'distance') return [`${(Number(value) / 1000).toFixed(1)} km`, 'Distanza'];
+                              if (name === 'sessions') return [value, 'Sessioni'];
+                              if (name === 'avgSpeed') return [`${(Number(value) * 3.6).toFixed(1)} km/h`, 'Velocità Media'];
+                              if (name === 'pbs') return [value, 'Personal Bests'];
+                              return [value, name];
+                            }}
+                          />
+                          <Legend 
+                            wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }}
+                          />
+                          <defs>
+                            <linearGradient id="colorDistance" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <Area 
+                            yAxisId="left"
+                            type="monotone" 
+                            dataKey="distance" 
+                            fill="url(#colorDistance)" 
+                            stroke="#3b82f6"
+                            strokeWidth={2}
+                            name="Distanza"
+                          />
+                          <Bar 
+                            yAxisId="right"
+                            dataKey="sessions" 
+                            fill="#8b5cf6" 
+                            radius={[8, 8, 0, 0]}
+                            name="Sessioni"
+                          />
+                          <Line 
+                            yAxisId="left"
+                            type="monotone" 
+                            dataKey="avgSpeed" 
+                            stroke="#f59e0b" 
+                            strokeWidth={2}
+                            dot={{ fill: '#f59e0b', r: 3 }}
+                            name="Velocità Media"
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                        {stats.monthlyProgress.slice(-2).map((month, idx) => (
+                          <div key={idx} className="rounded-lg bg-slate-50 p-3 border border-slate-200">
+                            <p className="font-semibold text-slate-800 mb-1">{month.month}</p>
+                            <div className="space-y-1 text-slate-600">
+                              <p>📊 {month.sessions} sessioni</p>
+                              <p>📏 {(month.distance / 1000).toFixed(1)} km</p>
+                              {month.avgSpeed && <p>⚡ {(month.avgSpeed * 3.6).toFixed(1)} km/h</p>}
+                              {month.pbs > 0 && <p className="text-amber-600 font-semibold">⭐ {month.pbs} PB</p>}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
