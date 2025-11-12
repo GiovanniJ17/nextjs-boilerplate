@@ -1490,21 +1490,24 @@ export default function StatistichePage() {
       </Card>
       </motion.div>
 
-      <motion.div variants={fadeInUp}>
-      <Card className="border-slate-200 shadow-sm">
+      <motion.div 
+        variants={fadeInUp}
+        className="sticky top-0 z-10 bg-slate-50 pb-2 pt-2"
+      >
+      <Card className="border-slate-200 shadow-lg">
         <CardHeader className="pb-2.5">
-          <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-slate-800">
             <TrendingUp className="h-5 w-5 text-sky-600" strokeWidth={2} /> Andamento
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-sm">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-xs sm:text-sm">
             {tabs.map(tab => (
               <button
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key as typeof activeTab)}
-                className={`rounded-full px-4 py-1.5 transition ${
+                className={`rounded-full px-3 sm:px-4 py-1.5 transition ${
                   activeTab === tab.key
                     ? 'bg-sky-600 text-white shadow-sm'
                     : 'text-slate-600 hover:bg-white'
