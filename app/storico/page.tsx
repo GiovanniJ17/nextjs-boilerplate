@@ -165,7 +165,7 @@ const sessionTypeOptions = [
   { value: 'pista', label: 'Allenamenti in pista' },
   { value: 'test', label: 'Test' },
   { value: 'gara', label: 'Gara' },
-  { value: 'massimale', label: 'Massimali' },
+  { value: 'palestra', label: 'Massimali' },
   { value: 'scarico', label: 'Scarico' },
   { value: 'recupero', label: 'Recupero' },
   { value: 'altro', label: 'Altro' },
@@ -181,7 +181,7 @@ const sessionTypeTokens: Record<string, { bg: string; text: string }> = {
   pista: { bg: 'bg-sky-100', text: 'text-sky-600' },
   test: { bg: 'bg-amber-100', text: 'text-amber-600' },
   gara: { bg: 'bg-rose-100', text: 'text-rose-600' },
-  massimale: { bg: 'bg-emerald-100', text: 'text-emerald-600' },
+  palestra: { bg: 'bg-emerald-100', text: 'text-emerald-600' },
   scarico: { bg: 'bg-purple-100', text: 'text-purple-600' },
   recupero: { bg: 'bg-indigo-100', text: 'text-indigo-600' },
   altro: { bg: 'bg-slate-200', text: 'text-slate-600' },
@@ -1255,10 +1255,11 @@ export default function StoricoPage() {
                                   const categoryKey = metric.category ?? 'altro';
                                   const token = metricCategoryTokens[categoryKey] ?? metricCategoryTokens.altro;
                                   const CategoryIcon = metricCategoryIconsMap[categoryKey] ?? FileText;
-                                  const isPerformanceMetric =
-                                    categoryKey === 'test' ||
-                                    metric.time_s != null ||
-                                    metric.distance_m != null;
+                                  
+                                  // Massimali mostrano valore/target, test/gare mostrano distanza/tempo
+                                  const isPerformanceMetric = 
+                                    categoryKey === 'test' && (metric.time_s != null || metric.distance_m != null);
+                                  
                                   const recoveryMinutes =
                                     metric.recovery_post_s != null
                                       ? Math.round((metric.recovery_post_s / 60) * 10) / 10
