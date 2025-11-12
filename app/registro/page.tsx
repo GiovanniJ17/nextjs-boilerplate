@@ -1241,14 +1241,21 @@ export default function RegistroPage() {
 
     metrics.forEach((metric, index) => {
       if (!metric.metric_name.trim()) return;
-      if (isMetricSession) {
+      if (sessionForm.type === 'test' || sessionForm.type === 'gara') {
+        // Test e gare richiedono distanza e tempo
         if (!metric.distance_m) {
           validation[`metric-${index}-distance_m`] = 'Indica la distanza della prova';
         }
         if (!metric.time_s) {
           validation[`metric-${index}-time_s`] = 'Inserisci il tempo registrato';
         }
+      } else if (sessionForm.type === 'massimale') {
+        // Massimali richiedono solo il valore (peso in kg)
+        if (!metric.value) {
+          validation[`metric-${index}-value`] = 'Inserisci il peso sollevato';
+        }
       } else if (!metric.value) {
+        // Altri tipi richiedono il valore generico
         validation[`metric-${index}-value`] = 'Inserisci il valore della metrica';
       }
     });
@@ -1324,8 +1331,12 @@ export default function RegistroPage() {
       
       const metricErrors = metrics.some((metric) => {
         if (!metric.metric_name.trim()) return false;
-        if (isMetricSession) {
+        if (sessionForm.type === 'test' || sessionForm.type === 'gara') {
+          // Test e gare richiedono distanza e tempo
           return !metric.distance_m || !metric.time_s;
+        } else if (sessionForm.type === 'massimale') {
+          // Massimali richiedono solo il valore (peso)
+          return !metric.value;
         }
         return !metric.value;
       });
@@ -2517,8 +2528,8 @@ export default function RegistroPage() {
                                   </span>
                                 )}
                                 {exercise.rest_between_reps_s && (
-                                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
-                                    <RefreshCcw className="h-3 w-3 text-slate-500" /> Recupero previsto: {exercise.rest_between_reps_s}s
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 font-medium text-blue-700">
+                                    <RefreshCcw className="h-3 w-3 text-blue-600" /> Recupero: {exercise.rest_between_reps_s}s tra rip.
                                   </span>
                                 )}
                                 {exercise.rest_between_sets_s && (
@@ -2528,13 +2539,84 @@ export default function RegistroPage() {
                                 )}
                               </div>
 
+                              {/* Compilazione rapida */}
+                              <div className="mt-3 rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 p-3">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Sparkles className="h-4 w-4 text-sky-600" />
+                                  <span className="text-sm font-semibold text-slate-700">Compilazione Rapida</span>
+                                </div>
+                                <p className="text-xs text-slate-600 mb-3">
+                                  Inserisci un tempo medio o il miglior tempo per applicarlo a tutte le {group.entries.length} ripetizioni
+                                </p>
+                                <div className="flex flex-wrap items-end gap-2">
+                                  <div className="flex-1 min-w-[120px]">
+                                    <Label className="text-xs text-slate-600 mb-1 block">Tempo (secondi)</Label>
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      min={0}
+                                      placeholder="es. 15.50"
+                                      id={`quick-time-${block.id}-${index}-${group.seriesNumber}`}
+                                      className="h-9"
+                                    />
+                                  </div>
+                                  <div className="flex-1 min-w-[100px]">
+                                    <Label className="text-xs text-slate-600 mb-1 block">RPE (opzionale)</Label>
+                                    <Input
+                                      type="number"
+                                      step="0.1"
+                                      min={0}
+                                      max={10}
+                                      placeholder="es. 7.5"
+                                      id={`quick-rpe-${block.id}-${index}-${group.seriesNumber}`}
+                                      className="h-9"
+                                    />
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => {
+                                      const timeInput = document.getElementById(`quick-time-${block.id}-${index}-${group.seriesNumber}`) as HTMLInputElement;
+                                      const rpeInput = document.getElementById(`quick-rpe-${block.id}-${index}-${group.seriesNumber}`) as HTMLInputElement;
+                                      const timeValue = timeInput?.value;
+                                      const rpeValue = rpeInput?.value;
+                                      
+                                      if (!timeValue) {
+                                        alert('Inserisci un tempo per applicare a tutte le ripetizioni');
+                                        return;
+                                      }
+
+                                      // Applica il tempo a tutte le ripetizioni della serie
+                                      group.entries.forEach(entry => {
+                                        const event = { target: { name: 'time_s', value: timeValue } };
+                                        handleResultChange(block.id, index, entry.resultIndex, event as any);
+                                        
+                                        if (rpeValue) {
+                                          const rpeEvent = { target: { name: 'rpe', value: rpeValue } };
+                                          handleResultChange(block.id, index, entry.resultIndex, rpeEvent as any);
+                                        }
+                                      });
+
+                                      // Reset inputs
+                                      timeInput.value = '';
+                                      if (rpeInput) rpeInput.value = '';
+                                      
+                                      alert(`✓ Tempo applicato a ${group.entries.length} ripetizioni`);
+                                    }}
+                                    className="h-9 bg-sky-600 hover:bg-sky-700"
+                                  >
+                                    <Play className="h-3 w-3 mr-1" />
+                                    Applica
+                                  </Button>
+                                </div>
+                              </div>
+
                               <div className="mt-4 overflow-x-auto">
                                 <table className="min-w-full divide-y divide-slate-200 text-sm">
                                   <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                                     <tr>
                                       <th className="px-3 py-2 text-left">Ripetizione</th>
                                       <th className="px-3 py-2 text-left">Tempo (s)</th>
-                                      <th className="px-3 py-2 text-left">Recupero (s)</th>
                                       <th className="px-3 py-2 text-left">RPE</th>
                                       <th className="px-3 py-2 text-left">Note</th>
                                       <th className="px-3 py-2 text-right">Azioni</th>
@@ -2543,7 +2625,6 @@ export default function RegistroPage() {
                                   <tbody className="divide-y divide-slate-200">
                                     {group.entries.map(entry => {
                                       const numericTime = parseDecimalInput(entry.result.time_s);
-                                      const numericRecovery = parseDecimalInput(entry.result.weight_kg);
                                       const numericRpe = parseDecimalInput(entry.result.rpe);
                                       const isBestTime =
                                         numericTime != null &&
@@ -2575,23 +2656,6 @@ export default function RegistroPage() {
                                               {isBestTime && (
                                                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
                                                   <Trophy className="h-3 w-3" /> PB di giornata
-                                                </span>
-                                              )}
-                                            </div>
-                                          </td>
-                                          <td className="px-3 py-3 align-top">
-                                            <div className="space-y-1">
-                                              <Input
-                                                name="weight_kg"
-                                                type="number"
-                                                step="0.5"
-                                                min={0}
-                                                value={entry.result.weight_kg}
-                                                onChange={event => handleResultChange(block.id, index, entry.resultIndex, event)}
-                                              />
-                                              {numericRecovery == null && exercise.rest_between_reps_s && (
-                                                <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
-                                                  <RefreshCcw className="h-3 w-3" /> Previsto {exercise.rest_between_reps_s}s
                                                 </span>
                                               )}
                                             </div>
