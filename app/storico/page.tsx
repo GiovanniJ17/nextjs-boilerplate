@@ -152,7 +152,6 @@ function humanDiscipline(discipline: string | null) {
 const sessionTypeOptions = [
   { value: '', label: 'Tutte le sessioni' },
   { value: 'pista', label: 'Allenamenti in pista' },
-  { value: 'palestra', label: 'Palestra / forza' },
   { value: 'test', label: 'Test' },
   { value: 'gara', label: 'Gara' },
   { value: 'scarico', label: 'Scarico' },
@@ -168,7 +167,6 @@ const smartRangeOptions = [
 
 const sessionTypeTokens: Record<string, { bg: string; text: string }> = {
   pista: { bg: 'bg-sky-100', text: 'text-sky-600' },
-  palestra: { bg: 'bg-emerald-100', text: 'text-emerald-600' },
   test: { bg: 'bg-amber-100', text: 'text-amber-600' },
   gara: { bg: 'bg-rose-100', text: 'text-rose-600' },
   scarico: { bg: 'bg-purple-100', text: 'text-purple-600' },
@@ -815,11 +813,7 @@ export default function StoricoPage() {
                 if (bestTime != null) {
                   highlightBadges.push({ icon: Clock3, label: 'Miglior tempo', value: `${bestTime.toFixed(2)}s` });
                 }
-                // Show weight badge only for gym/strength sessions, not for track sessions
-                const isGymSession = session.type === 'palestra' || session.type === 'forza';
-                if (bestWeight != null && isGymSession) {
-                  highlightBadges.push({ icon: Weight, label: 'Carico massimo', value: `${bestWeight.toFixed(1)}kg` });
-                }
+                // Weight badges removed - only tracked in Metriche section now (massimali)
                 if (averageRpeSession != null) {
                   highlightBadges.push({ icon: Gauge, label: 'RPE medio', value: averageRpeSession.toFixed(1) });
                 }

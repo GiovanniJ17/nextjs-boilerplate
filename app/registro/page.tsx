@@ -29,6 +29,7 @@ import {
   Timer,
   Trash2,
   Trophy,
+  Weight,
   Wind,
   X,
   Play,
@@ -165,9 +166,9 @@ const metricCategories: MetricCategory[] = [
     description: 'Prove di valutazione interne con cronometro o sensori.',
   },
   {
-    value: 'fisico',
-    label: 'Fisico',
-    description: 'Valori di forza o potenza registrati in palestra come riferimento.',
+    value: 'massimale',
+    label: 'Massimale',
+    description: 'Test di forza massima: squat, girata, stacco, trazioni.',
   },
   {
     value: 'recupero',
@@ -201,10 +202,18 @@ const locationOptions = [
 const metricCategoryIcons: Record<string, LucideIcon> = {
   prestazione: Trophy,
   test: Target,
-  fisico: Gauge,
+  massimale: Weight,
   recupero: Wind,
   altro: NotebookPen,
 };
+
+// Esercizi massimali predefiniti per la categoria "massimale"
+const massimaliExercises = [
+  'Squat',
+  'Girata',
+  'Stacco',
+  'Trazioni',
+];
 
 function buildRangeBackground(value: string | number, min = 1, max = 10): CSSProperties {
   const parsed = typeof value === 'number' ? value : Number(value);
@@ -1103,7 +1112,29 @@ export default function RegistroPage() {
   function handleMetricCategorySelect(index: number, category: string) {
     setMetrics(prev => {
       const copy = [...prev];
-      copy[index] = { ...copy[index], category };
+      const currentMetric = copy[index];
+      
+      // Auto-fill in base alla categoria selezionata
+      if (category === 'massimale') {
+        // Massimali: unità in kg, suggerimento primo esercizio
+        copy[index] = { 
+          ...currentMetric, 
+          category,
+          unit: 'kg',
+          metric_target: currentMetric.metric_target || massimaliExercises[0],
+        };
+      } else if (category === 'test' || category === 'prestazione') {
+        // Test e Prestazioni: unità in secondi
+        copy[index] = { 
+          ...currentMetric, 
+          category,
+          unit: 's',
+        };
+      } else {
+        // Altre categorie: solo categoria
+        copy[index] = { ...currentMetric, category };
+      }
+      
       return copy;
     });
   }
@@ -2844,13 +2875,30 @@ export default function RegistroPage() {
 
                             <div className="mt-4 grid gap-4 md:grid-cols-4">
                               <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Target / Test</Label>
-                                <Input
-                                  name="metric_target"
-                                  value={metric.metric_target}
-                                  onChange={event => updateMetric(index, event)}
-                                  placeholder="Es. 60m indoor"
-                                />
+                                <Label className="text-xs font-semibold text-slate-600">
+                                  {metric.category === 'massimale' ? 'Esercizio' : 'Target / Test'}
+                                </Label>
+                                {metric.category === 'massimale' ? (
+                                  <select
+                                    name="metric_target"
+                                    value={metric.metric_target}
+                                    onChange={event => updateMetric(index, event)}
+                                    className="flex h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white transition-colors placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    {massimaliExercises.map(exercise => (
+                                      <option key={exercise} value={exercise}>
+                                        {exercise}
+                                      </option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <Input
+                                    name="metric_target"
+                                    value={metric.metric_target}
+                                    onChange={event => updateMetric(index, event)}
+                                    placeholder="Es. 60m indoor"
+                                  />
+                                )}
                               </div>
                               <div className="space-y-1">
                                 <Label className="text-xs font-semibold text-slate-600">Valore</Label>
@@ -2873,6 +2921,11 @@ export default function RegistroPage() {
                                   value={metric.unit}
                                   onChange={event => updateMetric(index, event)}
                                   placeholder="kg, s, cm..."
+                                  readOnly={metric.category === 'massimale' || metric.category === 'test' || metric.category === 'prestazione'}
+                                  className={cn(
+                                    (metric.category === 'massimale' || metric.category === 'test' || metric.category === 'prestazione') && 
+                                    'bg-slate-50 cursor-not-allowed'
+                                  )}
                                 />
                               </div>
                               <div className="space-y-1 md:col-span-2">

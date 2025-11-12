@@ -59,7 +59,6 @@ const distanceOptions = [
 const sessionTypeFilters = [
   { value: '', label: 'Tutti' },
   { value: 'pista', label: 'Pista' },
-  { value: 'palestra', label: 'Palestra' },
   { value: 'test', label: 'Test' },
   { value: 'gara', label: 'Gara' },
   { value: 'scarico', label: 'Scarico' },
