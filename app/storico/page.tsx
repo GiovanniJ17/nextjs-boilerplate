@@ -37,6 +37,7 @@ import { notifyError, notifySuccess } from '@/lib/notifications';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { FilterBar, FilterItem } from '@/components/ui/filter-bar';
+import { Pagination } from '@/components/ui/pagination';
 import { 
   pageTransition, 
   fadeInUp, 
@@ -232,6 +233,8 @@ export default function StoricoPage() {
   const [activeSmartRange, setActiveSmartRange] = useState<string>('');
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const [sessionToDelete, setSessionToDelete] = useState<{ id: string; label: string } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // Modificabile se necessario
 
   useEffect(() => {
     void loadBlocks();
@@ -529,6 +532,19 @@ export default function StoricoPage() {
     });
   }, [search, sessions]);
 
+  // Calcola paginazione
+  const totalPages = Math.ceil(filteredSessions.length / itemsPerPage);
+  const paginatedSessions = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredSessions.slice(startIndex, endIndex);
+  }, [filteredSessions, currentPage, itemsPerPage]);
+
+  // Reset pagina quando cambiano i filtri
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, typeFilter, blockFilter, fromDate, toDate]);
+
   function toggleSession(id: string) {
     setOpenSession(prev => (prev === id ? null : id));
   }
@@ -602,10 +618,13 @@ export default function StoricoPage() {
         </motion.div>
       </motion.section>
 
-      {/* Filters - Redesigned with Clear Sections */}
-      <motion.div variants={fadeInUp}>
-        <Card className="border-slate-200 shadow-sm">
-        <CardContent className="p-5 space-y-5">
+      {/* Filters - Redesigned with Clear Sections - Sticky */}
+      <motion.div 
+        variants={fadeInUp}
+        className="sticky top-0 z-10 bg-slate-50 pb-2 pt-2"
+      >
+        <Card className="border-slate-200 shadow-lg">
+        <CardContent className="p-4 sm:p-5 space-y-4 sm:space-y-5">
           
           {/* PERIODO Section */}
           <div className="space-y-3">
@@ -831,15 +850,14 @@ export default function StoricoPage() {
               Nessun allenamento trovato. Modifica i filtri o registra una nuova sessione!
             </div>
           ) : (
-            
-
+            <>
             <motion.div 
               className="space-y-4"
               variants={staggerContainer}
               initial="hidden"
               animate="visible"
             >
-              {filteredSessions.map(session => {
+              {paginatedSessions.map(session => {
                 const isOpen = openSession === session.id;
                 const totalMetrics = session.metrics?.length ?? 0;
                 
@@ -1285,6 +1303,20 @@ export default function StoricoPage() {
                 );
               })}
             </motion.div>
+            
+            {/* Paginazione */}
+            {filteredSessions.length > itemsPerPage && (
+              <div className="pt-4 border-t border-slate-200">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  itemsPerPage={itemsPerPage}
+                  totalItems={filteredSessions.length}
+                />
+              </div>
+            )}
+            </>
           )}
         </CardContent>
       </Card>
