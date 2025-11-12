@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ChevronDown,
   Clock,
+  Dumbbell,
   Flame,
   Flag,
   FolderPlus,
@@ -28,6 +29,7 @@ import {
   Target,
   Timer,
   Trash2,
+  Trees,
   Trophy,
   Weight,
   Wind,
@@ -200,8 +202,8 @@ const sessionTypeIcons: Record<string, LucideIcon> = {
 const locationOptions = [
   { value: 'pista-indoor', label: 'Pista indoor' },
   { value: 'pista-outdoor', label: 'Pista outdoor' },
-  { value: 'campo-scuola', label: 'Campo scuola' },
-  { value: 'outdoor', label: 'Strada / parco' },
+  { value: 'palestra', label: 'Palestra' },
+  { value: 'erba', label: 'Erba' },
   { value: 'custom', label: 'Altro luogo' },
 ];
 
@@ -247,8 +249,8 @@ function buildRangeBackground(value: string | number, min = 1, max = 10): CSSPro
 const locationIcons: Record<string, LucideIcon> = {
   'pista-indoor': Activity,
   'pista-outdoor': Flag,
-  'campo-scuola': MapPin,
-  outdoor: Wind,
+  palestra: Dumbbell,
+  erba: Trees,
   custom: PenSquare,
 };
 
@@ -2788,92 +2790,127 @@ export default function RegistroPage() {
                               </div>
                             </div>
 
-                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                              <div className="space-y-1.5">
-                                <Label className="text-xs font-medium text-slate-700">Distanza (m)</Label>
-                                <Input
-                                  name="distance_m"
-                                  type="number"
-                                  min={0}
-                                  value={metric.distance_m}
-                                  onChange={event => updateMetric(index, event)}
-                                  className={cn('h-9', errors[`metric-${index}-distance_m`] && 'border-red-500')}
-                                />
-                                {errors[`metric-${index}-distance_m`] && (
-                                  <p className="text-[11px] text-red-500">{errors[`metric-${index}-distance_m`]}</p>
-                                )}
+                            {sessionForm.type === 'massimale' ? (
+                              // Per massimali: solo Valore e RPE (no distanza/tempo/recupero)
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs font-medium text-slate-700">Valore (kg)</Label>
+                                  <Input
+                                    name="value"
+                                    type="number"
+                                    step="0.5"
+                                    min={0}
+                                    value={metric.value}
+                                    onChange={event => updateMetric(index, event)}
+                                    className={cn('h-9', errors[`metric-${index}-value`] && 'border-red-500')}
+                                    placeholder="Es. 120"
+                                  />
+                                  {errors[`metric-${index}-value`] && (
+                                    <p className="text-[11px] text-red-500">{errors[`metric-${index}-value`]}</p>
+                                  )}
+                                </div>
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs font-medium text-slate-700">RPE (1-10)</Label>
+                                  <Input
+                                    name="intensity"
+                                    type="number"
+                                    min={1}
+                                    max={10}
+                                    step={1}
+                                    value={metric.intensity}
+                                    onChange={event => updateMetric(index, event)}
+                                    className="h-9"
+                                  />
+                                  <p className="text-[11px] text-slate-500">
+                                    {intensityNumber <= 3
+                                      ? 'Scarico o ritmo blando'
+                                      : intensityNumber <= 6
+                                      ? 'Intensità controllata'
+                                      : intensityNumber <= 8
+                                      ? 'Spinta elevata'
+                                      : 'Massimo sforzo'}
+                                  </p>
+                                </div>
                               </div>
-                              <div className="space-y-1.5">
-                                <Label className="text-xs font-medium text-slate-700">Tempo (s)</Label>
-                                <Input
-                                  name="time_s"
-                                  type="number"
-                                  step="0.01"
-                                  min={0}
-                                  value={metric.time_s}
-                                  onChange={event => updateMetric(index, event)}
-                                  className={cn('h-9', errors[`metric-${index}-time_s`] && 'border-red-500')}
-                                />
-                                {errors[`metric-${index}-time_s`] && (
-                                  <p className="text-[11px] text-red-500">{errors[`metric-${index}-time_s`]}</p>
-                                )}
+                            ) : (
+                              // Per test/gara: Distanza, Tempo, Recupero, RPE
+                              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs font-medium text-slate-700">Distanza (m)</Label>
+                                  <Input
+                                    name="distance_m"
+                                    type="number"
+                                    min={0}
+                                    value={metric.distance_m}
+                                    onChange={event => updateMetric(index, event)}
+                                    className={cn('h-9', errors[`metric-${index}-distance_m`] && 'border-red-500')}
+                                  />
+                                  {errors[`metric-${index}-distance_m`] && (
+                                    <p className="text-[11px] text-red-500">{errors[`metric-${index}-distance_m`]}</p>
+                                  )}
+                                </div>
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs font-medium text-slate-700">Tempo (s)</Label>
+                                  <Input
+                                    name="time_s"
+                                    type="number"
+                                    step="0.01"
+                                    min={0}
+                                    value={metric.time_s}
+                                    onChange={event => updateMetric(index, event)}
+                                    className={cn('h-9', errors[`metric-${index}-time_s`] && 'border-red-500')}
+                                  />
+                                  {errors[`metric-${index}-time_s`] && (
+                                    <p className="text-[11px] text-red-500">{errors[`metric-${index}-time_s`]}</p>
+                                  )}
+                                </div>
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs font-medium text-slate-700">Recupero (min)</Label>
+                                  <Input
+                                    name="recovery_post_s"
+                                    type="number"
+                                    min={0}
+                                    step="0.1"
+                                    value={metric.recovery_post_s}
+                                    onChange={event => updateMetric(index, event)}
+                                    placeholder="Es. 7"
+                                    className="h-9"
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs font-medium text-slate-700">RPE (1-10)</Label>
+                                  <Input
+                                    name="intensity"
+                                    type="number"
+                                    min={1}
+                                    max={10}
+                                    step={1}
+                                    value={metric.intensity}
+                                    onChange={event => updateMetric(index, event)}
+                                    className="h-9"
+                                  />
+                                  <p className="text-[11px] text-slate-500">
+                                    {intensityNumber <= 3
+                                      ? 'Scarico o ritmo blando'
+                                      : intensityNumber <= 6
+                                      ? 'Intensità controllata'
+                                      : intensityNumber <= 8
+                                      ? 'Spinta elevata'
+                                      : 'Massimo sforzo'}
+                                  </p>
+                                </div>
                               </div>
-                              <div className="space-y-1.5">
-                                <Label className="text-xs font-medium text-slate-700">Recupero (min)</Label>
-                                <Input
-                                  name="recovery_post_s"
-                                  type="number"
-                                  min={0}
-                                  step="0.1"
-                                  value={metric.recovery_post_s}
-                                  onChange={event => updateMetric(index, event)}
-                                  placeholder="Es. 7"
-                                  className="h-9"
-                                />
-                              </div>
-                              <div className="space-y-1.5">
-                                <Label className="text-xs font-medium text-slate-700">RPE (1-10)</Label>
-                                <Input
-                                  name="intensity"
-                                  type="number"
-                                  min={1}
-                                  max={10}
-                                  step={1}
-                                  value={metric.intensity}
-                                  onChange={event => updateMetric(index, event)}
-                                  className="h-9"
-                                />
-                                <p className="text-[11px] text-slate-500">
-                                  {intensityNumber <= 3
-                                    ? 'Scarico o ritmo blando'
-                                    : intensityNumber <= 6
-                                    ? 'Intensità controllata'
-                                    : intensityNumber <= 8
-                                    ? 'Spinta elevata'
-                                    : 'Massimo sforzo'}
-                                </p>
-                              </div>
-                            </div>
+                            )}
 
-                            <div className="grid gap-4 md:grid-cols-2">
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Contesto (es. fase, condizioni)</Label>
-                                <Input
-                                  name="metric_target"
-                                  value={metric.metric_target}
-                                  onChange={event => updateMetric(index, event)}
-                                  placeholder="Es. Finale, simulazione, condizioni meteo"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Note</Label>
-                                <Textarea
-                                  name="notes"
-                                  value={metric.notes}
-                                  onChange={event => updateMetric(index, event)}
-                                  placeholder="Sensazioni, feedback del coach..."
-                                />
-                              </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs font-semibold text-slate-600">Note</Label>
+                              <Textarea
+                                name="notes"
+                                value={metric.notes}
+                                onChange={event => updateMetric(index, event)}
+                                placeholder="Sensazioni, feedback, contesto..."
+                                className="min-h-[80px]"
+                              />
                             </div>
                           </div>
                         ) : (
