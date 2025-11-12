@@ -534,72 +534,54 @@ export default function StoricoPage() {
   }
 
   return (
-    <div className="space-y-6 animate-page">
-      <section className="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-white shadow-xl">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium">
-              <NotebookText className="h-4 w-4" /> Storico Allenamenti
-            </div>
-            <h1 className="text-3xl font-semibold">Rivivi le tue sessioni più importanti</h1>
-            <p className="max-w-xl text-sm text-white/70">
-              Consulta rapidamente blocchi, dettagli tecnici, risultati e metriche raccolte nelle sessioni precedenti.
-              Utilizza i filtri per trovare l’allenamento giusto in pochi secondi.
-            </p>
+    <div className="page-container">
+      <PageHeader 
+        title="Storico Allenamenti"
+        description="Consulta e analizza le tue sessioni precedenti"
+        icon={History}
+        actions={
+          <div className="badge badge-primary text-base font-bold px-4 py-2">
+            {sessions.length} sessioni
           </div>
-          <div className="rounded-3xl bg-white/10 px-6 py-5 text-center">
-            <p className="text-xs uppercase tracking-widest text-white/60">Allenamenti registrati</p>
-            <p className="text-4xl font-semibold">{sessions.length}</p>
-            <p className="text-xs text-white/60">Ultimi 100 inserimenti</p>
-          </div>
-        </div>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {heroStats.map(stat => {
-            const Icon = stat.icon;
+        }
+      />
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-3 lg:grid-cols-6">
+        {heroStats.map(stat => (
+          <StatCard
+            key={stat.label}
+            label={stat.label}
+            value={stat.value}
+            icon={stat.icon}
+          />
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="card-compact mb-4">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {smartRangeOptions.map(option => {
+            const isActive = activeSmartRange === option.key;
             return (
-              <div key={stat.label} className="rounded-2xl bg-white/10 px-4 py-3 text-sm">
-                <div className="flex items-center justify-between text-white/80">
-                  <span className="text-xs uppercase tracking-widest text-white/60">{stat.label}</span>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                </div>
-                <p className="mt-2 text-2xl font-semibold text-white">{stat.value}</p>
-              </div>
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => applySmartRange(option.key)}
+                className={cn(
+                  'rounded-lg border px-3 py-1.5 text-xs font-medium transition',
+                  isActive
+                    ? 'border-sky-500 bg-sky-50 text-sky-700'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
+                )}
+              >
+                {option.label}
+              </button>
             );
           })}
         </div>
-      </section>
 
-      <Card className="border-none shadow-lg">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
-            <Filter className="h-5 w-5 text-sky-600" /> Filtri avanzati
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs">
-            {smartRangeOptions.map(option => {
-              const isActive = activeSmartRange === option.key;
-              return (
-                <button
-                  key={option.key}
-                  type="button"
-                  onClick={() => applySmartRange(option.key)}
-                  className={cn(
-                    'rounded-full border px-3 py-1 font-medium transition',
-                    isActive
-                      ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                      : 'border-transparent bg-white text-slate-600 hover:border-sky-200'
-                  )}
-                  aria-pressed={isActive}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
-
+        <div className="form-grid">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1">
               <Label className="text-xs font-semibold text-slate-600">Da</Label>
@@ -716,8 +698,8 @@ export default function StoricoPage() {
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <Card className="border-none shadow-lg">
         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
