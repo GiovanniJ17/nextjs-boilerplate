@@ -2415,18 +2415,18 @@ export default function RegistroPage() {
                         <div className="flex flex-wrap items-center gap-2">
                           <button
                             type="button"
+                            onClick={() => addSeries(block.id, index)}
+                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
+                          >
+                            <ListPlus className="h-3 w-3" /> Aggiungi serie
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => duplicateLastSeries(block.id, index)}
                             className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100"
                             disabled={seriesGroups.length === 0}
                           >
                             <PlusCircle className="h-3 w-3" /> Duplica ultima serie
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => addSeries(block.id, index)}
-                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
-                          >
-                            <ListPlus className="h-3 w-3" /> Aggiungi serie
                           </button>
                         </div>
                       </div>
