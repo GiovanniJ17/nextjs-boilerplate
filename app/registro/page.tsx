@@ -2181,7 +2181,8 @@ export default function RegistroPage() {
                     </div>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  {/* Recupero serie + Intensità */}
+                  <div className="grid gap-3 lg:grid-cols-2">
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium text-slate-700">Recupero tra serie (s)</Label>
                       <Input
@@ -2197,7 +2198,7 @@ export default function RegistroPage() {
 
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium text-slate-700">Intensità percepita</Label>
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
                         <input
                           type="range"
                           min={1}
@@ -2206,18 +2207,18 @@ export default function RegistroPage() {
                           name="intensity"
                           value={exercise.intensity}
                           onChange={event => handleExerciseChange(block.id, index, event)}
-                          className="range-input mt-2"
+                          className="range-input w-full"
                           style={buildRangeBackground(exercise.intensity)}
                         />
-                        <div className="mt-3 grid grid-cols-10 gap-1 text-[10px]">
+                        <div className="mt-2 grid grid-cols-10 gap-0.5 text-[9px]">
                           {Array.from({ length: 10 }).map((_, tickIndex) => {
                             const tickValue = tickIndex + 1;
                             const isActive = sliderValue >= tickValue;
                             return (
-                              <div key={tickValue} className="flex flex-col items-center gap-1">
+                              <div key={tickValue} className="flex flex-col items-center gap-0.5">
                                 <span
                                   className={cn(
-                                    'block h-2 w-1 rounded-full transition-colors',
+                                    'block h-1.5 w-0.5 rounded-full transition-colors',
                                     isActive ? 'bg-sky-500' : 'bg-slate-300'
                                   )}
                                 />
@@ -2233,17 +2234,17 @@ export default function RegistroPage() {
                             );
                           })}
                         </div>
-                        <div className="mt-2 grid grid-cols-4 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                        <div className="mt-1.5 grid grid-cols-4 text-[9px] font-semibold uppercase tracking-wide text-slate-400">
                           <span className="text-left">Basso</span>
                           <span className="text-center">Medio</span>
                           <span className="text-center">Alto</span>
                           <span className="text-right">Massimo</span>
                         </div>
-                        <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-1 text-sky-700">
+                        <div className="mt-1.5 flex items-center justify-between text-xs">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-sky-700 font-medium">
                             <Flame className="h-3 w-3" /> {exercise.intensity || '—'}/10
                           </span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-slate-600">
+                          <span className="inline-flex items-center gap-1 text-slate-500 text-[10px]">
                             <Clock className="h-3 w-3" /> Effort: {effortType ?? '—'}
                           </span>
                         </div>
@@ -2251,17 +2252,19 @@ export default function RegistroPage() {
                     </div>
                   </div>
 
-                  <div className="mt-4 space-y-3">
-                    <Label className="text-xs font-semibold text-slate-600">Note esercizio</Label>
+                  {/* Note esercizio */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700">Note esercizio</Label>
                     <Textarea
                       name="notes"
                       value={exercise.notes}
                       onChange={event => handleExerciseChange(block.id, index, event)}
                       placeholder="Dettagli su esecuzione, appunti tecnici, feedback..."
+                      className="min-h-[72px]"
                     />
                   </div>
 
-                    <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-4">
+                    <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-3.5">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                           <Timer className="h-4 w-4 text-slate-500" /> Registro serie e ripetute
