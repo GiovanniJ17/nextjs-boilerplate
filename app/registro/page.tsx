@@ -1565,10 +1565,11 @@ export default function RegistroPage() {
                 <NotebookPen className="h-5 w-5 text-sky-600" strokeWidth={2} /> Dettagli sessione
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-600">Blocco di allenamento</Label>
+            <CardContent className="p-4 space-y-4">
+            {/* Blocco + Data */}
+            <div className="grid gap-4 lg:grid-cols-12">
+              <div className="lg:col-span-8 space-y-1.5">
+                <Label className="text-xs font-medium text-slate-700">Blocco di allenamento</Label>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -1630,96 +1631,101 @@ export default function RegistroPage() {
                     );
                   })}
                 </div>
-                <div className="flex flex-wrap gap-2 pt-2">
+                <div className="flex flex-wrap gap-2 pt-1.5">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowBlockForm(prev => !prev)}
-                    className="gap-2 rounded-full border-slate-200"
+                    className="gap-2 rounded-full border-slate-200 h-8 text-xs px-3"
                   >
-                    <PenSquare className="h-4 w-4" />
+                    <PenSquare className="h-3.5 w-3.5" />
                     {showBlockForm ? 'Nascondi editor' : 'Nuovo blocco'}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => void fetchBlocks()}
-                    className="gap-2 border-transparent bg-transparent text-xs text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-sky-600"
+                    className="gap-2 border-transparent bg-transparent text-xs text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-sky-600 h-8 px-3"
                   >
                     {loadingBlocks ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
                       <RefreshCcw className="h-3.5 w-3.5" />
                     )}
-                    Aggiorna elenco
+                    Aggiorna
                   </Button>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-600">Data</Label>
+              <div className="lg:col-span-4 space-y-1.5">
+                <Label className="text-xs font-medium text-slate-700">Data</Label>
                 <Input
                   type="date"
                   name="date"
                   value={sessionForm.date}
                   onChange={handleSessionChange}
-                  className={cn('rounded-xl bg-slate-50', errors.date && 'border-red-500')}
+                  className={cn('rounded-xl bg-slate-50 h-9', errors.date && 'border-red-500')}
                 />
                 {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
               </div>
             </div>
 
             {showBlockForm && (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-3">
                   <Target className="h-4 w-4" /> Nuovo blocco di allenamento
                 </div>
-                <div className="mt-4 grid gap-4 md:grid-cols-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600">Nome</Label>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700">Nome</Label>
                     <Input
                       value={blockForm.name}
                       onChange={event => setBlockForm(prev => ({ ...prev, name: event.target.value }))}
                       placeholder="Macro ciclo, preparazione indoor..."
+                      className="h-9"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600">Inizio</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700">Inizio</Label>
                     <Input
                       type="date"
                       value={blockForm.start_date}
                       onChange={event => setBlockForm(prev => ({ ...prev, start_date: event.target.value }))}
+                      className="h-9"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600">Fine</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700">Fine</Label>
                     <Input
                       type="date"
                       value={blockForm.end_date}
                       onChange={event => setBlockForm(prev => ({ ...prev, end_date: event.target.value }))}
+                      className="h-9"
                     />
                   </div>
                 </div>
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600">Obiettivo</Label>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700">Obiettivo</Label>
                     <Input
                       value={blockForm.goal}
                       onChange={event => setBlockForm(prev => ({ ...prev, goal: event.target.value }))}
                       placeholder="Es. Migliorare accelerazione"
+                      className="h-9"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600">Note</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700">Note</Label>
                     <Textarea
                       value={blockForm.notes}
                       onChange={event => setBlockForm(prev => ({ ...prev, notes: event.target.value }))}
                       placeholder="Appunti generali, gare obiettivo..."
+                      className="min-h-[72px]"
                     />
                   </div>
                 </div>
-                <div className="mt-4 flex justify-end">
-                  <Button type="button" onClick={handleCreateBlock} disabled={loadingBlocks} className="gap-2">
+                <div className="mt-3 flex justify-end">
+                  <Button type="button" onClick={handleCreateBlock} disabled={loadingBlocks} className="gap-2 h-9">
                     {loadingBlocks && <Loader2 className="h-4 w-4 animate-spin" />}
                     Salva blocco
                   </Button>
@@ -1727,10 +1733,12 @@ export default function RegistroPage() {
               </div>
             )}
 
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2 md:col-span-3">
-                <Label className="text-xs font-semibold text-slate-600">Tipo di sessione</Label>
-                <div className="grid gap-2 sm:grid-cols-2">
+            <div className="border-t border-slate-100"></div>
+
+            {/* Tipo di sessione */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-700">Tipo di sessione</Label>
+              <div className="grid gap-2 sm:grid-cols-2">
                   {sessionTypes.map(type => {
                     const Icon = sessionTypeIcons[type.value] ?? Activity;
                     const isSelected = sessionForm.type === type.value;
@@ -1761,18 +1769,21 @@ export default function RegistroPage() {
                 {errors.type && <p className="text-xs text-red-500">{errors.type}</p>}
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-600">Fase / Periodo</Label>
+            {/* Fase e Luogo */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-700">Fase / Periodo</Label>
                 <Input
                   name="phase"
                   value={sessionForm.phase}
                   onChange={handleSessionChange}
                   placeholder="Es. Accumulo, Intensificazione, Taper"
+                  className="h-9"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-semibold text-slate-600">Luogo</Label>
+                <Label className="text-xs font-medium text-slate-700">Luogo</Label>
                 <div className="flex flex-wrap gap-2">
                   {locationOptions.map(option => {
                     const isSelected =
@@ -1817,8 +1828,11 @@ export default function RegistroPage() {
               </div>
             </div>
 
-            <div>
-              <Label className="text-xs font-semibold text-slate-600">Note sessione</Label>
+            <div className="border-t border-slate-100"></div>
+
+            {/* Note sessione */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700">Note sessione</Label>
               <Textarea
                 name="notes"
                 value={sessionForm.notes}
@@ -2071,20 +2085,20 @@ export default function RegistroPage() {
                     )}
                   </div>
 
-                  <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs font-semibold text-slate-600">Nome ripetuta</Label>
+                  <div className="mt-3 grid gap-3 lg:grid-cols-12">
+                    <div className="lg:col-span-5 space-y-1.5">
+                      <Label className="text-xs font-medium text-slate-700">Nome ripetuta</Label>
                       <Input
                         name="name"
                         value={exercise.name}
                         onChange={event => handleExerciseChange(block.id, index, event)}
                         placeholder="Es. 4×60m blocchi, 3×150m progressivi"
-                        className={cn(errors[`exercise-${block.id}-${index}-name`] && 'border-red-500')}
+                        className={cn('h-9', errors[`exercise-${block.id}-${index}-name`] && 'border-red-500')}
                       />
                     </div>
 
-                    <div className="space-y-1">
-                      <Label className="text-xs font-semibold text-slate-600">Focus tecnico</Label>
+                    <div className="lg:col-span-7 space-y-1.5">
+                      <Label className="text-xs font-medium text-slate-700">Focus tecnico</Label>
                       <div className="flex flex-wrap gap-2">
                         {disciplineTypes.map(type => {
                           const Icon = disciplineIcons[type.value] ?? Activity;
@@ -2112,9 +2126,12 @@ export default function RegistroPage() {
                         <p className="text-[11px] text-red-500">{errors[`exercise-${index}-discipline`]}</p>
                       )}
                     </div>
+                  </div>
 
-                    <div className="space-y-1">
-                      <Label className="text-xs font-semibold text-slate-600">Distanza (m)</Label>
+                  {/* Distanza, Serie, Ripetizioni, Recuperi */}
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-slate-700">Distanza (m)</Label>
                       <Input
                         name="distance_m"
                         type="number"
@@ -2122,35 +2139,36 @@ export default function RegistroPage() {
                         value={exercise.distance_m}
                         onChange={event => handleExerciseChange(block.id, index, event)}
                         placeholder="Es. 150"
+                        className="h-9"
                       />
                     </div>
 
-                    <div className="space-y-1">
-                      <Label className="text-xs font-semibold text-slate-600">Serie</Label>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-slate-700">Serie</Label>
                       <Input
                         name="sets"
                         type="number"
                         min={0}
                         value={exercise.sets}
                         onChange={event => handleExerciseChange(block.id, index, event)}
-                        className={cn(errors[`exercise-${block.id}-${index}-sets`] && 'border-red-500')}
+                        className={cn('h-9', errors[`exercise-${block.id}-${index}-sets`] && 'border-red-500')}
                       />
                     </div>
 
-                    <div className="space-y-1">
-                      <Label className="text-xs font-semibold text-slate-600">Ripetizioni</Label>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-slate-700">Ripetizioni</Label>
                       <Input
                         name="repetitions"
                         type="number"
                         min={0}
                         value={exercise.repetitions}
                         onChange={event => handleExerciseChange(block.id, index, event)}
-                        className={cn(errors[`exercise-${block.id}-${index}-repetitions`] && 'border-red-500')}
+                        className={cn('h-9', errors[`exercise-${block.id}-${index}-repetitions`] && 'border-red-500')}
                       />
                     </div>
 
-                    <div className="space-y-1">
-                      <Label className="text-xs font-semibold text-slate-600">Recupero tra ripetizioni (s)</Label>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-slate-700">Recupero tra rep. (s)</Label>
                       <Input
                         name="rest_between_reps_s"
                         type="number"
@@ -2158,11 +2176,14 @@ export default function RegistroPage() {
                         value={exercise.rest_between_reps_s}
                         onChange={event => handleExerciseChange(block.id, index, event)}
                         placeholder="60"
+                        className="h-9"
                       />
                     </div>
+                  </div>
 
-                    <div className="space-y-1">
-                      <Label className="text-xs font-semibold text-slate-600">Recupero tra serie (s)</Label>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-slate-700">Recupero tra serie (s)</Label>
                       <Input
                         name="rest_between_sets_s"
                         type="number"
@@ -2170,11 +2191,12 @@ export default function RegistroPage() {
                         value={exercise.rest_between_sets_s}
                         onChange={event => handleExerciseChange(block.id, index, event)}
                         placeholder="180"
+                        className="h-9"
                       />
                     </div>
 
-                    <div className="space-y-1">
-                      <Label className="text-xs font-semibold text-slate-600">Intensità percepita</Label>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-slate-700">Intensità percepita</Label>
                       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                         <input
                           type="range"
@@ -2582,10 +2604,10 @@ export default function RegistroPage() {
                         </div>
 
                         {isTestOrRaceSession ? (
-                          <div className="mt-4 space-y-4">
-                            <div className="grid gap-4 md:grid-cols-2">
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Data della sessione</Label>
+                          <div className="mt-3 space-y-3">
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium text-slate-700">Data della sessione</Label>
                                 <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
                                   <Calendar className="h-4 w-4 text-slate-400" />
                                   <span>
@@ -2600,34 +2622,35 @@ export default function RegistroPage() {
                                   </p>
                                 )}
                               </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Prova / Distanza</Label>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium text-slate-700">Prova / Distanza</Label>
                                 <Input
                                   name="metric_name"
                                   value={metric.metric_name}
                                   onChange={event => updateMetric(index, event)}
                                   placeholder="Es. Test 150m massimo sforzo"
+                                  className="h-9"
                                 />
                               </div>
                             </div>
 
-                            <div className="grid gap-4 md:grid-cols-4">
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Distanza (m)</Label>
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium text-slate-700">Distanza (m)</Label>
                                 <Input
                                   name="distance_m"
                                   type="number"
                                   min={0}
                                   value={metric.distance_m}
                                   onChange={event => updateMetric(index, event)}
-                                  className={cn(errors[`metric-${index}-distance_m`] && 'border-red-500')}
+                                  className={cn('h-9', errors[`metric-${index}-distance_m`] && 'border-red-500')}
                                 />
                                 {errors[`metric-${index}-distance_m`] && (
                                   <p className="text-[11px] text-red-500">{errors[`metric-${index}-distance_m`]}</p>
                                 )}
                               </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Tempo (s)</Label>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium text-slate-700">Tempo (s)</Label>
                                 <Input
                                   name="time_s"
                                   type="number"
@@ -2635,14 +2658,14 @@ export default function RegistroPage() {
                                   min={0}
                                   value={metric.time_s}
                                   onChange={event => updateMetric(index, event)}
-                                  className={cn(errors[`metric-${index}-time_s`] && 'border-red-500')}
+                                  className={cn('h-9', errors[`metric-${index}-time_s`] && 'border-red-500')}
                                 />
                                 {errors[`metric-${index}-time_s`] && (
                                   <p className="text-[11px] text-red-500">{errors[`metric-${index}-time_s`]}</p>
                                 )}
                               </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Recupero post test (min)</Label>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium text-slate-700">Recupero (min)</Label>
                                 <Input
                                   name="recovery_post_s"
                                   type="number"
@@ -2651,10 +2674,11 @@ export default function RegistroPage() {
                                   value={metric.recovery_post_s}
                                   onChange={event => updateMetric(index, event)}
                                   placeholder="Es. 7"
+                                  className="h-9"
                                 />
                               </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Intensità percepita (1-10)</Label>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium text-slate-700">RPE (1-10)</Label>
                                 <Input
                                   name="intensity"
                                   type="number"
@@ -2663,6 +2687,7 @@ export default function RegistroPage() {
                                   step={1}
                                   value={metric.intensity}
                                   onChange={event => updateMetric(index, event)}
+                                  className="h-9"
                                 />
                                 <p className="text-[11px] text-slate-500">
                                   {intensityNumber <= 3
