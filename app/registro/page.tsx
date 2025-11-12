@@ -1482,62 +1482,56 @@ export default function RegistroPage() {
   const selectedBlock = trainingBlocks.find(block => block.id === sessionForm.block_id);
 
   return (
-    <div className="page-container">
-      <PageHeader 
-        title="Registro Allenamento"
-        description="Registra la tua sessione di allenamento con esercizi e metriche"
-        icon={Play}
-      />
-
-      {/* Progress & Stats Card */}
-      <div className="card mb-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-sky-50">
-              <div className="text-center">
-                <div className="text-xl font-bold text-sky-600">{progressValue}%</div>
-              </div>
+    <div className="space-y-4 animate-page">
+      {/* Hero Section - Gradient Style */}
+      <section className="rounded-3xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 p-5 text-white shadow-xl">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium">
+              <Play className="h-4 w-4" strokeWidth={2} /> Registro Allenamento
             </div>
-            <div>
-              <p className="text-sm font-medium text-slate-900">{completedSteps} di {stepProgress.length} completati</p>
-              <div className="mt-1 h-1.5 w-32 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-sky-500 transition-colors"
-                  style={{ width: progressBarWidth }}
-                />
-              </div>
-            </div>
+            <h1 className="text-3xl font-semibold">Registra la tua sessione</h1>
+            <p className="max-w-xl text-sm text-white/75">
+              Inserisci esercizi, serie, ripetizioni e metriche. Monitora il progresso in tempo reale.
+            </p>
           </div>
-          
-          <div className="flex flex-wrap gap-2">
-            {summaryStats.slice(0, 3).map(stat => {
-              const Icon = stat.icon;
-              const formattedValue =
-                typeof stat.value === 'number' ? numberFormatter.format(stat.value) : stat.value;
 
-              return (
-                <div key={stat.label} className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
-                  <Icon className="h-4 w-4 text-slate-400" />
-                  <div className="text-xs">
-                    <p className="font-medium text-slate-900">{formattedValue}</p>
-                    <p className="text-slate-500">{stat.label}</p>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="rounded-3xl bg-white/10 px-6 py-5 text-center">
+            <p className="text-xs uppercase tracking-widest text-white/60">Completamento</p>
+            <p className="text-4xl font-semibold">{progressValue}%</p>
+            <p className="text-xs text-white/60">{completedSteps} di {stepProgress.length} step</p>
           </div>
-          
-          {selectedBlock && (
-            <div className="badge badge-primary flex items-center gap-2">
-              <Package className="h-3 w-3" />
-              {selectedBlock.name}
-            </div>
-          )}
         </div>
-      </div>
+        
+        {/* Stats in hero */}
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {summaryStats.slice(0, 4).map(stat => {
+            const Icon = stat.icon;
+            const formattedValue = typeof stat.value === 'number' ? numberFormatter.format(stat.value) : stat.value;
+            return (
+              <div key={stat.label} className="rounded-2xl bg-white/10 px-4 py-3 text-sm">
+                <div className="flex items-center justify-between text-white/75">
+                  <span className="text-xs uppercase tracking-widest text-white/60">{stat.label}</span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
+                    <Icon className="h-4 w-4" strokeWidth={2} />
+                  </span>
+                </div>
+                <p className="mt-2 text-2xl font-semibold text-white">{formattedValue}</p>
+              </div>
+            );
+          })}
+        </div>
+        
+        {selectedBlock && (
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium">
+            <Package className="h-4 w-4" strokeWidth={2} />
+            {selectedBlock.name}
+          </div>
+        )}
+      </section>
 
-      {/* Step Progress - Compact */}
-      <div className="card-compact mb-5">
+      {/* Step Progress */}
+      <div className="card-compact">
         <div className="flex flex-wrap gap-2">
           {stepProgress.map(step => {
             const Icon = step.icon;

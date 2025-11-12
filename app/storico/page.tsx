@@ -534,32 +534,48 @@ export default function StoricoPage() {
   }
 
   return (
-    <div className="page-container">
-      <PageHeader 
-        title="Storico Allenamenti"
-        description="Consulta e analizza le tue sessioni precedenti"
-        icon={History}
-        actions={
-          <div className="badge badge-primary text-base font-bold px-4 py-2">
-            {sessions.length} sessioni
+    <div className="space-y-4 animate-page">
+      {/* Hero Section - Gradient Style */}
+      <section className="rounded-3xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-500 p-5 text-white shadow-xl">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium">
+              <History className="h-4 w-4" strokeWidth={2} /> Storico Allenamenti
+            </div>
+            <h1 className="text-3xl font-semibold">Rivedi le tue performance</h1>
+            <p className="max-w-xl text-sm text-white/75">
+              Consulta, analizza ed esporta le tue sessioni precedenti. Monitora i progressi nel tempo.
+            </p>
           </div>
-        }
-      />
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 mb-5 sm:grid-cols-3 lg:grid-cols-6">
-        {heroStats.map(stat => (
-          <StatCard
-            key={stat.label}
-            label={stat.label}
-            value={stat.value}
-            icon={stat.icon}
-          />
-        ))}
-      </div>
+          <div className="rounded-3xl bg-white/10 px-6 py-5 text-center">
+            <p className="text-xs uppercase tracking-widest text-white/60">Sessioni totali</p>
+            <p className="text-4xl font-semibold">{sessions.length}</p>
+            <p className="text-xs text-white/60">registrate</p>
+          </div>
+        </div>
+        
+        {/* Stats in hero */}
+        <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {heroStats.map(stat => {
+            const Icon = stat.icon;
+            return (
+              <div key={stat.label} className="rounded-2xl bg-white/10 px-4 py-3 text-sm">
+                <div className="flex items-center justify-between text-white/75">
+                  <span className="text-xs uppercase tracking-widest text-white/60">{stat.label}</span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
+                    <Icon className="h-4 w-4" strokeWidth={2} />
+                  </span>
+                </div>
+                <p className="mt-2 text-2xl font-semibold text-white">{stat.value}</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Filters */}
-      <div className="card-compact mb-4">
+      <div className="card-compact">
         <div className="flex flex-wrap items-center gap-2 mb-3">
           {smartRangeOptions.map(option => {
             const isActive = activeSmartRange === option.key;
