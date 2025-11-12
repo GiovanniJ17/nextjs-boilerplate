@@ -80,3 +80,88 @@ export function notifyError(title: string, options?: NotificationOptions) {
 export function notifyInfo(title: string, options?: NotificationOptions) {
   return showToast("info", title, options);
 }
+
+/**
+ * Notifiche specifiche per operazioni comuni
+ */
+export const notify = {
+  // Export operations
+  exportSuccess: (format: 'CSV' | 'PDF' | 'PNG') =>
+    notifySuccess(`Export ${format} completato!`, {
+      description: 'Controlla la cartella download',
+      duration: 4000,
+    }),
+  
+  exportError: (format: 'CSV' | 'PDF' | 'PNG', error?: string) =>
+    notifyError(`Errore export ${format}`, {
+      description: error ?? 'Riprova più tardi',
+      duration: 5000,
+    }),
+
+  exportNoData: () =>
+    notifyInfo('Nessun dato da esportare', {
+      description: 'Aggiungi dati prima di esportare',
+      duration: 4000,
+    }),
+
+  // CRUD Operations
+  saveSuccess: (item: string) =>
+    notifySuccess(`${item} salvato!`, {
+      duration: 3000,
+    }),
+
+  saveError: (item: string, error?: string) =>
+    notifyError(`Errore salvataggio ${item}`, {
+      description: error ?? 'Riprova più tardi',
+      duration: 5000,
+    }),
+
+  deleteSuccess: (item: string) =>
+    notifySuccess(`${item} eliminato!`, {
+      duration: 3000,
+    }),
+
+  deleteError: (item: string, error?: string) =>
+    notifyError(`Errore eliminazione ${item}`, {
+      description: error ?? 'Riprova più tardi',
+      duration: 5000,
+    }),
+
+  updateSuccess: (item: string) =>
+    notifySuccess(`${item} aggiornato!`, {
+      duration: 3000,
+    }),
+
+  // Validation
+  validationError: (message: string) =>
+    notifyInfo('Validazione fallita', {
+      description: message,
+      duration: 4500,
+    }),
+
+  // Network
+  networkError: () =>
+    notifyError('Errore di connessione', {
+      description: 'Controlla la tua connessione internet',
+      duration: 5000,
+    }),
+
+  // Permissions
+  popupBlocked: () =>
+    notifyInfo('Popup bloccati', {
+      description: 'Abilita i popup per questa operazione',
+      duration: 5000,
+    }),
+
+  // Loading state
+  loading: (message: string = 'Operazione in corso...') =>
+    toast.loading(message, {
+      style: {
+        borderRadius: '1.5rem',
+        padding: '0.75rem 1rem',
+      },
+    }),
+
+  dismiss: (toastId?: string | number) =>
+    toast.dismiss(toastId),
+};

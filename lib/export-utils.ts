@@ -1,11 +1,13 @@
 /**
  * Export Utilities
- * Funzioni per esportare dati in formato CSV e PDF
+ * Funzioni per esportare dati in vari formati (CSV, PDF, PNG)
  */
 
+import { notify } from './notifications';
+
 export function exportToCSV(data: any[], filename: string) {
-  if (data.length === 0) {
-    alert('Nessun dato da esportare');
+  if (!data || data.length === 0) {
+    notify.exportNoData();
     return;
   }
 
@@ -107,7 +109,7 @@ export function exportStatisticsToCSV(stats: {
     exportToCSV(trendData, 'trend_performance');
   }
 
-  alert('Export completato! Controlla la cartella download.');
+  notify.exportSuccess('CSV');
 }
 
 export function prepareChartForExport(chartId: string): string | null {
@@ -126,7 +128,7 @@ export function prepareChartForExport(chartId: string): string | null {
 export function downloadChartAsPNG(chartId: string, filename: string) {
   const svgString = prepareChartForExport(chartId);
   if (!svgString) {
-    alert('Impossibile esportare il grafico');
+    notify.exportError('PNG', 'Grafico non trovato');
     return;
   }
 
@@ -164,7 +166,7 @@ export function generatePDFReport(stats: any, title: string) {
   // Per ora creiamo una versione HTML stampabile
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert('Abilita i popup per generare il report PDF');
+    notify.popupBlocked();
     return;
   }
 
@@ -299,4 +301,6 @@ export function generatePDFReport(stats: any, title: string) {
 
   printWindow.document.write(htmlContent);
   printWindow.document.close();
+  
+  notify.exportSuccess('PDF');
 }
