@@ -574,42 +574,83 @@ export default function StoricoPage() {
         </div>
       </section>
 
-      {/* Filters */}
-      <div className="card-compact">
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          {smartRangeOptions.map(option => {
-            const isActive = activeSmartRange === option.key;
-            return (
-              <button
-                key={option.key}
-                type="button"
-                onClick={() => applySmartRange(option.key)}
-                className={cn(
-                  'rounded-lg border px-3 py-1.5 text-xs font-medium transition',
-                  isActive
-                    ? 'border-sky-500 bg-sky-50 text-sky-700'
-                    : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
-                )}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
+      {/* Filters - Redesigned */}
+      <Card className="border-slate-200 shadow-sm">
+        <CardContent className="p-4 space-y-4">
+          {/* Smart Range Presets */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-slate-600 mr-2">Periodo:</span>
+            {smartRangeOptions.map(option => {
+              const isActive = activeSmartRange === option.key;
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => applySmartRange(option.key)}
+                  className={cn(
+                    'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                    isActive
+                      ? 'border-sky-500 bg-sky-50 text-sky-700'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
+                  )}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
 
-        <div className="form-grid">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-600">Da</Label>
-              <Input type="date" value={fromDate} onChange={event => handleFromDateChange(event.target.value)} />
+          <div className="border-t border-slate-100"></div>
+
+          {/* Date Range + Search */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
+            <div className="lg:col-span-2">
+              <Label className="text-xs font-medium text-slate-700 mb-1.5 block">Da</Label>
+              <Input 
+                type="date" 
+                value={fromDate} 
+                onChange={event => handleFromDateChange(event.target.value)}
+                className="h-9 text-sm"
+              />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-600">A</Label>
-              <Input type="date" value={toDate} onChange={event => handleToDateChange(event.target.value)} />
+            <div className="lg:col-span-2">
+              <Label className="text-xs font-medium text-slate-700 mb-1.5 block">A</Label>
+              <Input 
+                type="date" 
+                value={toDate} 
+                onChange={event => handleToDateChange(event.target.value)}
+                className="h-9 text-sm"
+              />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-600">Tipo sessione</Label>
-              <div className="flex flex-wrap gap-2">
+            <div className="lg:col-span-6">
+              <Label className="text-xs font-medium text-slate-700 mb-1.5 block">Cerca</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  value={search}
+                  onChange={event => setSearch(event.target.value)}
+                  placeholder="Note, luogo, esercizi..."
+                  className="h-9 pl-9 text-sm"
+                />
+              </div>
+            </div>
+            <div className="lg:col-span-2 flex items-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={resetFilters}
+                className="w-full h-9 text-xs"
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reset
+              </Button>
+            </div>
+          </div>
+
+          {/* Filters Row */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label className="text-xs font-medium text-slate-700 mb-2 block">Tipo sessione</Label>
+              <div className="flex flex-wrap gap-1.5">
                 {sessionTypeOptions.map(option => {
                   const isActive = typeFilter === option.value;
                   return (
@@ -618,12 +659,11 @@ export default function StoricoPage() {
                       type="button"
                       onClick={() => setTypeFilter(prev => (prev === option.value ? '' : option.value))}
                       className={cn(
-                        'rounded-full border px-3 py-1 text-[11px] font-medium transition',
+                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isActive
-                          ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
+                          ? 'border-sky-500 bg-sky-50 text-sky-700'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
                       )}
-                      aria-pressed={isActive}
                     >
                       {option.label}
                     </button>
@@ -631,21 +671,21 @@ export default function StoricoPage() {
                 })}
               </div>
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-600">Blocco</Label>
-              <div className="flex flex-wrap gap-2">
+
+            <div>
+              <Label className="text-xs font-medium text-slate-700 mb-2 block">Blocco</Label>
+              <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
                   onClick={() => setBlockFilter('')}
                   className={cn(
-                    'rounded-full border px-3 py-1 text-[11px] font-medium transition',
+                    'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                     !blockFilter
-                      ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
+                      ? 'border-sky-500 bg-sky-50 text-sky-700'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
                   )}
-                  aria-pressed={!blockFilter}
                 >
-                  Tutti i blocchi
+                  Tutti
                 </button>
                 {blocks.map(block => {
                   const isSelected = blockFilter === block.id;
@@ -655,14 +695,13 @@ export default function StoricoPage() {
                       type="button"
                       onClick={() => setBlockFilter(prev => (prev === block.id ? '' : block.id ?? ''))}
                       className={cn(
-                        'rounded-full border px-3 py-1 text-[11px] font-medium transition',
+                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isSelected
-                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
                       )}
-                      aria-pressed={isSelected}
                     >
-                      {block.name ?? 'Blocco senza nome'}
+                      {block.name ?? 'Senza nome'}
                     </button>
                   );
                 })}
@@ -670,30 +709,9 @@ export default function StoricoPage() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex w-full items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 focus-within:border-sky-300">
-              <Search className="h-4 w-4 text-slate-400" />
-              <input
-                value={search}
-                onChange={event => setSearch(event.target.value)}
-                placeholder="Cerca per note, luogo, esercizi o blocchi..."
-                className="h-8 w-full border-none bg-transparent text-sm outline-none"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={resetFilters}
-                className="flex items-center gap-2 rounded-full border-slate-200 text-xs"
-              >
-                <RotateCcw className="h-3.5 w-3.5" /> Reset
-              </Button>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-            <span className="font-medium">Ricerche rapide:</span>
+          {/* Quick Searches */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+            <span className="text-xs font-medium text-slate-500">Rapide:</span>
             {quickSearches.map(quick => {
               const isActive = activeQuickSearch === quick.query;
               return (
@@ -714,8 +732,8 @@ export default function StoricoPage() {
               );
             })}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       <Card className="border-none shadow-lg">
         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
