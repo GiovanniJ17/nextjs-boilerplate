@@ -6,6 +6,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { cn } from '@/lib/utils';
 import {
+  calculateRPEDistribution,
+  analyzeRecovery,
+  calculatePersonalBests,
+  calculateTrainingLoad,
+  analyzeLocationStats,
+  calculateMonthlyProgress,
+  analyzePerformanceTrends,
+  generateSmartInsights,
+  calculatePhaseStats,
+} from '@/lib/stats-calculator';
+import {
+  exportToCSV,
+  exportStatisticsToCSV,
+  downloadChartAsPNG,
+  generatePDFReport,
+} from '@/lib/export-utils';
+import {
   Activity,
   BarChart,
   BarChart3,
@@ -27,6 +44,21 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Minus,
+  Download,
+  FileText,
+  MapPin,
+  Gauge,
+  Award,
+  LineChart as LineChartIcon,
+  PieChart as PieChartIcon,
+  Settings,
+  Info,
+  ChevronRight,
+  Star,
+  ThumbsUp,
+  ThumbsDown,
+  Heart,
+  Shield,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -162,6 +194,62 @@ type StatsSnapshot = {
   } | null;
   performanceByDayOfWeek: { day: string; avgTime: number | null; count: number }[];
   alerts: { type: 'warning' | 'info' | 'success'; message: string }[];
+  // Nuove metriche aggiuntive
+  rpeDistribution: { rpe: number; count: number; percentage: number }[];
+  avgRPE: number | null;
+  recoveryAnalysis: {
+    avgRecoveryBetweenReps: number | null;
+    avgRecoveryBetweenSets: number | null;
+    optimalRange: { min: number; max: number } | null;
+    outliers: { session: string; value: number }[];
+  };
+  personalBests: {
+    distance: number;
+    time: number;
+    date: string;
+    improvement: number | null;
+    sessionType: string | null;
+  }[];
+  trainingLoad: {
+    date: string;
+    load: number;
+    acuteLoad: number;
+    chronicLoad: number;
+    ratio: number;
+  }[];
+  locationStats: {
+    location: string;
+    sessions: number;
+    avgPerformance: number | null;
+    bestPerformance: number | null;
+  }[];
+  phaseStats: {
+    phase: string;
+    sessions: number;
+    volume: number;
+    avgIntensity: number | null;
+  }[];
+  monthlyProgress: {
+    month: string;
+    sessions: number;
+    distance: number;
+    avgSpeed: number | null;
+    pbs: number;
+  }[];
+  performanceTrends: {
+    distance: number;
+    trend: 'improving' | 'stable' | 'declining';
+    changePercentage: number;
+    recentAvg: number;
+    previousAvg: number;
+  }[];
+  smartInsights: {
+    category: 'performance' | 'recovery' | 'volume' | 'intensity' | 'health';
+    severity: 'high' | 'medium' | 'low';
+    title: string;
+    description: string;
+    recommendation: string;
+  }[];
 };
 
 function matchesDistance(distance: number | null, filter: string) {
@@ -752,6 +840,207 @@ export default function StatistichePage() {
       });
     }
 
+    // ============================================
+    // CALCOLI AVANZATI CON STATS-CALCULATOR
+    // ============================================
+
+    // Prepara i dati per le analisi avanzate
+    const sessionData = sessions.map(s => {
+      const sessionExercises = distanceFilteredExercises.filter(ex => {
+        if (!ex.block_id) return false;
+        return blockIdToSessionId.get(ex.block_id) === s.id;
+      });
+      
+      const volume = sessionExercises.reduce((sum, ex) => 
+        sum + (ex.distance_m || 0) * (ex.sets || 0) * (ex.repetitions || 0), 0
+      );
+
+      const intensities = sessionExercises
+        .map(ex => ex.intensity)
+        .filter((v): v is number => typeof v === 'number');
+      
+      const rpe = intensities.length
+        ? intensities.reduce((sum, v) => sum + v, 0) / intensities.length
+        : undefined;
+
+      return {
+        date: s.date || '',
+        volume,
+        rpe,
+        type: s.type || undefined,
+        blockId: s.block_id || undefined,
+      };
+    }).filter(s => s.date);
+
+    // 1. Distribuzione RPE
+    const rpeValues = sessionData.map(s => s.rpe).filter((v): v is number => v !== undefined);
+    const rpeDistribution = calculateRPEDistribution(rpeValues);
+    const avgRPE = rpeValues.length
+      ? rpeValues.reduce((sum, v) => sum + v, 0) / rpeValues.length
+      : null;
+
+    // 2. Analisi recupero
+    const recoveryData: { sessionId: string; value: number; type: 'rep' | 'set' }[] = [];
+    sessions.forEach(session => {
+      const sessionExercises = distanceFilteredExercises.filter(ex => {
+        if (!ex.block_id) return false;
+        return blockIdToSessionId.get(ex.block_id) === session.id;
+      });
+      
+      sessionExercises.forEach(ex => {
+        if (ex.rest_between_sets_s) {
+          recoveryData.push({
+            sessionId: session.id,
+            value: ex.rest_between_sets_s,
+            type: 'set',
+          });
+        }
+      });
+    });
+    const recoveryAnalysis = analyzeRecovery(recoveryData);
+
+    // 3. Personal Bests con storico
+    const performanceData = performances
+      .filter(p => p.distance)
+      .map(p => {
+        // Trova la sessione associata
+        let sessionType: string | null = null;
+        let perfDate = '';
+        
+        for (const session of sessions) {
+          const hasPerformance = performances.some(perf => {
+            const exercise = Array.from(exerciseById.values()).find(ex => {
+              if (!ex.block_id) return false;
+              return blockIdToSessionId.get(ex.block_id) === session.id;
+            });
+            return exercise != null;
+          });
+          
+          if (hasPerformance) {
+            sessionType = session.type || null;
+            perfDate = session.date || '';
+            break;
+          }
+        }
+        
+        return {
+          distance: p.distance!,
+          time: p.time,
+          date: perfDate,
+          sessionType,
+        };
+      });
+    const personalBests = calculatePersonalBests(performanceData);
+
+    // 4. Training Load (Acute:Chronic Workload Ratio)
+    const trainingLoadData = sessionData.map(s => ({
+      date: s.date,
+      volume: s.volume,
+      intensity: s.rpe || 5, // Default RPE 5 se non disponibile
+    }));
+    const trainingLoad = calculateTrainingLoad(trainingLoadData);
+
+    // 5. Statistiche per località (placeholder - da implementare con location field)
+    const locationData: { location: string; sessionId: string; avgTime: number | null }[] = [];
+    sessions.forEach(session => {
+      const sessionPerfs = performances.filter(p => {
+        const exercise = Array.from(exerciseById.values()).find(ex => {
+          if (!ex.block_id) return false;
+          return blockIdToSessionId.get(ex.block_id) === session.id;
+        });
+        return exercise != null;
+      });
+      
+      const avgTime = sessionPerfs.length
+        ? sessionPerfs.reduce((sum, p) => sum + p.time, 0) / sessionPerfs.length
+        : null;
+      
+      locationData.push({
+        location: 'Default', // TODO: add location field to sessions
+        sessionId: session.id,
+        avgTime,
+      });
+    });
+    const locationStats = analyzeLocationStats(locationData);
+
+    // 6. Progressi mensili
+    const monthlyProgressData = performances
+      .filter(p => p.distance)
+      .map(p => {
+        let perfDate = '';
+        for (const session of sessions) {
+          const hasPerformance = performances.some(() => {
+            const exercise = Array.from(exerciseById.values()).find(ex => {
+              if (!ex.block_id) return false;
+              return blockIdToSessionId.get(ex.block_id) === session.id;
+            });
+            return exercise != null;
+          });
+          
+          if (hasPerformance && session.date) {
+            perfDate = session.date;
+            break;
+          }
+        }
+        
+        const speed = p.distance && p.time ? p.distance / p.time : null;
+        const pb = pbByDistance.find(pb => pb.distance === p.distance);
+        const isPB = pb ? pb.time === p.time : false;
+        
+        return {
+          date: perfDate,
+          distance: p.distance!,
+          avgSpeed: speed,
+          isPB,
+        };
+      })
+      .filter(p => p.date);
+    const monthlyProgress = calculateMonthlyProgress(monthlyProgressData);
+
+    // 7. Trend di performance
+    const performanceTrends = analyzePerformanceTrends(performanceData);
+
+    // 8. Statistiche per fase (se disponibili blocchi)
+    const phaseData = blocks.map(block => {
+      const blockSessions = sessions.filter(s => s.block_id === block.id);
+      const blockExercises = distanceFilteredExercises.filter(ex => {
+        if (!ex.block_id) return false;
+        const sessionId = blockIdToSessionId.get(ex.block_id);
+        return blockSessions.some(s => s.id === sessionId);
+      });
+      
+      const totalDistance = blockExercises.reduce((sum, ex) => 
+        sum + (ex.distance_m || 0) * (ex.sets || 0) * (ex.repetitions || 0), 0
+      );
+      
+      const intensities = blockExercises
+        .map(ex => ex.intensity)
+        .filter((v): v is number => typeof v === 'number');
+      const avgIntensity = intensities.length
+        ? intensities.reduce((sum, v) => sum + v, 0) / intensities.length
+        : null;
+      
+      return {
+        phase: block.name || null,
+        distance: totalDistance,
+        intensity: avgIntensity,
+      };
+    });
+    const phaseStats = calculatePhaseStats(phaseData);
+
+    // 9. Smart Insights
+    const smartInsights = generateSmartInsights({
+      trainingLoad,
+      rpeDistribution,
+      avgRPE,
+      performanceTrends,
+      recoveryAnalysis,
+      totalSessions,
+      recentDays: sessions.length > 0 && sessions[0].date
+        ? Math.ceil((new Date().getTime() - new Date(sessions[0].date).getTime()) / (24 * 60 * 60 * 1000))
+        : 0,
+    });
+
     setStats({
       totalSessions,
       totalDistance,
@@ -779,6 +1068,17 @@ export default function StatistichePage() {
       comparisonPreviousPeriod,
       performanceByDayOfWeek,
       alerts,
+      // Analisi avanzate
+      rpeDistribution,
+      avgRPE,
+      recoveryAnalysis,
+      personalBests,
+      trainingLoad,
+      locationStats,
+      phaseStats,
+      monthlyProgress,
+      performanceTrends,
+      smartInsights,
     });
 
     setLoading(false);
@@ -1692,50 +1992,394 @@ export default function StatistichePage() {
                       </ul>
                     </div>
                   </div>
+
+                  {/* NUOVE SEZIONI - ANALISI AVANZATE */}
+                  
+                  {/* Export Toolbar */}
+                  <div className="rounded-2xl border-2 border-sky-200 bg-gradient-to-br from-sky-50 to-blue-50 p-5 shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <h3 className="flex items-center gap-2 text-lg font-semibold text-sky-900">
+                          <Download className="h-5 w-5 text-sky-600" strokeWidth={2} />
+                          Esporta Statistiche
+                        </h3>
+                        <p className="mt-1 text-sm text-sky-700">
+                          Salva i tuoi dati per analisi esterne o documentazione
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-sky-300 bg-white hover:bg-sky-50"
+                          onClick={() => {
+                            if (stats) exportStatisticsToCSV(stats);
+                          }}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Esporta CSV
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-sky-300 bg-white hover:bg-sky-50"
+                          onClick={() => {
+                            if (stats) generatePDFReport(stats, 'Report Statistiche');
+                          }}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Genera PDF
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* RPE Distribution */}
+                  {stats.rpeDistribution.length > 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-4">
+                        <Gauge className="h-5 w-5 text-amber-600" strokeWidth={2} />
+                        Distribuzione RPE (Perceived Exertion)
+                      </h3>
+                      <div className="space-y-3">
+                        {stats.rpeDistribution.map((item) => (
+                          <div key={item.rpe} className="space-y-1">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="font-medium text-slate-700">RPE {item.rpe}/10</span>
+                              <span className="text-xs text-slate-500">
+                                {item.count} sessioni ({item.percentage.toFixed(1)}%)
+                              </span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className={cn(
+                                  "h-full transition-all",
+                                  item.rpe <= 3 ? "bg-emerald-500" :
+                                  item.rpe <= 6 ? "bg-amber-500" :
+                                  item.rpe <= 8 ? "bg-orange-500" : "bg-rose-500"
+                                )}
+                                style={{ width: `${item.percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                        {stats.avgRPE && (
+                          <div className="mt-4 rounded-xl bg-amber-50 p-3 text-center">
+                            <p className="text-xs text-amber-700">RPE Medio</p>
+                            <p className="text-2xl font-bold text-amber-900">{stats.avgRPE.toFixed(1)}/10</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Personal Bests with Improvement Tracking */}
+                  {stats.personalBests.length > 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-4">
+                        <Award className="h-5 w-5 text-yellow-600" strokeWidth={2} />
+                        Personal Bests e Progressi
+                      </h3>
+                      <div className="space-y-2">
+                        {stats.personalBests.slice(0, 10).map((pb, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between rounded-xl border border-slate-100 bg-gradient-to-r from-yellow-50 to-amber-50 p-3"
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-slate-800">{pb.distance}m</span>
+                                {pb.improvement !== null && pb.improvement > 0 && (
+                                  <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                    <TrendingUp className="h-3 w-3" />
+                                    +{pb.improvement.toFixed(1)}%
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-500 mt-0.5">
+                                {new Date(pb.date).toLocaleDateString('it-IT')}
+                                {pb.sessionType && ` • ${pb.sessionType}`}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xl font-bold text-amber-700">{pb.time.toFixed(2)}s</p>
+                              {pb.distance > 0 && (
+                                <p className="text-xs text-slate-500">
+                                  {((pb.distance / pb.time) * 3.6).toFixed(1)} km/h
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Training Load (Acute:Chronic Ratio) */}
+                  {stats.trainingLoad.length > 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-4">
+                        <Activity className="h-5 w-5 text-violet-600" strokeWidth={2} />
+                        Carico Allenamento (A:C Ratio)
+                      </h3>
+                      <div className="space-y-3">
+                        {stats.trainingLoad.slice(-10).map((item, idx) => {
+                          const isRiskZone = item.ratio > 1.5 || item.ratio < 0.8;
+                          const isOptimal = item.ratio >= 0.8 && item.ratio <= 1.3;
+                          
+                          return (
+                            <div key={idx} className="space-y-1">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-slate-700">
+                                  {new Date(item.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className={cn(
+                                    "rounded-full px-2 py-0.5 text-xs font-semibold",
+                                    isRiskZone ? "bg-rose-100 text-rose-700" :
+                                    isOptimal ? "bg-emerald-100 text-emerald-700" :
+                                    "bg-amber-100 text-amber-700"
+                                  )}>
+                                    {item.ratio.toFixed(2)}
+                                  </span>
+                                  {isRiskZone && <Shield className="h-4 w-4 text-rose-500" />}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+                          <div className="rounded-lg bg-emerald-50 p-2">
+                            <p className="font-semibold text-emerald-700">0.8 - 1.3</p>
+                            <p className="text-emerald-600">Ottimale</p>
+                          </div>
+                          <div className="rounded-lg bg-amber-50 p-2">
+                            <p className="font-semibold text-amber-700">1.3 - 1.5</p>
+                            <p className="text-amber-600">Moderato</p>
+                          </div>
+                          <div className="rounded-lg bg-rose-50 p-2">
+                            <p className="font-semibold text-rose-700">&gt; 1.5</p>
+                            <p className="text-rose-600">Rischio</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Performance Trends */}
+                  {stats.performanceTrends.length > 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-4">
+                        <LineChartIcon className="h-5 w-5 text-indigo-600" strokeWidth={2} />
+                        Trend di Performance per Distanza
+                      </h3>
+                      <div className="space-y-3">
+                        {stats.performanceTrends.map((trend, idx) => (
+                          <div
+                            key={idx}
+                            className={cn(
+                              "rounded-xl border p-3",
+                              trend.trend === 'improving' ? "border-emerald-200 bg-emerald-50" :
+                              trend.trend === 'declining' ? "border-rose-200 bg-rose-50" :
+                              "border-slate-200 bg-slate-50"
+                            )}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-slate-800">{trend.distance}m</span>
+                                {trend.trend === 'improving' && (
+                                  <span className="flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                                    <TrendingUp className="h-3 w-3" />
+                                    Miglioramento
+                                  </span>
+                                )}
+                                {trend.trend === 'declining' && (
+                                  <span className="flex items-center gap-1 text-xs font-semibold text-rose-700">
+                                    <TrendingDown className="h-3 w-3" />
+                                    In calo
+                                  </span>
+                                )}
+                                {trend.trend === 'stable' && (
+                                  <span className="flex items-center gap-1 text-xs font-semibold text-slate-700">
+                                    <Minus className="h-3 w-3" />
+                                    Stabile
+                                  </span>
+                                )}
+                              </div>
+                              <span className={cn(
+                                "text-sm font-bold",
+                                trend.trend === 'improving' ? "text-emerald-700" :
+                                trend.trend === 'declining' ? "text-rose-700" :
+                                "text-slate-700"
+                              )}>
+                                {trend.changePercentage > 0 ? '+' : ''}{trend.changePercentage.toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="mt-2 flex items-center gap-4 text-xs text-slate-600">
+                              <span>Media recente: {trend.recentAvg.toFixed(2)}s</span>
+                              <span>Media precedente: {trend.previousAvg.toFixed(2)}s</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Monthly Progress */}
+                  {stats.monthlyProgress.length > 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-4">
+                        <Calendar className="h-5 w-5 text-blue-600" strokeWidth={2} />
+                        Progressi Mensili
+                      </h3>
+                      <div className="space-y-2">
+                        {stats.monthlyProgress.slice(-6).map((month, idx) => (
+                          <div key={idx} className="rounded-xl bg-slate-50 p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-semibold text-slate-800">{month.month}</span>
+                              {month.pbs > 0 && (
+                                <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-700">
+                                  <Star className="h-3 w-3" />
+                                  {month.pbs} PB
+                                </span>
+                              )}
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-xs text-slate-600">
+                              <div>
+                                <p className="text-slate-500">Sessioni</p>
+                                <p className="font-semibold text-slate-700">{month.sessions}</p>
+                              </div>
+                              <div>
+                                <p className="text-slate-500">Distanza</p>
+                                <p className="font-semibold text-slate-700">{(month.distance / 1000).toFixed(1)} km</p>
+                              </div>
+                              <div>
+                                <p className="text-slate-500">Vel. media</p>
+                                <p className="font-semibold text-slate-700">
+                                  {month.avgSpeed ? `${(month.avgSpeed * 3.6).toFixed(1)} km/h` : 'N/D'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
               {activeTab === 'insights' && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                      <Medal className="h-4 w-4 text-amber-500" /> Personal Best registrati
-                    </h3>
-                    <ul className="mt-3 space-y-2 text-xs text-slate-600">
-                      {stats.pbByDistance.length === 0 ? (
-                        <li>Nessun tempo registrato nelle ripetute selezionate</li>
-                      ) : (
-                        stats.pbByDistance.map(item => (
-                          <li
-                            key={item.distance}
-                            className="flex items-center justify-between rounded-2xl bg-amber-50/60 px-3 py-2"
+                <div className="space-y-4">
+                  {/* Smart Insights */}
+                  {stats.smartInsights.length > 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-4">
+                        <Sparkles className="h-5 w-5 text-purple-600" strokeWidth={2} />
+                        Smart Insights & Raccomandazioni
+                      </h3>
+                      <div className="space-y-3">
+                        {stats.smartInsights.map((insight, idx) => (
+                          <div
+                            key={idx}
+                            className={cn(
+                              "rounded-xl border-l-4 p-4",
+                              insight.severity === 'high' ? "border-rose-500 bg-rose-50" :
+                              insight.severity === 'medium' ? "border-amber-500 bg-amber-50" :
+                              "border-emerald-500 bg-emerald-50"
+                            )}
                           >
-                            <span>{item.distance} m</span>
-                            <span className="font-semibold text-amber-700">{item.time.toFixed(2)} s</span>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  </div>
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  {insight.severity === 'high' && <AlertTriangle className="h-4 w-4 text-rose-600" />}
+                                  {insight.severity === 'medium' && <Info className="h-4 w-4 text-amber-600" />}
+                                  {insight.severity === 'low' && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                                  <h4 className={cn(
+                                    "font-semibold",
+                                    insight.severity === 'high' ? "text-rose-900" :
+                                    insight.severity === 'medium' ? "text-amber-900" :
+                                    "text-emerald-900"
+                                  )}>
+                                    {insight.title}
+                                  </h4>
+                                </div>
+                                <p className={cn(
+                                  "text-sm mb-2",
+                                  insight.severity === 'high' ? "text-rose-700" :
+                                  insight.severity === 'medium' ? "text-amber-700" :
+                                  "text-emerald-700"
+                                )}>
+                                  {insight.description}
+                                </p>
+                                <div className={cn(
+                                  "rounded-lg p-2 text-sm",
+                                  insight.severity === 'high' ? "bg-rose-100" :
+                                  insight.severity === 'medium' ? "bg-amber-100" :
+                                  "bg-emerald-100"
+                                )}>
+                                  <p className="flex items-center gap-2">
+                                    <ChevronRight className="h-3 w-3" />
+                                    <strong>Raccomandazione:</strong> {insight.recommendation}
+                                  </p>
+                                </div>
+                              </div>
+                              <span className={cn(
+                                "rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-wide",
+                                insight.severity === 'high' ? "bg-rose-200 text-rose-800" :
+                                insight.severity === 'medium' ? "bg-amber-200 text-amber-800" :
+                                "bg-emerald-200 text-emerald-800"
+                              )}>
+                                {insight.category}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                      <Sparkles className="h-4 w-4 text-sky-500" /> Insight rapidi
-                    </h3>
-                    <ul className="mt-3 space-y-2 text-xs text-slate-600">
-                      {stats.insights.length === 0 ? (
-                        <li>Aggiungi più dati per ottenere suggerimenti personalizzati!</li>
-                      ) : (
-                        stats.insights.map((insight, index) => (
-                          <li
-                            key={index}
-                            className="rounded-2xl bg-sky-50/70 px-3 py-2 text-sky-800"
-                          >
-                            {insight}
-                          </li>
-                        ))
-                      )}
-                    </ul>
+                  {/* Original Insights Section */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                        <Medal className="h-4 w-4 text-amber-500" /> Personal Best registrati
+                      </h3>
+                      <ul className="mt-3 space-y-2 text-xs text-slate-600">
+                        {stats.pbByDistance.length === 0 ? (
+                          <li>Nessun tempo registrato nelle ripetute selezionate</li>
+                        ) : (
+                          stats.pbByDistance.map(item => (
+                            <li
+                              key={item.distance}
+                              className="flex items-center justify-between rounded-2xl bg-amber-50/60 px-3 py-2"
+                            >
+                              <span>{item.distance} m</span>
+                              <span className="font-semibold text-amber-700">{item.time.toFixed(2)} s</span>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                        <Sparkles className="h-4 w-4 text-sky-500" /> Insight rapidi
+                      </h3>
+                      <ul className="mt-3 space-y-2 text-xs text-slate-600">
+                        {stats.insights.length === 0 ? (
+                          <li>Aggiungi più dati per ottenere suggerimenti personalizzati!</li>
+                        ) : (
+                          stats.insights.map((insight, index) => (
+                            <li
+                              key={index}
+                              className="rounded-2xl bg-sky-50/70 px-3 py-2 text-sky-800"
+                            >
+                              {insight}
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </div>
                   </div>
                 </div>
               )}
