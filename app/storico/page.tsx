@@ -727,7 +727,7 @@ export default function StoricoPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-none shadow-lg">
+      <Card className="border-slate-200 shadow-sm">
         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
             <FolderKanban className="h-5 w-5 text-sky-600" strokeWidth={2} /> Storico sessioni
@@ -764,7 +764,7 @@ export default function StoricoPage() {
               <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2} /> Caricamento delle sessioni...
             </div>
           ) : filteredSessions.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 py-12 text-center text-sm text-slate-500">
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 py-12 text-center text-sm text-slate-500">
               Nessun allenamento trovato. Modifica i filtri o registra una nuova sessione!
             </div>
           ) : (
@@ -853,7 +853,7 @@ export default function StoricoPage() {
                     {viewMode === 'timeline' && (
                       <span className="absolute left-[7px] top-8 h-3 w-3 rounded-full border-2 border-white bg-sky-500 shadow transition-colors group-hover:scale-110" />
                     )}
-                    <div className={cn('rounded-3xl border border-slate-200 bg-white shadow-sm transition', viewMode === 'timeline' && 'ml-4')}>
+                    <div className={cn('rounded-2xl border border-slate-200 bg-white shadow-sm transition', viewMode === 'timeline' && 'ml-4')}>
                       <div className="flex items-start justify-between">
                         <div
                           role="button"
@@ -865,7 +865,7 @@ export default function StoricoPage() {
                               toggleSession(session.id);
                             }
                           }}
-                          className="flex flex-1 cursor-pointer items-center justify-between gap-4 rounded-3xl px-5 py-4 text-left transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                          className="flex flex-1 cursor-pointer items-center justify-between gap-4 rounded-2xl px-4 py-3.5 text-left transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
                         >
                           <div className="flex flex-1 flex-col gap-3">
                             <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
@@ -972,7 +972,7 @@ export default function StoricoPage() {
                                   .map(block => (
                                     <div
                                       key={block.id}
-                                      className="space-y-2 rounded-3xl border-2 border-sky-200 bg-sky-50/30 p-3"
+                                      className="space-y-2 rounded-2xl border-2 border-sky-200 bg-sky-50/30 p-3"
                                     >
                                       {/* Block Header */}
                                       <div className="flex items-center justify-between">

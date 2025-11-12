@@ -925,7 +925,7 @@ export default function StatistichePage() {
         {(topType || headlinePb) && (
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {topType && (
-              <div className="rounded-3xl bg-white/15 px-4 py-3 text-sm text-white">
+              <div className="rounded-2xl bg-white/15 px-4 py-3 text-sm text-white">
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-2 font-semibold">
                     <Target className="h-4 w-4" /> Focus tipologia
@@ -943,7 +943,7 @@ export default function StatistichePage() {
               </div>
             )}
             {headlinePb && (
-              <div className="rounded-3xl bg-white/15 px-4 py-3 text-sm text-white">
+              <div className="rounded-2xl bg-white/15 px-4 py-3 text-sm text-white">
                 <div className="inline-flex items-center gap-2 font-semibold">
                   <Medal className="h-4 w-4" /> Ultimo PB rilevante
                 </div>
@@ -1108,7 +1108,7 @@ export default function StatistichePage() {
         </CardContent>
       </Card>
 
-      <Card className="border-none shadow-lg">
+      <Card className="border-slate-200 shadow-sm">
         <CardHeader className="pb-2.5">
           <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
             <TrendingUp className="h-5 w-5 text-sky-600" strokeWidth={2} /> Andamento
@@ -1137,7 +1137,7 @@ export default function StatistichePage() {
               <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2} /> Calcolo statistiche...
             </div>
           ) : !stats ? (
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 py-12 text-center text-sm text-slate-500">
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 py-12 text-center text-sm text-slate-500">
               Nessun dato disponibile per i filtri selezionati.
             </div>
           ) : (
@@ -1180,7 +1180,7 @@ export default function StatistichePage() {
                   </div>
 
                   <div className="grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                       <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
                         <span>Distribuzione per tipologia</span>
                         <button
@@ -1224,7 +1224,7 @@ export default function StatistichePage() {
                       </p>
                     </div>
 
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                       <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                         <Medal className="h-4 w-4 text-amber-500" /> Personal Best per distanza
                       </h3>
@@ -1273,7 +1273,7 @@ export default function StatistichePage() {
                   )}
 
                   {/* Grafico Volume Settimanale */}
-                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                     <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
                       <BarChart3 className="h-5 w-5 text-sky-600" strokeWidth={2} />
                       Volume Settimanale
@@ -1305,7 +1305,7 @@ export default function StatistichePage() {
 
                   {/* Grafico Distribuzione Intensità */}
                   <div className="grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                       <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
                         <Zap className="h-5 w-5 text-violet-600" strokeWidth={2} />
                         Distribuzione Intensità
@@ -1338,7 +1338,7 @@ export default function StatistichePage() {
                     </div>
 
                     {/* Performance per giorno della settimana */}
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                       <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
                         <Calendar className="h-5 w-5 text-indigo-600" strokeWidth={2} />
                         Performance per Giorno
@@ -1371,7 +1371,7 @@ export default function StatistichePage() {
 
                   {/* Grafici progressione tempi per distanza */}
                   {Object.keys(stats.timeProgressionByDistance).length > 0 && (
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                       <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
                         <TrendingUp className="h-5 w-5 text-emerald-600" strokeWidth={2} />
                         Progressione Tempi per Distanza
@@ -1492,7 +1492,7 @@ export default function StatistichePage() {
 
                   {/* Confronto con periodo precedente */}
                   {stats.comparisonPreviousPeriod && (
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                       <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
                         <BarChart className="h-5 w-5 text-indigo-600" strokeWidth={2} />
                         Confronto con Periodo Precedente
@@ -1594,7 +1594,7 @@ export default function StatistichePage() {
 
                   {/* Altre metriche avanzate */}
                   <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                       <h3 className="text-sm font-semibold text-slate-700">Distribuzione Intensità</h3>
                       <div className="mt-3 space-y-2">
                         {stats.intensityDistribution.map((item, idx) => (
@@ -1606,7 +1606,7 @@ export default function StatistichePage() {
                       </div>
                     </div>
 
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                       <h3 className="text-sm font-semibold text-slate-700">Riepilogo Avanzato</h3>
                       <ul className="mt-3 space-y-2 text-xs text-slate-600">
                         <li className="flex items-center justify-between rounded-2xl bg-sky-50 px-3 py-2">
@@ -1633,7 +1633,7 @@ export default function StatistichePage() {
 
               {activeTab === 'insights' && (
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                     <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                       <Medal className="h-4 w-4 text-amber-500" /> Personal Best registrati
                     </h3>
@@ -1654,7 +1654,7 @@ export default function StatistichePage() {
                     </ul>
                   </div>
 
-                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                     <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                       <Sparkles className="h-4 w-4 text-sky-500" /> Insight rapidi
                     </h3>
@@ -1693,7 +1693,7 @@ type SummaryCardProps = {
 
 function SummaryCard({ title, value, subtitle, icon, accent }: SummaryCardProps) {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${accent}`}>
         {icon}
         <span>{title}</span>

@@ -1559,7 +1559,7 @@ export default function RegistroPage() {
 
       <div className="grid gap-4">
         <div ref={sectionRefs.details} className="scroll-mt-24">
-          <Card className="border-none shadow-lg">
+          <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-2.5">
               <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
                 <NotebookPen className="h-5 w-5 text-sky-600" strokeWidth={2} /> Dettagli sessione
@@ -1868,7 +1868,7 @@ export default function RegistroPage() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-none shadow-lg">
+            <Card className="border-slate-200 shadow-sm">
               <CardHeader className="pb-2.5">
                 <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
                   <ListPlus className="h-5 w-5 text-sky-600" strokeWidth={2} /> Ripetute e risultati
@@ -1876,7 +1876,7 @@ export default function RegistroPage() {
               </CardHeader>
               <CardContent className="space-y-4">
               {disciplineDistribution.length > 0 && (
-                <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3.5">
                   <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-slate-700">
                     <span className="inline-flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-sky-600" /> Focus ripetute
@@ -1905,7 +1905,7 @@ export default function RegistroPage() {
               {exerciseBlocks.map((block) => (
                 <div key={block.id} className="space-y-4">
                   {/* Block Header */}
-                  <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/50 p-4">
+                  <div className="rounded-2xl border-2 border-sky-200 bg-sky-50/50 p-4">
                     <div className="mb-3 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Package className="h-5 w-5 text-sky-600" strokeWidth={2} />
@@ -2063,7 +2063,7 @@ export default function RegistroPage() {
                 ).slice(0, 4);
 
               return (
-                <div key={index} className="rounded-3xl border border-slate-200 bg-white/70 p-4 shadow-sm">
+                <div key={index} className="rounded-2xl border border-slate-200 bg-white/70 p-3.5 shadow-sm">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3 text-sm font-semibold text-slate-700">
                       <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
@@ -2531,7 +2531,7 @@ export default function RegistroPage() {
         </div>
 
         <div ref={sectionRefs.metrics} className="scroll-mt-24">
-          <Card className="border-none shadow-lg">
+          <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-2.5">
               <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
                 <Target className="h-5 w-5 text-sky-600" strokeWidth={2} /> Metriche e test
@@ -2539,7 +2539,7 @@ export default function RegistroPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {metrics.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-5 text-center text-sm text-slate-500">
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-5 text-center text-sm text-slate-500">
                   <p>
                     {isTestOrRaceSession
                       ? 'Aggiungi le prove della gara o del test: distanza, tempo e recupero.'
@@ -2558,7 +2558,7 @@ export default function RegistroPage() {
               ) : (
                 <div className="space-y-4">
                   {!isTestOrRaceSession && metricSuggestions.length > 0 && (
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3.5">
                       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                           <Sparkles className="h-4 w-4 text-sky-600" /> Suggerimenti rapidi
@@ -2589,7 +2589,7 @@ export default function RegistroPage() {
                   {metrics.map((metric, index) => {
                     const intensityNumber = parseDecimalInput(metric.intensity) ?? 0;
                     return (
-                      <div key={index} className="rounded-3xl border border-slate-200 bg-white/70 p-4 shadow-sm">
+                      <div key={index} className="rounded-2xl border border-slate-200 bg-white/70 p-3.5 shadow-sm">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                             <Activity className="h-4 w-4 text-slate-500" />
