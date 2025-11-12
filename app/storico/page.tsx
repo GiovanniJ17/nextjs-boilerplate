@@ -24,6 +24,7 @@ import {
   Target,
   Trash2,
   Weight,
+  History,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +33,9 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { notifyError, notifySuccess } from '@/lib/notifications';
+import { PageHeader } from '@/components/ui/page-header';
+import { StatCard } from '@/components/ui/stat-card';
+import { FilterBar, FilterItem } from '@/components/ui/filter-bar';
 
 type ExerciseResult = {
   id: string;

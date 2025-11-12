@@ -30,6 +30,7 @@ import {
   Trophy,
   Wind,
   X,
+  Play,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { notifyError, notifySuccess } from '@/lib/notifications';
+import { PageHeader } from '@/components/ui/page-header';
 
 type TrainingBlock = {
   id: string;
@@ -1480,155 +1482,86 @@ export default function RegistroPage() {
   const selectedBlock = trainingBlocks.find(block => block.id === sessionForm.block_id);
 
   return (
-    <div className="space-y-6 animate-page">
-      <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-sky-500 via-sky-600 to-blue-600 p-6 text-white shadow-lg">
-        <div className="space-y-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-sm font-medium backdrop-blur">
-                <Activity className="h-4 w-4" />
-                Registro allenamento
+    <div className="page-container">
+      <PageHeader 
+        title="Registro Allenamento"
+        description="Registra la tua sessione di allenamento con esercizi e metriche"
+        icon={Play}
+      />
+
+      {/* Progress & Stats Card */}
+      <div className="card mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-sky-50">
+              <div className="text-center">
+                <div className="text-xl font-bold text-sky-600">{progressValue}%</div>
               </div>
-              <div className="space-y-2">
-                <h1 className="text-3xl font-semibold leading-tight">Racconta il tuo allenamento passo dopo passo</h1>
-                <p className="max-w-xl text-sm text-white/80">
-                  Compila i passaggi guidati per salvare sessione, esercizi e metriche. Tutto è pensato per essere chiaro anche da mobile.
-                </p>
-              </div>
-              {selectedBlock ? (
-                <div className="inline-flex items-start gap-3 rounded-2xl bg-white/15 px-4 py-3 text-sm">
-                  <CheckCircle2 className="mt-1 h-4 w-4" />
-                  <div>
-                    <p className="font-semibold">Blocco selezionato: {selectedBlock.name}</p>
-                    <p className="text-xs text-white/70">
-                      {formatDateHuman(selectedBlock.start_date)} → {formatDateHuman(selectedBlock.end_date)}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3 rounded-2xl bg-white/10 px-4 py-3 text-sm text-white/90 md:flex-row md:items-center md:gap-4">
-                  <div className="flex items-start gap-3">
-                    <StickyNote className="mt-1 h-5 w-5 text-white/80" />
-                    <div>
-                      <p className="font-semibold">Abbina la sessione a un blocco</p>
-                      <p className="text-xs text-white/70">
-                        Ti aiuta a leggere lo storico e monitorare gli obiettivi di periodo.
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleCreateBlockShortcut}
-                    className="inline-flex items-center gap-2 rounded-full border-white/40 bg-white/10 px-4 py-2 text-xs font-semibold text-white shadow-sm backdrop-blur transition hover:bg-white/20 hover:text-white"
-                  >
-                    <FolderPlus className="h-4 w-4" />
-                    Crea blocco ora
-                  </Button>
-                </div>
-              )}
             </div>
-            <div className="w-full md:w-64">
-              <div className="rounded-3xl bg-white/15 px-5 py-6 text-right text-white/90 shadow-inner">
-                <p className="text-xs uppercase tracking-[0.35em] text-white/70">Avanzamento</p>
-                <p className="mt-2 text-4xl font-semibold">{progressValue}%</p>
-                <p className="text-xs text-white/70">
-                  {completedSteps} di {stepProgress.length} step completati
-                </p>
-                <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/20">
-                  <div
-                    className="h-full rounded-full bg-white/90 transition-all duration-300 ease-out"
-                    style={{ width: progressBarWidth }}
-                  />
-                </div>
+            <div>
+              <p className="text-sm font-medium text-slate-900">{completedSteps} di {stepProgress.length} completati</p>
+              <div className="mt-1 h-1.5 w-32 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-sky-500 transition-all duration-300"
+                  style={{ width: progressBarWidth }}
+                />
               </div>
             </div>
           </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {summaryStats.map(stat => {
+          
+          <div className="flex flex-wrap gap-2">
+            {summaryStats.slice(0, 3).map(stat => {
               const Icon = stat.icon;
               const formattedValue =
                 typeof stat.value === 'number' ? numberFormatter.format(stat.value) : stat.value;
 
-                return (
-                <div key={stat.label} className="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 text-sm">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/20">
-                    <Icon className="h-5 w-5 text-white" />
-                  </span>
-                  <div>
-                    <p className="text-xs text-white/70">{stat.label}</p>
-                    <p className="text-lg font-semibold text-white">{formattedValue}</p>
+              return (
+                <div key={stat.label} className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
+                  <Icon className="h-4 w-4 text-slate-400" />
+                  <div className="text-xs">
+                    <p className="font-medium text-slate-900">{formattedValue}</p>
+                    <p className="text-slate-500">{stat.label}</p>
                   </div>
                 </div>
               );
             })}
           </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            {stepProgress.map(step => {
-              const Icon = step.icon;
-
-              return (
-                <button
-                  key={step.key}
-                  type="button"
-                  onClick={() => handleScrollToSection(step.key)}
-                  className={cn(
-                    'group flex h-full flex-col justify-between gap-3 rounded-2xl border border-white/20 bg-white/5 p-4 text-left transition hover:bg-white/10',
-                    step.status === 'active' && 'bg-white text-sky-700 shadow-lg',
-                    step.status === 'done' && 'border-white/40 bg-white/15 text-white'
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={cn(
-                        'flex h-10 w-10 items-center justify-center rounded-2xl bg-white/20 text-white',
-                        step.status === 'active' && 'bg-sky-100 text-sky-600',
-                        step.status === 'done' && 'bg-emerald-100 text-emerald-600'
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <div>
-                      <p
-                        className={cn(
-                          'text-sm font-semibold text-white',
-                          step.status === 'active' && 'text-sky-700',
-                          step.status === 'done' && 'text-white'
-                        )}
-                      >
-                        {step.label}
-                      </p>
-                      <p
-                        className={cn(
-                          'text-xs text-white/70',
-                          step.status === 'active' && 'text-sky-600',
-                          step.status === 'done' && 'text-white/70'
-                        )}
-                      >
-                        {step.description}
-                      </p>
-                    </div>
-                  </div>
-                  <span
-                    className={cn(
-                      'text-xs font-medium',
-                      step.status === 'done'
-                        ? 'text-emerald-200'
-                        : step.status === 'active'
-                        ? 'text-sky-600'
-                        : 'text-white/70'
-                    )}
-                  >
-                    {stepStatusLabel[step.status]}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          
+          {selectedBlock && (
+            <div className="badge badge-primary flex items-center gap-2">
+              <Package className="h-3 w-3" />
+              {selectedBlock.name}
+            </div>
+          )}
         </div>
-      </section>
+      </div>
+
+      {/* Step Progress - Compact */}
+      <div className="card-compact mb-6">
+        <div className="flex flex-wrap gap-2">
+          {stepProgress.map(step => {
+            const Icon = step.icon;
+
+            return (
+              <button
+                key={step.key}
+                type="button"
+                onClick={() => handleScrollToSection(step.key)}
+                className={cn(
+                  'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition',
+                  step.status === 'active' && 'border-sky-200 bg-sky-50 text-sky-700',
+                  step.status === 'done' && 'border-green-200 bg-green-50 text-green-700',
+                  step.status === 'todo' && 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="font-medium">{step.label}</span>
+                {step.status === 'done' && <CheckCircle2 className="h-4 w-4" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="grid gap-6">
         <div ref={sectionRefs.details} className="scroll-mt-24">
