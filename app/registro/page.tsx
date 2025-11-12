@@ -36,6 +36,7 @@ import {
   X,
   Play,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +47,15 @@ import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { notifyError, notifySuccess } from '@/lib/notifications';
 import { PageHeader } from '@/components/ui/page-header';
+import { 
+  pageTransition, 
+  fadeInUp, 
+  staggerContainer, 
+  staggerItem, 
+  scaleIn,
+  collapse,
+  buttonTap 
+} from '@/lib/animations';
 
 type TrainingBlock = {
   id: string;
@@ -1533,34 +1543,62 @@ export default function RegistroPage() {
   const selectedBlock = trainingBlocks.find(block => block.id === sessionForm.block_id);
 
   return (
-    <div className="space-y-4 animate-page">
+    <motion.div 
+      className="space-y-4"
+      variants={pageTransition}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+    >
       {/* Hero Section - Gradient Style */}
-      <section className="rounded-3xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 p-5 text-white shadow-xl">
+      <motion.section 
+        className="rounded-3xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 p-5 text-white shadow-xl"
+        variants={fadeInUp}
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium">
+            <motion.div 
+              className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium"
+              variants={scaleIn}
+            >
               <Play className="h-4 w-4" strokeWidth={2} /> Registro Allenamento
-            </div>
+            </motion.div>
             <h1 className="text-3xl font-semibold">Registra la tua sessione</h1>
             <p className="max-w-xl text-sm text-white/75">
               Inserisci esercizi, serie, ripetizioni e metriche. Monitora il progresso in tempo reale.
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white/10 px-6 py-5 text-center">
+          <motion.div 
+            className="rounded-3xl bg-white/10 px-6 py-5 text-center"
+            variants={scaleIn}
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          >
             <p className="text-xs uppercase tracking-widest text-white/60">Completamento</p>
             <p className="text-4xl font-semibold">{progressValue}%</p>
             <p className="text-xs text-white/60">{completedSteps} di {stepProgress.length} step</p>
-          </div>
+          </motion.div>
         </div>
         
         {/* Stats in hero */}
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <motion.div 
+          className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
           {summaryStats.slice(0, 4).map(stat => {
             const Icon = stat.icon;
             const formattedValue = typeof stat.value === 'number' ? numberFormatter.format(stat.value) : stat.value;
             return (
-              <div key={stat.label} className="rounded-2xl bg-white/10 px-4 py-3 text-sm">
+              <motion.div 
+                key={stat.label} 
+                className="rounded-2xl bg-white/10 px-4 py-3 text-sm"
+                variants={staggerItem}
+                whileHover={{ y: -4, backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+                transition={{ duration: 0.2 }}
+              >
                 <div className="flex items-center justify-between text-white/75">
                   <span className="text-xs uppercase tracking-widest text-white/60">{stat.label}</span>
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
@@ -1568,18 +1606,26 @@ export default function RegistroPage() {
                   </span>
                 </div>
                 <p className="mt-2 text-2xl font-semibold text-white">{formattedValue}</p>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
         
-        {selectedBlock && (
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium">
-            <Package className="h-4 w-4" strokeWidth={2} />
-            {selectedBlock.name}
-          </div>
-        )}
-      </section>
+        <AnimatePresence>
+          {selectedBlock && (
+            <motion.div 
+              className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Package className="h-4 w-4" strokeWidth={2} />
+              {selectedBlock.name}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.section>
 
       {/* Step Progress */}
       <div className="card-compact">
@@ -3095,6 +3141,6 @@ export default function RegistroPage() {
         onCancel={() => setBlockToDelete(null)}
         onConfirm={confirmDeleteBlock}
       />
-    </div>
+    </motion.div>
   );
 }

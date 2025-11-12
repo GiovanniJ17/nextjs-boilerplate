@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { cn } from '@/lib/utils';
 import {
@@ -48,6 +49,13 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import { 
+  pageTransition, 
+  fadeInUp, 
+  staggerContainer, 
+  staggerItem, 
+  scaleIn 
+} from '@/lib/animations';
 
 const distanceOptions = [
   { value: 'all', label: 'Tutte le distanze' },
@@ -884,13 +892,25 @@ export default function StatistichePage() {
   );
 
   return (
-    <div className="space-y-4 animate-page">
-      <section className="rounded-3xl bg-gradient-to-br from-indigo-500 via-sky-500 to-cyan-500 p-5 text-white shadow-xl">
+    <motion.div 
+      className="space-y-4"
+      variants={pageTransition}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+    >
+      <motion.section 
+        className="rounded-3xl bg-gradient-to-br from-indigo-500 via-sky-500 to-cyan-500 p-5 text-white shadow-xl"
+        variants={fadeInUp}
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium">
+            <motion.div 
+              className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium"
+              variants={scaleIn}
+            >
               <BarChart className="h-4 w-4" /> Statistiche Allenamenti
-            </div>
+            </motion.div>
             <h1 className="text-3xl font-semibold">Analizza il tuo percorso da velocista</h1>
             <p className="max-w-xl text-sm text-white/75">
               Visualizza trend, progressi e curiosità sulle tue sessioni. Filtra per periodo, blocco e distanza per
@@ -898,19 +918,35 @@ export default function StatistichePage() {
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white/10 px-6 py-5 text-center">
+          <motion.div 
+            className="rounded-3xl bg-white/10 px-6 py-5 text-center"
+            variants={scaleIn}
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          >
             <p className="text-xs uppercase tracking-widest text-white/60">Distanza totale</p>
             <p className="text-4xl font-semibold">
               {stats ? formatNumber(stats.totalDistance) : '—'}
             </p>
             <p className="text-xs text-white/60">metri registrati</p>
-          </div>
+          </motion.div>
         </div>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <motion.div 
+          className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
           {heroStats.map(stat => {
             const Icon = stat.icon;
             return (
-              <div key={stat.label} className="rounded-2xl bg-white/10 px-4 py-3 text-sm">
+              <motion.div 
+                key={stat.label} 
+                className="rounded-2xl bg-white/10 px-4 py-3 text-sm"
+                variants={staggerItem}
+                whileHover={{ y: -4, backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+                transition={{ duration: 0.2 }}
+              >
                 <div className="flex items-center justify-between text-white/75">
                   <span className="text-xs uppercase tracking-widest text-white/60">{stat.label}</span>
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
@@ -918,12 +954,19 @@ export default function StatistichePage() {
                   </span>
                 </div>
                 <p className="mt-2 text-2xl font-semibold text-white">{stat.value}</p>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
-        {(topType || headlinePb) && (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        </motion.div>
+        <AnimatePresence>
+          {(topType || headlinePb) && (
+            <motion.div 
+              className="mt-4 grid gap-3 sm:grid-cols-2"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
             {topType && (
               <div className="rounded-2xl bg-white/15 px-4 py-3 text-sm text-white">
                 <div className="flex items-center justify-between">
@@ -951,10 +994,12 @@ export default function StatistichePage() {
                 <p className="text-xs text-white/80">Sui {headlinePb.distance} m</p>
               </div>
             )}
-          </div>
-        )}
-      </section>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.section>
 
+      <motion.div variants={fadeInUp}>
       <Card className="border-slate-200 shadow-sm">
         <CardContent className="p-5 space-y-5">
           
@@ -1124,7 +1169,9 @@ export default function StatistichePage() {
 
         </CardContent>
       </Card>
+      </motion.div>
 
+      <motion.div variants={fadeInUp}>
       <Card className="border-slate-200 shadow-sm">
         <CardHeader className="pb-2.5">
           <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
@@ -1696,7 +1743,8 @@ export default function StatistichePage() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

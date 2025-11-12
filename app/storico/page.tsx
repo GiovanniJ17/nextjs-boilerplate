@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import {
   Activity,
@@ -36,6 +37,15 @@ import { notifyError, notifySuccess } from '@/lib/notifications';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { FilterBar, FilterItem } from '@/components/ui/filter-bar';
+import { 
+  pageTransition, 
+  fadeInUp, 
+  staggerContainer, 
+  staggerItem, 
+  scaleIn,
+  collapse,
+  cardHover 
+} from '@/lib/animations';
 
 type ExerciseResult = {
   id: string;
@@ -524,33 +534,61 @@ export default function StoricoPage() {
   }
 
   return (
-    <div className="space-y-4 animate-page">
+    <motion.div 
+      className="space-y-4"
+      variants={pageTransition}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+    >
       {/* Hero Section - Gradient Style */}
-      <section className="rounded-3xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-500 p-5 text-white shadow-xl">
+      <motion.section 
+        className="rounded-3xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-500 p-5 text-white shadow-xl"
+        variants={fadeInUp}
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium">
+            <motion.div 
+              className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium"
+              variants={scaleIn}
+            >
               <History className="h-4 w-4" strokeWidth={2} /> Storico Allenamenti
-            </div>
+            </motion.div>
             <h1 className="text-3xl font-semibold">Rivedi le tue performance</h1>
             <p className="max-w-xl text-sm text-white/75">
               Consulta, analizza ed esporta le tue sessioni precedenti. Monitora i progressi nel tempo.
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white/10 px-6 py-5 text-center">
+          <motion.div 
+            className="rounded-3xl bg-white/10 px-6 py-5 text-center"
+            variants={scaleIn}
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          >
             <p className="text-xs uppercase tracking-widest text-white/60">Sessioni totali</p>
             <p className="text-4xl font-semibold">{sessions.length}</p>
             <p className="text-xs text-white/60">registrate</p>
-          </div>
+          </motion.div>
         </div>
         
         {/* Stats in hero - 5 cards on one row */}
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+        <motion.div 
+          className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
           {heroStats.map(stat => {
             const Icon = stat.icon;
             return (
-              <div key={stat.label} className="rounded-2xl bg-white/10 px-4 py-3 text-sm">
+              <motion.div 
+                key={stat.label} 
+                className="rounded-2xl bg-white/10 px-4 py-3 text-sm"
+                variants={staggerItem}
+                whileHover={{ y: -4, backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+                transition={{ duration: 0.2 }}
+              >
                 <div className="flex items-center justify-between text-white/75">
                   <span className="text-xs uppercase tracking-widest text-white/60">{stat.label}</span>
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
@@ -558,14 +596,15 @@ export default function StoricoPage() {
                   </span>
                 </div>
                 <p className="mt-2 text-2xl font-semibold text-white">{stat.value}</p>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* Filters - Redesigned with Clear Sections */}
-      <Card className="border-slate-200 shadow-sm">
+      <motion.div variants={fadeInUp}>
+        <Card className="border-slate-200 shadow-sm">
         <CardContent className="p-5 space-y-5">
           
           {/* PERIODO Section */}
@@ -748,7 +787,9 @@ export default function StoricoPage() {
 
         </CardContent>
       </Card>
+      </motion.div>
 
+      <motion.div variants={fadeInUp}>
       <Card className="border-slate-200 shadow-sm">
         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
@@ -792,7 +833,12 @@ export default function StoricoPage() {
           ) : (
             
 
-            <div className="space-y-4">
+            <motion.div 
+              className="space-y-4"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+            >
               {filteredSessions.map(session => {
                 const isOpen = openSession === session.id;
                 const totalMetrics = session.metrics?.length ?? 0;
@@ -862,18 +908,30 @@ export default function StoricoPage() {
                   sessionTypeOptions.find(option => option.value === session.type)?.label ?? 'Sessione registrata';
 
                 return (
-                  <div
+                  <motion.div
                     key={session.id}
                     className={cn(
                       'group',
                       viewMode === 'timeline' &&
                         "relative pl-6 before:absolute before:left-[12px] before:top-0 before:h-full before:w-px before:bg-slate-200 before:content-['']"
                     )}
+                    variants={staggerItem}
+                    initial="hidden"
+                    animate="visible"
+                    layout
                   >
                     {viewMode === 'timeline' && (
-                      <span className="absolute left-[7px] top-8 h-3 w-3 rounded-full border-2 border-white bg-sky-500 shadow transition-colors group-hover:scale-110" />
+                      <motion.span 
+                        className="absolute left-[7px] top-8 h-3 w-3 rounded-full border-2 border-white bg-sky-500 shadow transition-colors group-hover:scale-110"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                      />
                     )}
-                    <div className={cn('rounded-2xl border border-slate-200 bg-white shadow-sm transition', viewMode === 'timeline' && 'ml-4')}>
+                    <motion.div 
+                      className={cn('rounded-2xl border border-slate-200 bg-white shadow-sm transition', viewMode === 'timeline' && 'ml-4')}
+                      whileHover={cardHover}
+                    >
                       <div className="flex items-start justify-between">
                         <div
                           role="button"
@@ -979,8 +1037,15 @@ export default function StoricoPage() {
                         </div>
                       </div>
 
-                      {isOpen && (
-                        <div className="border-t border-slate-100 px-5 pb-5">
+                      <AnimatePresence initial={false}>
+                        {isOpen && (
+                          <motion.div 
+                            className="border-t border-slate-100 px-5 pb-5"
+                            variants={collapse}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                          >
                           <div className="grid gap-4 py-4 lg:grid-cols-2">
                             <div className="space-y-3">
                               <h3 className="text-sm font-semibold text-slate-700">Blocchi ed Esercizi</h3>
@@ -1212,16 +1277,19 @@ export default function StoricoPage() {
                               )}
                             </div>
                           </div>
-                        </div>
+                        </motion.div>
                       )}
-                    </div>
-                  </div>
+                      </AnimatePresence>
+                    </motion.div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           )}
         </CardContent>
       </Card>
+      </motion.div>
+      
       <ConfirmDialog
         open={sessionToDelete != null}
         title="Eliminare la sessione?"
@@ -1237,6 +1305,6 @@ export default function StoricoPage() {
         onCancel={() => setSessionToDelete(null)}
         onConfirm={confirmDeleteSession}
       />
-    </div>
+    </motion.div>
   );
 }
