@@ -636,8 +636,8 @@ export default function StoricoPage() {
             </div>
           </div>
 
-          {/* Filters Row */}
-          <div className="grid gap-3 sm:grid-cols-2">
+          {/* Filters Row - Tipo e Blocco */}
+          <div className="space-y-3">
             <div>
               <Label className="text-xs font-medium text-slate-700 mb-2 block">Tipo sessione</Label>
               <div className="flex flex-wrap gap-1.5">
@@ -662,41 +662,43 @@ export default function StoricoPage() {
               </div>
             </div>
 
-            <div>
-              <Label className="text-xs font-medium text-slate-700 mb-2 block">Blocco</Label>
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setBlockFilter('')}
-                  className={cn(
-                    'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                    !blockFilter
-                      ? 'border-sky-500 bg-sky-50 text-sky-700'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
-                  )}
-                >
-                  Tutti
-                </button>
-                {blocks.map(block => {
-                  const isSelected = blockFilter === block.id;
-                  return (
-                    <button
-                      key={block.id}
-                      type="button"
-                      onClick={() => setBlockFilter(prev => (prev === block.id ? '' : block.id ?? ''))}
-                      className={cn(
-                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                        isSelected
-                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
-                      )}
-                    >
-                      {block.name ?? 'Senza nome'}
-                    </button>
-                  );
-                })}
+            {blocks.length > 0 && (
+              <div>
+                <Label className="text-xs font-medium text-slate-700 mb-2 block">Blocco</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setBlockFilter('')}
+                    className={cn(
+                      'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                      !blockFilter
+                        ? 'border-sky-500 bg-sky-50 text-sky-700'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
+                    )}
+                  >
+                    Tutti
+                  </button>
+                  {blocks.map(block => {
+                    const isSelected = blockFilter === block.id;
+                    return (
+                      <button
+                        key={block.id}
+                        type="button"
+                        onClick={() => setBlockFilter(prev => (prev === block.id ? '' : block.id ?? ''))}
+                        className={cn(
+                          'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                          isSelected
+                            ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
+                        )}
+                      >
+                        {block.name ?? 'Senza nome'}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Quick Searches */}
