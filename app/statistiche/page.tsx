@@ -1723,14 +1723,8 @@ export default function StatistichePage() {
                               data={stats.intensityDistribution.filter(d => d.count > 0)}
                               cx="50%"
                               cy="50%"
-                              labelLine={{
-                                stroke: '#64748b',
-                                strokeWidth: 1,
-                              }}
-                              label={(entry: any) => {
-                                const percent = ((entry.percent || 0) * 100).toFixed(0);
-                                return `${entry.range} (${percent}%)`;
-                              }}
+                              labelLine={false}
+                              label={false}
                               outerRadius={90}
                               fill="#8884d8"
                               dataKey="count"
@@ -1756,6 +1750,12 @@ export default function StatistichePage() {
                                 `${value} sessioni (${((props.percent || 0) * 100).toFixed(1)}%)`,
                                 props.payload.range
                               ]}
+                            />
+                            <Legend 
+                              verticalAlign="bottom" 
+                              height={36}
+                              iconType="circle"
+                              wrapperStyle={{ fontSize: '12px', paddingTop: '15px' }}
                             />
                           </PieChart>
                         </ResponsiveContainer>
@@ -1910,11 +1910,25 @@ export default function StatistichePage() {
                   {/* Grafico Training Load (Acute:Chronic Ratio) */}
                   {stats.trainingLoad.length > 0 && (
                     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                      <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-slate-800">
                         <Activity className="h-5 w-5 text-violet-600" strokeWidth={2} />
                         Carico Allenamento (A:C Ratio)
                       </h3>
-                      <ResponsiveContainer width="100%" height={350}>
+                      <div className="mb-4 grid grid-cols-3 gap-2 text-center text-xs">
+                        <div className="rounded-lg bg-emerald-50 p-2 border border-emerald-200">
+                          <p className="font-semibold text-emerald-700">0.8 - 1.3</p>
+                          <p className="text-emerald-600">Zona Ottimale</p>
+                        </div>
+                        <div className="rounded-lg bg-amber-50 p-2 border border-amber-200">
+                          <p className="font-semibold text-amber-700">1.3 - 1.5</p>
+                          <p className="text-amber-600">Zona Moderata</p>
+                        </div>
+                        <div className="rounded-lg bg-rose-50 p-2 border border-rose-200">
+                          <p className="font-semibold text-rose-700">&gt; 1.5</p>
+                          <p className="text-rose-600">Rischio Infortuni</p>
+                        </div>
+                      </div>
+                      <ResponsiveContainer width="100%" height={300}>
                         <LineChart 
                           data={stats.trainingLoad.slice(-30)}
                           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
@@ -1941,33 +1955,18 @@ export default function StatistichePage() {
                             }}
                             labelFormatter={(value) => new Date(value).toLocaleDateString('it-IT')}
                             formatter={(value: any, name: string) => {
-                              if (name === 'ratio') {
+                              if (name === 'A:C Ratio') {
                                 const ratio = Number(value);
                                 let status = 'Moderato';
                                 if (ratio >= 0.8 && ratio <= 1.3) status = 'Ottimale';
                                 else if (ratio > 1.5) status = 'Alto Rischio';
                                 return [`${value.toFixed(2)} (${status})`, 'A:C Ratio'];
                               }
-                              if (name === 'acuteLoad') return [`${value.toFixed(0)}`, 'Carico Acuto (7gg)'];
-                              if (name === 'chronicLoad') return [`${value.toFixed(0)}`, 'Carico Cronico (28gg)'];
+                              if (name === 'Carico Acuto') return [`${value.toFixed(0)}`, 'Carico Acuto (7gg)'];
+                              if (name === 'Carico Cronico') return [`${value.toFixed(0)}`, 'Carico Cronico (28gg)'];
                               return [value, name];
                             }}
                           />
-                          <Legend 
-                            wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }}
-                            iconType="line"
-                          />
-                          {/* Zone colorate */}
-                          <defs>
-                            <linearGradient id="colorOptimal" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                            </linearGradient>
-                            <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1}/>
-                              <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                            </linearGradient>
-                          </defs>
                           <Line 
                             type="monotone" 
                             dataKey="ratio" 
@@ -1997,20 +1996,6 @@ export default function StatistichePage() {
                           />
                         </LineChart>
                       </ResponsiveContainer>
-                      <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
-                        <div className="rounded-lg bg-emerald-50 p-2 border border-emerald-200">
-                          <p className="font-semibold text-emerald-700">0.8 - 1.3</p>
-                          <p className="text-emerald-600">Zona Ottimale</p>
-                        </div>
-                        <div className="rounded-lg bg-amber-50 p-2 border border-amber-200">
-                          <p className="font-semibold text-amber-700">1.3 - 1.5</p>
-                          <p className="text-amber-600">Zona Moderata</p>
-                        </div>
-                        <div className="rounded-lg bg-rose-50 p-2 border border-rose-200">
-                          <p className="font-semibold text-rose-700">&gt; 1.5</p>
-                          <p className="text-rose-600">Rischio Infortuni</p>
-                        </div>
-                      </div>
                     </div>
                   )}
 
@@ -2083,11 +2068,25 @@ export default function StatistichePage() {
                   {/* Grafico Progressi Mensili Combinato */}
                   {stats.monthlyProgress.length > 0 && (
                     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                      <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-slate-800">
                         <Calendar className="h-5 w-5 text-blue-600" strokeWidth={2} />
                         Progressi Mensili
                       </h3>
-                      <ResponsiveContainer width="100%" height={350}>
+                      <div className="mb-3 flex flex-wrap gap-3 justify-center text-xs">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-full bg-blue-500"></div>
+                          <span className="text-slate-600">Distanza</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-full bg-violet-500"></div>
+                          <span className="text-slate-600">Sessioni</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+                          <span className="text-slate-600">Velocità Media</span>
+                        </div>
+                      </div>
+                      <ResponsiveContainer width="100%" height={300}>
                         <ComposedChart 
                           data={stats.monthlyProgress.slice(-12)}
                           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
@@ -2102,14 +2101,12 @@ export default function StatistichePage() {
                             yAxisId="left"
                             tick={{ fontSize: 12 }} 
                             stroke="#64748b"
-                            label={{ value: 'Distanza (km)', angle: -90, position: 'insideLeft', style: { fontSize: 12 } }}
                           />
                           <YAxis 
                             yAxisId="right"
                             orientation="right"
                             tick={{ fontSize: 12 }} 
                             stroke="#64748b"
-                            label={{ value: 'Sessioni', angle: 90, position: 'insideRight', style: { fontSize: 12 } }}
                           />
                           <Tooltip
                             contentStyle={{
@@ -2120,15 +2117,11 @@ export default function StatistichePage() {
                               padding: '12px',
                             }}
                             formatter={(value: any, name: string) => {
-                              if (name === 'distance') return [`${(Number(value) / 1000).toFixed(1)} km`, 'Distanza'];
-                              if (name === 'sessions') return [value, 'Sessioni'];
-                              if (name === 'avgSpeed') return [`${(Number(value) * 3.6).toFixed(1)} km/h`, 'Velocità Media'];
-                              if (name === 'pbs') return [value, 'Personal Bests'];
+                              if (name === 'Distanza') return [`${(Number(value) / 1000).toFixed(1)} km`, 'Distanza'];
+                              if (name === 'Sessioni') return [value, 'Sessioni'];
+                              if (name === 'Velocità Media') return [`${(Number(value) * 3.6).toFixed(1)} km/h`, 'Velocità Media'];
                               return [value, name];
                             }}
-                          />
-                          <Legend 
-                            wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }}
                           />
                           <defs>
                             <linearGradient id="colorDistance" x1="0" y1="0" x2="0" y2="1">
@@ -2163,15 +2156,31 @@ export default function StatistichePage() {
                           />
                         </ComposedChart>
                       </ResponsiveContainer>
-                      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {stats.monthlyProgress.slice(-2).map((month, idx) => (
-                          <div key={idx} className="rounded-lg bg-slate-50 p-3 border border-slate-200">
-                            <p className="font-semibold text-slate-800 mb-1">{month.month}</p>
-                            <div className="space-y-1 text-slate-600">
-                              <p>📊 {month.sessions} sessioni</p>
-                              <p>📏 {(month.distance / 1000).toFixed(1)} km</p>
-                              {month.avgSpeed && <p>⚡ {(month.avgSpeed * 3.6).toFixed(1)} km/h</p>}
-                              {month.pbs > 0 && <p className="text-amber-600 font-semibold">⭐ {month.pbs} PB</p>}
+                          <div key={idx} className="rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 border border-slate-200">
+                            <p className="font-bold text-slate-800 mb-2 text-base">{month.month}</p>
+                            <div className="space-y-1.5 text-sm text-slate-600">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">📊</span>
+                                <span>{month.sessions} sessioni</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">📏</span>
+                                <span>{(month.distance / 1000).toFixed(1)} km</span>
+                              </div>
+                              {month.avgSpeed && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">⚡</span>
+                                  <span>{(month.avgSpeed * 3.6).toFixed(1)} km/h</span>
+                                </div>
+                              )}
+                              {month.pbs > 0 && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">⭐</span>
+                                  <span className="font-semibold text-amber-600">{month.pbs} PB</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}
