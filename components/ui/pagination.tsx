@@ -81,10 +81,10 @@ export function Pagination({
         {/* First page */}
         <Button
           variant="outline"
-          size="icon"
+          size="sm"
           onClick={goToFirstPage}
           disabled={currentPage === 1}
-          className="h-9 w-9 disabled:opacity-50"
+          className="h-9 w-9 p-0 disabled:opacity-50"
           aria-label="Prima pagina"
         >
           <ChevronsLeft className="h-4 w-4" />
@@ -93,10 +93,10 @@ export function Pagination({
         {/* Previous page */}
         <Button
           variant="outline"
-          size="icon"
+          size="sm"
           onClick={goToPreviousPage}
           disabled={currentPage === 1}
-          className="h-9 w-9 disabled:opacity-50"
+          className="h-9 w-9 p-0 disabled:opacity-50"
           aria-label="Pagina precedente"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -119,9 +119,10 @@ export function Pagination({
             return (
               <Button
                 key={page}
+                size="sm"
                 variant={currentPage === page ? 'default' : 'outline'}
                 onClick={() => onPageChange(page as number)}
-                className="h-9 w-9"
+                className="h-9 w-9 p-0"
               >
                 {page}
               </Button>
@@ -139,10 +140,10 @@ export function Pagination({
         {/* Next page */}
         <Button
           variant="outline"
-          size="icon"
+          size="sm"
           onClick={goToNextPage}
           disabled={currentPage === totalPages}
-          className="h-9 w-9 disabled:opacity-50"
+          className="h-9 w-9 p-0 disabled:opacity-50"
           aria-label="Pagina successiva"
         >
           <ChevronRight className="h-4 w-4" />
@@ -151,10 +152,10 @@ export function Pagination({
         {/* Last page */}
         <Button
           variant="outline"
-          size="icon"
+          size="sm"
           onClick={goToLastPage}
           disabled={currentPage === totalPages}
-          className="h-9 w-9 disabled:opacity-50"
+          className="h-9 w-9 p-0 disabled:opacity-50"
           aria-label="Ultima pagina"
         >
           <ChevronsRight className="h-4 w-4" />
