@@ -141,7 +141,7 @@ const sessionTypes = [
     hint: 'Competizioni ufficiali o simulazioni complete',
   },
   {
-    value: 'massimale',
+    value: 'palestra',
     label: 'Test massimali',
     hint: 'Test di forza massima: squat, girata, stacco, trazioni',
   },
@@ -235,7 +235,7 @@ const massimaliExercises = [
 
 // Helper per determinare se una sessione è di tipo metrica/test
 function isMetricSessionType(sessionType: string): boolean {
-  return sessionType === 'test' || sessionType === 'gara' || sessionType === 'massimale';
+  return sessionType === 'test' || sessionType === 'gara' || sessionType === 'palestra';
 }
 
 // Helper per determinare se una sessione è di allenamento con ripetute
@@ -613,13 +613,13 @@ export default function RegistroPage() {
       if (isMetricSession) {
         // Auto-fill based on session type
         const getDefaultUnit = () => {
-          if (sessionForm.type === 'massimale') return 'kg';
+          if (sessionForm.type === 'palestra') return 'kg';
           if (sessionForm.type === 'test' || sessionForm.type === 'gara') return 's';
           return '';
         };
 
         const getDefaultMetricName = () => {
-          if (sessionForm.type === 'massimale') return massimaliExercises[0]; // Squat by default
+          if (sessionForm.type === 'palestra') return massimaliExercises[0]; // Squat by default
           return 'Prova 1';
         };
 
@@ -1249,7 +1249,7 @@ export default function RegistroPage() {
         if (!metric.time_s) {
           validation[`metric-${index}-time_s`] = 'Inserisci il tempo registrato';
         }
-      } else if (sessionForm.type === 'massimale') {
+      } else if (sessionForm.type === 'palestra') {
         // Massimali richiedono solo il valore (peso in kg)
         if (!metric.value) {
           validation[`metric-${index}-value`] = 'Inserisci il peso sollevato';
@@ -1334,7 +1334,7 @@ export default function RegistroPage() {
         if (sessionForm.type === 'test' || sessionForm.type === 'gara') {
           // Test e gare richiedono distanza e tempo
           return !metric.distance_m || !metric.time_s;
-        } else if (sessionForm.type === 'massimale') {
+        } else if (sessionForm.type === 'palestra') {
           // Massimali richiedono solo il valore (peso)
           return !metric.value;
         }
@@ -1473,7 +1473,7 @@ export default function RegistroPage() {
           notes: metric.notes || null,
         };
 
-        if (sessionForm.type === 'massimale') {
+        if (sessionForm.type === 'palestra') {
           // Massimali: salvano solo valore (peso in kg)
           payload.category = 'massimale';
           payload.value = parseDecimalInput(metric.value);
@@ -2009,7 +2009,7 @@ export default function RegistroPage() {
                 <p className="text-sm text-slate-600">
                   Le sessioni di tipo <span className="font-semibold text-slate-700">test</span>,{' '}
                   <span className="font-semibold text-slate-700">gara</span> o{' '}
-                  <span className="font-semibold text-slate-700">massimale</span> utilizzano la sezione{' '}
+                  <span className="font-semibold text-slate-700">palestra</span> utilizzano la sezione{' '}
                   <span className="font-semibold text-sky-600">«Metriche &amp; Test»</span>.
                 </p>
                 <p className="text-xs text-slate-500">
@@ -2554,7 +2554,7 @@ export default function RegistroPage() {
                                   <span className="text-sm font-semibold text-slate-700">Compilazione Rapida</span>
                                 </div>
                                 <p className="text-xs text-slate-600 mb-3">
-                                  Inserisci un tempo medio o il miglior tempo per applicarlo a tutte le {group.entries.length} ripetizioni
+                                  Applica lo stesso valore a tutte le {group.entries.length} ripetizioni (puoi compilare uno o entrambi i campi)
                                 </p>
                                 <div className="flex flex-wrap items-end gap-2">
                                   <div className="flex-1 min-w-[120px]">
@@ -2589,17 +2589,19 @@ export default function RegistroPage() {
                                       const timeValue = timeInput?.value;
                                       const rpeValue = rpeInput?.value;
                                       
-                                      if (!timeValue) {
-                                        notifyError('Inserisci un tempo', {
-                                          description: 'Compila il campo tempo per applicarlo a tutte le ripetizioni.'
+                                      if (!timeValue && !rpeValue) {
+                                        notifyError('Compila almeno un campo', {
+                                          description: 'Inserisci il tempo e/o RPE da applicare alle ripetizioni.'
                                         });
                                         return;
                                       }
 
-                                      // Applica il tempo a tutte le ripetizioni della serie
+                                      // Applica i valori a tutte le ripetizioni della serie
                                       group.entries.forEach(entry => {
-                                        const event = { target: { name: 'time_s', value: timeValue } };
-                                        handleResultChange(block.id, index, entry.resultIndex, event as any);
+                                        if (timeValue) {
+                                          const event = { target: { name: 'time_s', value: timeValue } };
+                                          handleResultChange(block.id, index, entry.resultIndex, event as any);
+                                        }
                                         
                                         if (rpeValue) {
                                           const rpeEvent = { target: { name: 'rpe', value: rpeValue } };
@@ -2608,11 +2610,15 @@ export default function RegistroPage() {
                                       });
 
                                       // Reset inputs
-                                      timeInput.value = '';
+                                      if (timeInput) timeInput.value = '';
                                       if (rpeInput) rpeInput.value = '';
                                       
+                                      const appliedFields = [];
+                                      if (timeValue) appliedFields.push('Tempo');
+                                      if (rpeValue) appliedFields.push('RPE');
+                                      
                                       notifySuccess('Compilazione completata', {
-                                        description: `Tempo${rpeValue ? ' e RPE' : ''} applicato a ${group.entries.length} ripetizioni.`
+                                        description: `${appliedFields.join(' e ')} applicato a ${group.entries.length} ripetizioni.`
                                       });
                                     }}
                                     className="h-9 bg-sky-600 hover:bg-sky-700"
@@ -2785,7 +2791,7 @@ export default function RegistroPage() {
                   Per registrare metriche, test o massimali cambia il tipo di sessione in:{' '}
                   <span className="font-semibold text-amber-600">Test</span>,{' '}
                   <span className="font-semibold text-rose-600">Gara</span> o{' '}
-                  <span className="font-semibold text-emerald-600">Massimale</span>.
+                  <span className="font-semibold text-emerald-600">Palestra</span>.
                 </p>
                 <p className="text-xs text-slate-500">
                   Gli allenamenti standard utilizzano la sezione «Ripetute» per registrare esercizi e serie.
@@ -2901,9 +2907,9 @@ export default function RegistroPage() {
                               </div>
                               <div className="space-y-1.5">
                                 <Label className="text-xs font-medium text-slate-700">
-                                  {sessionForm.type === 'massimale' ? 'Esercizio' : 'Prova / Distanza'}
+                                  {sessionForm.type === 'palestra' ? 'Esercizio' : 'Prova / Distanza'}
                                 </Label>
-                                {sessionForm.type === 'massimale' ? (
+                                {sessionForm.type === 'palestra' ? (
                                   <select
                                     name="metric_name"
                                     value={metric.metric_name}
@@ -2928,7 +2934,7 @@ export default function RegistroPage() {
                               </div>
                             </div>
 
-                            {sessionForm.type === 'massimale' ? (
+                            {sessionForm.type === 'palestra' ? (
                               // Per massimali: solo Valore e RPE (no distanza/tempo/recupero)
                               <div className="grid gap-3 sm:grid-cols-2">
                                 <div className="space-y-1.5">
@@ -3107,9 +3113,9 @@ export default function RegistroPage() {
                             <div className="mt-4 grid gap-4 md:grid-cols-4">
                               <div className="space-y-1">
                                 <Label className="text-xs font-semibold text-slate-600">
-                                  {sessionForm.type === 'massimale' ? 'Esercizio' : 'Target / Test'}
+                                  {sessionForm.type === 'palestra' ? 'Esercizio' : 'Target / Test'}
                                 </Label>
-                                {sessionForm.type === 'massimale' ? (
+                                {sessionForm.type === 'palestra' ? (
                                   <select
                                     name="metric_target"
                                     value={metric.metric_target}
@@ -3152,9 +3158,9 @@ export default function RegistroPage() {
                                   value={metric.unit}
                                   onChange={event => updateMetric(index, event)}
                                   placeholder="kg, s, cm..."
-                                  readOnly={sessionForm.type === 'massimale' || sessionForm.type === 'test' || sessionForm.type === 'gara'}
+                                  readOnly={sessionForm.type === 'palestra' || sessionForm.type === 'test' || sessionForm.type === 'gara'}
                                   className={cn(
-                                    (sessionForm.type === 'massimale' || sessionForm.type === 'test' || sessionForm.type === 'gara') && 
+                                    (sessionForm.type === 'palestra' || sessionForm.type === 'test' || sessionForm.type === 'gara') && 
                                     'bg-slate-50 cursor-not-allowed'
                                   )}
                                 />
