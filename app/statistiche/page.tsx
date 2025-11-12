@@ -963,38 +963,56 @@ export default function StatistichePage() {
     });
     const locationStats = analyzeLocationStats(locationData);
 
-    // 6. Progressi mensili
-    const monthlyProgressData = performances
-      .filter(p => p.distance)
-      .map(p => {
-        let perfDate = '';
-        for (const session of sessions) {
-          const hasPerformance = performances.some(() => {
-            const exercise = Array.from(exerciseById.values()).find(ex => {
-              if (!ex.block_id) return false;
-              return blockIdToSessionId.get(ex.block_id) === session.id;
-            });
-            return exercise != null;
-          });
-          
-          if (hasPerformance && session.date) {
-            perfDate = session.date;
-            break;
-          }
-        }
-        
-        const speed = p.distance && p.time ? p.distance / p.time : null;
+    // 6. Progressi mensili - RAGGRUPPA PER SESSIONE
+    const sessionProgressMap = new Map<string, {
+      date: string;
+      totalDistance: number;
+      speeds: number[];
+      hasPB: boolean;
+    }>();
+    
+    sessions.forEach(session => {
+      if (!session.date) return;
+      
+      // Trova tutte le performance di questa sessione
+      const sessionPerformances = performances.filter(p => {
+        const exercise = Array.from(exerciseById.values()).find(ex => {
+          if (!ex.block_id) return false;
+          return blockIdToSessionId.get(ex.block_id) === session.id;
+        });
+        return exercise != null && p.distance;
+      });
+      
+      if (sessionPerformances.length === 0) return;
+      
+      const totalDistance = sessionPerformances.reduce((sum, p) => sum + (p.distance || 0), 0);
+      const speeds = sessionPerformances
+        .filter(p => p.distance && p.time)
+        .map(p => p.distance! / p.time);
+      
+      // Controlla se questa sessione ha almeno un PB
+      const hasPB = sessionPerformances.some(p => {
         const pb = pbByDistance.find(pb => pb.distance === p.distance);
-        const isPB = pb ? pb.time === p.time : false;
-        
-        return {
-          date: perfDate,
-          distance: p.distance!,
-          avgSpeed: speed,
-          isPB,
-        };
-      })
-      .filter(p => p.date);
+        return pb && pb.time === p.time;
+      });
+      
+      sessionProgressMap.set(session.id, {
+        date: session.date,
+        totalDistance,
+        speeds,
+        hasPB,
+      });
+    });
+    
+    const monthlyProgressData = Array.from(sessionProgressMap.values()).map(sessionData => ({
+      date: sessionData.date,
+      distance: sessionData.totalDistance,
+      avgSpeed: sessionData.speeds.length > 0
+        ? sessionData.speeds.reduce((sum, s) => sum + s, 0) / sessionData.speeds.length
+        : null,
+      isPB: sessionData.hasPB,
+    }));
+    
     const monthlyProgress = calculateMonthlyProgress(monthlyProgressData);
 
     // 7. Trend di performance
