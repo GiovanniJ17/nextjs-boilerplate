@@ -955,14 +955,11 @@ export default function StatistichePage() {
         )}
       </section>
 
-      <Card className="border-none shadow-lg">
-        <CardHeader className="pb-2.5">
-          <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
-            <Filter className="h-5 w-5 text-sky-600" strokeWidth={2} /> Filtri
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs">
+      <Card className="border-slate-200 shadow-sm">
+        <CardContent className="p-4 space-y-4">
+          {/* Range Presets */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-slate-600 mr-2">Periodo:</span>
             {rangePresets.map(preset => {
               const isActive = rangePreset === preset.key;
               return (
@@ -971,10 +968,10 @@ export default function StatistichePage() {
                   type="button"
                   onClick={() => applyRangePreset(preset.key)}
                   className={cn(
-                    'rounded-full border px-3 py-1 font-medium transition',
+                    'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                     isActive
-                      ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                      : 'border-transparent bg-white text-slate-600 hover:border-sky-200'
+                      ? 'border-sky-500 bg-sky-50 text-sky-700'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
                   )}
                   aria-pressed={isActive}
                 >
@@ -984,18 +981,45 @@ export default function StatistichePage() {
             })}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-600">Da</Label>
-              <Input type="date" value={fromDate} onChange={event => handleFromDateChange(event.target.value)} />
+          <div className="border-t border-slate-100"></div>
+
+          {/* Date Range + Reset */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
+            <div className="lg:col-span-5 space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700">Da</Label>
+              <Input 
+                type="date" 
+                value={fromDate} 
+                onChange={event => handleFromDateChange(event.target.value)}
+                className="h-9"
+              />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-600">A</Label>
-              <Input type="date" value={toDate} onChange={event => handleToDateChange(event.target.value)} />
+            <div className="lg:col-span-5 space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700">A</Label>
+              <Input 
+                type="date" 
+                value={toDate} 
+                onChange={event => handleToDateChange(event.target.value)}
+                className="h-9"
+              />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-600">Tipo</Label>
-              <div className="flex flex-wrap gap-2">
+            <div className="lg:col-span-2 flex items-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={resetFilters}
+                className="w-full h-9 text-xs"
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reset
+              </Button>
+            </div>
+          </div>
+
+          {/* Filters Row */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700">Tipo</Label>
+              <div className="flex flex-wrap gap-1.5">
                 {sessionTypeFilters.map(option => {
                   const isActive = typeFilter === option.value;
                   return (
@@ -1004,10 +1028,10 @@ export default function StatistichePage() {
                       type="button"
                       onClick={() => setTypeFilter(prev => (prev === option.value ? '' : option.value))}
                       className={cn(
-                        'rounded-full border px-3 py-1 text-[11px] font-medium transition',
+                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isActive
-                          ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
+                          ? 'border-sky-500 bg-sky-50 text-sky-700'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
                       )}
                       aria-pressed={isActive}
                     >
@@ -1017,17 +1041,18 @@ export default function StatistichePage() {
                 })}
               </div>
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-600">Blocco</Label>
-              <div className="flex flex-wrap gap-2">
+            
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700">Blocco</Label>
+              <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
                   onClick={() => setBlockFilter('')}
                   className={cn(
-                    'rounded-full border px-3 py-1 text-[11px] font-medium transition',
+                    'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                     blockFilter
-                      ? 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200'
-                      : 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                      ? 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
+                      : 'border-emerald-500 bg-emerald-50 text-emerald-700'
                   )}
                   aria-pressed={!blockFilter}
                 >
@@ -1041,55 +1066,44 @@ export default function StatistichePage() {
                       type="button"
                       onClick={() => setBlockFilter(prev => (prev === block.id ? '' : block.id ?? ''))}
                       className={cn(
-                        'rounded-full border px-3 py-1 text-[11px] font-medium transition',
+                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isActive
-                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
                       )}
                       aria-pressed={isActive}
                     >
-                      {block.name ?? 'Blocco senza nome'}
+                      {block.name ?? 'Senza nome'}
                     </button>
                   );
                 })}
               </div>
             </div>
-          </div>
 
-          <div className="space-y-1">
-            <Label className="text-xs font-semibold text-slate-600">Distanza</Label>
-            <div className="flex flex-wrap gap-2">
-              {distanceOptions.map(option => {
-                const isActive = distanceFilter === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setDistanceFilter(option.value)}
-                    className={cn(
-                      'rounded-full border px-3 py-1 text-[11px] font-medium transition',
-                      isActive
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200'
-                    )}
-                    aria-pressed={isActive}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700">Distanza</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {distanceOptions.map(option => {
+                  const isActive = distanceFilter === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setDistanceFilter(option.value)}
+                      className={cn(
+                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                        isActive
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/50'
+                      )}
+                      aria-pressed={isActive}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={resetFilters}
-              className="flex items-center gap-2 rounded-full text-xs"
-            >
-              <RotateCcw className="h-3.5 w-3.5" /> Reset
-            </Button>
           </div>
         </CardContent>
       </Card>
