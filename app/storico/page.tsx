@@ -564,166 +564,192 @@ export default function StoricoPage() {
         </div>
       </section>
 
-      {/* Filters - Redesigned */}
+      {/* Filters - Redesigned with Clear Sections */}
       <Card className="border-slate-200 shadow-sm">
-        <CardContent className="p-4 space-y-4">
-          {/* Smart Range Presets */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-slate-600 mr-2">Periodo:</span>
-            {smartRangeOptions.map(option => {
-              const isActive = activeSmartRange === option.key;
-              return (
-                <button
-                  key={option.key}
-                  type="button"
-                  onClick={() => applySmartRange(option.key)}
-                  className={cn(
-                    'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
-                    isActive
-                      ? 'border-sky-500 bg-sky-50 text-sky-700'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
-                  )}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="border-t border-slate-100"></div>
-
-          {/* Date Range + Search */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
-            <div className="lg:col-span-2">
-              <Label className="text-xs font-medium text-slate-700 mb-1.5 block">Da</Label>
-              <Input 
-                type="date" 
-                value={fromDate} 
-                onChange={event => handleFromDateChange(event.target.value)}
-                className="h-9 text-sm"
-              />
-            </div>
-            <div className="lg:col-span-2">
-              <Label className="text-xs font-medium text-slate-700 mb-1.5 block">A</Label>
-              <Input 
-                type="date" 
-                value={toDate} 
-                onChange={event => handleToDateChange(event.target.value)}
-                className="h-9 text-sm"
-              />
-            </div>
-            <div className="lg:col-span-6">
-              <Label className="text-xs font-medium text-slate-700 mb-1.5 block">Cerca</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  value={search}
-                  onChange={event => setSearch(event.target.value)}
-                  placeholder="Note, luogo, esercizi..."
-                  className="h-9 pl-9 text-sm"
-                />
-              </div>
-            </div>
-            <div className="lg:col-span-2 flex items-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={resetFilters}
-                className="w-full h-9 text-xs"
-              >
-                <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reset
-              </Button>
-            </div>
-          </div>
-
-          {/* Filters Row - Tipo e Blocco */}
+        <CardContent className="p-5 space-y-5">
+          
+          {/* PERIODO Section */}
           <div className="space-y-3">
-            <div>
-              <Label className="text-xs font-medium text-slate-700 mb-2 block">Tipo sessione</Label>
-              <div className="flex flex-wrap gap-1.5">
-                {sessionTypeOptions.map(option => {
-                  const isActive = typeFilter === option.value;
-                  return (
-                    <button
-                      key={option.value || 'all'}
-                      type="button"
-                      onClick={() => setTypeFilter(prev => (prev === option.value ? '' : option.value))}
-                      className={cn(
-                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                        isActive
-                          ? 'border-sky-500 bg-sky-50 text-sky-700'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
-                      )}
-                    >
-                      {option.label}
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-slate-500" />
+              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Periodo</h3>
             </div>
-
-            {blocks.length > 0 && (
-              <div>
-                <Label className="text-xs font-medium text-slate-700 mb-2 block">Blocco</Label>
-                <div className="flex flex-wrap gap-1.5">
+            
+            <div className="flex flex-wrap items-center gap-2">
+              {smartRangeOptions.map(option => {
+                const isActive = activeSmartRange === option.key;
+                return (
                   <button
+                    key={option.key}
                     type="button"
-                    onClick={() => setBlockFilter('')}
+                    onClick={() => applySmartRange(option.key)}
                     className={cn(
-                      'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                      !blockFilter
-                        ? 'border-sky-500 bg-sky-50 text-sky-700'
+                      'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                      isActive
+                        ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
                         : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
                     )}
                   >
-                    Tutti
+                    {option.label}
                   </button>
-                  {blocks.map(block => {
-                    const isSelected = blockFilter === block.id;
+                );
+              })}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <div className="lg:col-span-2">
+                <Label className="text-xs font-medium text-slate-700 mb-1.5 block">Da</Label>
+                <Input 
+                  type="date" 
+                  value={fromDate} 
+                  onChange={event => handleFromDateChange(event.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+              <div className="lg:col-span-2">
+                <Label className="text-xs font-medium text-slate-700 mb-1.5 block">A</Label>
+                <Input 
+                  type="date" 
+                  value={toDate} 
+                  onChange={event => handleToDateChange(event.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetFilters}
+                  className="w-full h-9 text-xs gap-1.5"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> Reset
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-200"></div>
+
+          {/* FILTRI Section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-slate-500" />
+              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Filtri</h3>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Tipo sessione */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-slate-600">Tipo sessione</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {sessionTypeOptions.map(option => {
+                    const isActive = typeFilter === option.value;
                     return (
                       <button
-                        key={block.id}
+                        key={option.value || 'all'}
                         type="button"
-                        onClick={() => setBlockFilter(prev => (prev === block.id ? '' : block.id ?? ''))}
+                        onClick={() => setTypeFilter(prev => (prev === option.value ? '' : option.value))}
                         className={cn(
                           'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                          isSelected
-                            ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
+                          isActive
+                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
                         )}
                       >
-                        {block.name ?? 'Senza nome'}
+                        {option.label}
                       </button>
                     );
                   })}
                 </div>
               </div>
-            )}
+
+              {/* Blocco */}
+              {blocks.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-slate-600">Blocco allenamento</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setBlockFilter('')}
+                      className={cn(
+                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                        !blockFilter
+                          ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
+                      )}
+                    >
+                      Tutti
+                    </button>
+                    {blocks.map(block => {
+                      const isSelected = blockFilter === block.id;
+                      return (
+                        <button
+                          key={block.id}
+                          type="button"
+                          onClick={() => setBlockFilter(prev => (prev === block.id ? '' : block.id ?? ''))}
+                          className={cn(
+                            'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                            isSelected
+                              ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
+                          )}
+                        >
+                          {block.name ?? 'Senza nome'}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Quick Searches */}
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
-            <span className="text-xs font-medium text-slate-500">Rapide:</span>
-            {quickSearches.map(quick => {
-              const isActive = activeQuickSearch === quick.query;
-              return (
-                <button
-                  key={quick.label}
-                  type="button"
-                  onClick={() => handleQuickSearch(quick.query)}
-                  className={cn(
-                    'rounded-full border px-3 py-1 transition',
-                    isActive
-                      ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-500 hover:border-sky-200 hover:text-sky-600'
-                  )}
-                  aria-pressed={isActive}
-                >
-                  {quick.label}
-                </button>
-              );
-            })}
+          <div className="border-t border-slate-200"></div>
+
+          {/* RICERCA Section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Search className="h-4 w-4 text-slate-500" />
+              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Ricerca</h3>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="md:col-span-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    value={search}
+                    onChange={event => setSearch(event.target.value)}
+                    placeholder="Cerca per note, luogo, esercizi..."
+                    className="h-9 pl-9 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs font-medium text-slate-500 mr-1">Rapide:</span>
+                {quickSearches.map(quick => {
+                  const isActive = activeQuickSearch === quick.query;
+                  return (
+                    <button
+                      key={quick.label}
+                      type="button"
+                      onClick={() => handleQuickSearch(quick.query)}
+                      className={cn(
+                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                        isActive
+                          ? 'border-violet-500 bg-violet-50 text-violet-700 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-500 hover:border-violet-200 hover:text-violet-600'
+                      )}
+                      aria-pressed={isActive}
+                    >
+                      {quick.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
+
         </CardContent>
       </Card>
 

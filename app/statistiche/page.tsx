@@ -956,155 +956,172 @@ export default function StatistichePage() {
       </section>
 
       <Card className="border-slate-200 shadow-sm">
-        <CardContent className="p-4 space-y-4">
-          {/* Range Presets */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-slate-600 mr-2">Periodo:</span>
-            {rangePresets.map(preset => {
-              const isActive = rangePreset === preset.key;
-              return (
-                <button
-                  key={preset.key}
-                  type="button"
-                  onClick={() => applyRangePreset(preset.key)}
-                  className={cn(
-                    'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
-                    isActive
-                      ? 'border-sky-500 bg-sky-50 text-sky-700'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
-                  )}
-                  aria-pressed={isActive}
-                >
-                  {preset.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="border-t border-slate-100"></div>
-
-          {/* Date Range + Reset */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
-            <div className="lg:col-span-5 space-y-1.5">
-              <Label className="text-xs font-medium text-slate-700">Da</Label>
-              <Input 
-                type="date" 
-                value={fromDate} 
-                onChange={event => handleFromDateChange(event.target.value)}
-                className="h-9"
-              />
-            </div>
-            <div className="lg:col-span-5 space-y-1.5">
-              <Label className="text-xs font-medium text-slate-700">A</Label>
-              <Input 
-                type="date" 
-                value={toDate} 
-                onChange={event => handleToDateChange(event.target.value)}
-                className="h-9"
-              />
-            </div>
-            <div className="lg:col-span-2 flex items-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={resetFilters}
-                className="w-full h-9 text-xs"
-              >
-                <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reset
-              </Button>
-            </div>
-          </div>
-
-          {/* Filters Row */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-slate-700">Tipo</Label>
-              <div className="flex flex-wrap gap-1.5">
-                {sessionTypeFilters.map(option => {
-                  const isActive = typeFilter === option.value;
-                  return (
-                    <button
-                      key={option.value || 'all'}
-                      type="button"
-                      onClick={() => setTypeFilter(prev => (prev === option.value ? '' : option.value))}
-                      className={cn(
-                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                        isActive
-                          ? 'border-sky-500 bg-sky-50 text-sky-700'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
-                      )}
-                      aria-pressed={isActive}
-                    >
-                      {option.label}
-                    </button>
-                  );
-                })}
-              </div>
+        <CardContent className="p-5 space-y-5">
+          
+          {/* PERIODO Section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-slate-500" />
+              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Periodo</h3>
             </div>
             
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-slate-700">Blocco</Label>
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setBlockFilter('')}
-                  className={cn(
-                    'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                    blockFilter
-                      ? 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
-                      : 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                  )}
-                  aria-pressed={!blockFilter}
-                >
-                  Tutti
-                </button>
-                {blocks.map(block => {
-                  const isActive = blockFilter === block.id;
-                  return (
-                    <button
-                      key={block.id}
-                      type="button"
-                      onClick={() => setBlockFilter(prev => (prev === block.id ? '' : block.id ?? ''))}
-                      className={cn(
-                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                        isActive
-                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
-                      )}
-                      aria-pressed={isActive}
-                    >
-                      {block.name ?? 'Senza nome'}
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {rangePresets.map(preset => {
+                const isActive = rangePreset === preset.key;
+                return (
+                  <button
+                    key={preset.key}
+                    type="button"
+                    onClick={() => applyRangePreset(preset.key)}
+                    className={cn(
+                      'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                      isActive
+                        ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
+                    )}
+                    aria-pressed={isActive}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-slate-700">Distanza</Label>
-              <div className="flex flex-wrap gap-1.5">
-                {distanceOptions.map(option => {
-                  const isActive = distanceFilter === option.value;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setDistanceFilter(option.value)}
-                      className={cn(
-                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                        isActive
-                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/50'
-                      )}
-                      aria-pressed={isActive}
-                    >
-                      {option.label}
-                    </button>
-                  );
-                })}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <div className="lg:col-span-2">
+                <Label className="text-xs font-medium text-slate-700 mb-1.5 block">Da</Label>
+                <Input 
+                  type="date" 
+                  value={fromDate} 
+                  onChange={event => handleFromDateChange(event.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <div className="lg:col-span-2">
+                <Label className="text-xs font-medium text-slate-700 mb-1.5 block">A</Label>
+                <Input 
+                  type="date" 
+                  value={toDate} 
+                  onChange={event => handleToDateChange(event.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetFilters}
+                  className="w-full h-9 text-xs gap-1.5"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> Reset
+                </Button>
               </div>
             </div>
           </div>
+
+          <div className="border-t border-slate-200"></div>
+
+          {/* FILTRI Section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-slate-500" />
+              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Filtri</h3>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {/* Tipo sessione */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-slate-600">Tipo sessione</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {sessionTypeFilters.map(option => {
+                    const isActive = typeFilter === option.value;
+                    return (
+                      <button
+                        key={option.value || 'all'}
+                        type="button"
+                        onClick={() => setTypeFilter(prev => (prev === option.value ? '' : option.value))}
+                        className={cn(
+                          'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                          isActive
+                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
+                        )}
+                        aria-pressed={isActive}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              {/* Blocco */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-slate-600">Blocco allenamento</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setBlockFilter('')}
+                    className={cn(
+                      'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                      blockFilter
+                        ? 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
+                        : 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                    )}
+                    aria-pressed={!blockFilter}
+                  >
+                    Tutti
+                  </button>
+                  {blocks.map(block => {
+                    const isActive = blockFilter === block.id;
+                    return (
+                      <button
+                        key={block.id}
+                        type="button"
+                        onClick={() => setBlockFilter(prev => (prev === block.id ? '' : block.id ?? ''))}
+                        className={cn(
+                          'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                          isActive
+                            ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
+                        )}
+                        aria-pressed={isActive}
+                      >
+                        {block.name ?? 'Senza nome'}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Distanza */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-slate-600">Categoria distanza</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {distanceOptions.map(option => {
+                    const isActive = distanceFilter === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setDistanceFilter(option.value)}
+                        className={cn(
+                          'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                          isActive
+                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/50'
+                        )}
+                        aria-pressed={isActive}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
         </CardContent>
       </Card>
 
