@@ -19,19 +19,19 @@ export function StatCard({ label, value, icon: Icon, trend, suffix, className = 
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <p className="stat-label">{label}</p>
-          <p className="stat-value mt-1">
+          <p className="stat-value mt-0.5">
             {value}
-            {suffix && <span className="text-base text-slate-500 ml-1">{suffix}</span>}
+            {suffix && <span className="text-sm text-slate-500 ml-1">{suffix}</span>}
           </p>
           {trend && (
-            <p className={`mt-1 text-xs font-medium ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`mt-0.5 text-xs font-medium ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
               {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
             </p>
           )}
         </div>
         {Icon && (
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-50 text-slate-400">
-            <Icon className="h-6 w-6" />
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-slate-50 text-slate-400">
+            <Icon className="h-5 w-5" strokeWidth={2} />
           </div>
         )}
       </div>

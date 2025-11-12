@@ -547,7 +547,7 @@ export default function StoricoPage() {
       />
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 mb-5 sm:grid-cols-3 lg:grid-cols-6">
         {heroStats.map(stat => (
           <StatCard
             key={stat.label}
@@ -704,7 +704,7 @@ export default function StoricoPage() {
       <Card className="border-none shadow-lg">
         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
-            <FolderKanban className="h-5 w-5 text-sky-600" /> Storico sessioni
+            <FolderKanban className="h-5 w-5 text-sky-600" strokeWidth={2} /> Storico sessioni
           </CardTitle>
           <div className="flex items-center gap-2 text-xs">
             <span className="text-slate-500">Vista</span>
@@ -735,7 +735,7 @@ export default function StoricoPage() {
         <CardContent className="space-y-4">
           {loading ? (
             <div className="flex items-center justify-center gap-3 py-20 text-sm text-slate-500">
-              <Loader2 className="h-5 w-5 animate-spin" /> Caricamento delle sessioni...
+              <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2} /> Caricamento delle sessioni...
             </div>
           ) : filteredSessions.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 py-12 text-center text-sm text-slate-500">

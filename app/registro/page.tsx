@@ -1537,7 +1537,7 @@ export default function RegistroPage() {
       </div>
 
       {/* Step Progress - Compact */}
-      <div className="card-compact mb-6">
+      <div className="card-compact mb-5">
         <div className="flex flex-wrap gap-2">
           {stepProgress.map(step => {
             const Icon = step.icon;
@@ -1563,15 +1563,15 @@ export default function RegistroPage() {
         </div>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         <div ref={sectionRefs.details} className="scroll-mt-24">
           <Card className="border-none shadow-lg">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2.5">
               <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
-                <NotebookPen className="h-5 w-5 text-sky-600" /> Dettagli sessione
+                <NotebookPen className="h-5 w-5 text-sky-600" strokeWidth={2} /> Dettagli sessione
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1">
                 <Label className="text-xs font-semibold text-slate-600">Blocco di allenamento</Label>
@@ -1754,7 +1754,7 @@ export default function RegistroPage() {
                         aria-pressed={isSelected}
                       >
                         <span className="inline-flex items-center gap-2 text-xs font-semibold">
-                          <span className={cn('flex h-6 w-6 items-center justify-center rounded-xl', isSelected ? 'bg-sky-100 text-sky-600' : 'bg-slate-100 text-slate-500')}>
+                          <span className={cn('flex h-5 w-5 items-center justify-center rounded-xl', isSelected ? 'bg-sky-100 text-sky-600' : 'bg-slate-100 text-slate-500')}>
                             <Icon className="h-3.5 w-3.5" />
                           </span>
                           {type.label}
@@ -1842,7 +1842,7 @@ export default function RegistroPage() {
             <Card className="border-none bg-slate-50/70 shadow-lg">
               <CardHeader className="flex flex-col items-center gap-3 pb-4 text-center">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
-                  <Target className="h-6 w-6" />
+                  <Target className="h-5 w-5" strokeWidth={2} />
                 </div>
                 <CardTitle className="text-lg text-slate-800">
                   Ripetute e risultati disabilitati
@@ -1861,12 +1861,12 @@ export default function RegistroPage() {
             </Card>
           ) : (
             <Card className="border-none shadow-lg">
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-2.5">
                 <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
-                  <ListPlus className="h-5 w-5 text-sky-600" /> Ripetute e risultati
+                  <ListPlus className="h-5 w-5 text-sky-600" strokeWidth={2} /> Ripetute e risultati
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4">
               {disciplineDistribution.length > 0 && (
                 <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-slate-700">
@@ -1895,12 +1895,12 @@ export default function RegistroPage() {
               )}
 
               {exerciseBlocks.map((block) => (
-                <div key={block.id} className="space-y-6">
+                <div key={block.id} className="space-y-4">
                   {/* Block Header */}
                   <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/50 p-4">
                     <div className="mb-3 flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Package className="h-5 w-5 text-sky-600" />
+                        <Package className="h-5 w-5 text-sky-600" strokeWidth={2} />
                         <Input
                           value={block.name}
                           onChange={(e) => handleBlockChange(block.id, e)}
@@ -2059,7 +2059,7 @@ export default function RegistroPage() {
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3 text-sm font-semibold text-slate-700">
                       <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
-                        <DisciplineIcon className="h-5 w-5" />
+                        <DisciplineIcon className="h-5 w-5" strokeWidth={2} />
                       </div>
                       <div>
                 <p className="text-base">Blocco ripetute #{index + 1}</p>
@@ -2505,7 +2505,7 @@ export default function RegistroPage() {
                 onClick={addBlock}
                 className="group flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-sky-300 bg-sky-50/50 py-4 text-sky-700 hover:border-sky-400 hover:bg-sky-100"
               >
-                <Package className="h-5 w-5 transition group-hover:text-sky-600" />
+                <Package className="h-5 w-5 transition group-hover:text-sky-600" strokeWidth={2} />
                 Aggiungi nuovo blocco di ripetute
               </Button>
               </CardContent>
@@ -2515,14 +2515,14 @@ export default function RegistroPage() {
 
         <div ref={sectionRefs.metrics} className="scroll-mt-24">
           <Card className="border-none shadow-lg">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2.5">
               <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
-                <Target className="h-5 w-5 text-sky-600" /> Metriche e test
+                <Target className="h-5 w-5 text-sky-600" strokeWidth={2} /> Metriche e test
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {metrics.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-6 text-center text-sm text-slate-500">
+                <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-5 text-center text-sm text-slate-500">
                   <p>
                     {isTestOrRaceSession
                       ? 'Aggiungi le prove della gara o del test: distanza, tempo e recupero.'
@@ -2827,7 +2827,7 @@ export default function RegistroPage() {
           disabled={loading}
           className="flex items-center gap-2 rounded-full px-6 py-3 text-base shadow-lg"
         >
-          {loading && <Loader2 className="h-5 w-5 animate-spin" />}
+          {loading && <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2} />}
           Salva allenamento
         </Button>
       </div>

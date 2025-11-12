@@ -884,9 +884,9 @@ export default function StatistichePage() {
   );
 
   return (
-    <div className="space-y-6 animate-page">
-      <section className="rounded-3xl bg-gradient-to-br from-indigo-500 via-sky-500 to-cyan-500 p-6 text-white shadow-xl">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+    <div className="space-y-4 animate-page">
+      <section className="rounded-3xl bg-gradient-to-br from-indigo-500 via-sky-500 to-cyan-500 p-5 text-white shadow-xl">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium">
               <BarChart className="h-4 w-4" /> Statistiche Allenamenti
@@ -956,9 +956,9 @@ export default function StatistichePage() {
       </section>
 
       <Card className="border-none shadow-lg">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2.5">
           <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
-            <Filter className="h-5 w-5 text-sky-600" /> Filtri
+            <Filter className="h-5 w-5 text-sky-600" strokeWidth={2} /> Filtri
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -1095,12 +1095,12 @@ export default function StatistichePage() {
       </Card>
 
       <Card className="border-none shadow-lg">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2.5">
           <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
-            <TrendingUp className="h-5 w-5 text-sky-600" /> Andamento
+            <TrendingUp className="h-5 w-5 text-sky-600" strokeWidth={2} /> Andamento
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-sm">
             {tabs.map(tab => (
               <button
@@ -1120,7 +1120,7 @@ export default function StatistichePage() {
 
           {loading ? (
             <div className="flex items-center justify-center gap-3 py-16 text-sm text-slate-500">
-              <Loader2 className="h-5 w-5 animate-spin" /> Calcolo statistiche...
+              <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2} /> Calcolo statistiche...
             </div>
           ) : !stats ? (
             <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 py-12 text-center text-sm text-slate-500">
@@ -1135,14 +1135,14 @@ export default function StatistichePage() {
                       title="Totale sessioni"
                       value={formatNumber(stats.totalSessions)}
                       subtitle="Allenamenti registrati"
-                      icon={<Activity className="h-5 w-5" />}
+                      icon={<Activity className="h-5 w-5" strokeWidth={2} />}
                       accent="bg-sky-100 text-sky-600"
                     />
                     <SummaryCard
                       title="Distanza totale"
                       value={`${formatNumber(stats.totalDistance)} m`}
                       subtitle="Somma di tutte le ripetute"
-                      icon={<BarChart3 className="h-5 w-5" />}
+                      icon={<BarChart3 className="h-5 w-5" strokeWidth={2} />}
                       accent="bg-blue-100 text-blue-600"
                     />
                     <SummaryCard
@@ -1153,14 +1153,14 @@ export default function StatistichePage() {
                           ? `Sui ${stats.bestTimeDistance} m`
                           : 'Registra tempi per visualizzare il PB'
                       }
-                      icon={<Medal className="h-5 w-5" />}
+                      icon={<Medal className="h-5 w-5" strokeWidth={2} />}
                       accent="bg-amber-100 text-amber-600"
                     />
                     <SummaryCard
                       title="Tempo medio"
                       value={stats.avgTime ? `${stats.avgTime.toFixed(2)} s` : 'N/D'}
                       subtitle="Media delle prove cronometrate"
-                      icon={<Target className="h-5 w-5" />}
+                      icon={<Target className="h-5 w-5" strokeWidth={2} />}
                       accent="bg-indigo-100 text-indigo-600"
                     />
                   </div>
@@ -1235,7 +1235,7 @@ export default function StatistichePage() {
               )}
 
               {activeTab === 'graphs' && (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {/* Alert e suggerimenti in evidenza */}
                   {stats.alerts.length > 0 && (
                     <div className="space-y-2">
@@ -1249,9 +1249,9 @@ export default function StatistichePage() {
                             alert.type === 'info' && 'border-sky-200 bg-sky-50 text-sky-900'
                           )}
                         >
-                          {alert.type === 'warning' && <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" />}
-                          {alert.type === 'success' && <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-emerald-600" />}
-                          {alert.type === 'info' && <Sparkles className="h-5 w-5 flex-shrink-0 text-sky-600" />}
+                          {alert.type === 'warning' && <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" strokeWidth={2} />}
+                          {alert.type === 'success' && <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-emerald-600" strokeWidth={2} />}
+                          {alert.type === 'info' && <Sparkles className="h-5 w-5 flex-shrink-0 text-sky-600" strokeWidth={2} />}
                           <p>{alert.message}</p>
                         </div>
                       ))}
@@ -1259,9 +1259,9 @@ export default function StatistichePage() {
                   )}
 
                   {/* Grafico Volume Settimanale */}
-                  <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                     <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
-                      <BarChart3 className="h-5 w-5 text-sky-600" />
+                      <BarChart3 className="h-5 w-5 text-sky-600" strokeWidth={2} />
                       Volume Settimanale
                     </h3>
                     {stats.weeklyVolume.length > 0 ? (
@@ -1290,10 +1290,10 @@ export default function StatistichePage() {
                   </div>
 
                   {/* Grafico Distribuzione Intensità */}
-                  <div className="grid gap-6 lg:grid-cols-2">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                       <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
-                        <Zap className="h-5 w-5 text-violet-600" />
+                        <Zap className="h-5 w-5 text-violet-600" strokeWidth={2} />
                         Distribuzione Intensità
                       </h3>
                       {stats.intensityDistribution.some(d => d.count > 0) ? (
@@ -1324,9 +1324,9 @@ export default function StatistichePage() {
                     </div>
 
                     {/* Performance per giorno della settimana */}
-                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                       <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
-                        <Calendar className="h-5 w-5 text-indigo-600" />
+                        <Calendar className="h-5 w-5 text-indigo-600" strokeWidth={2} />
                         Performance per Giorno
                       </h3>
                       {stats.performanceByDayOfWeek.length > 0 ? (
@@ -1357,12 +1357,12 @@ export default function StatistichePage() {
 
                   {/* Grafici progressione tempi per distanza */}
                   {Object.keys(stats.timeProgressionByDistance).length > 0 && (
-                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                       <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
-                        <TrendingUp className="h-5 w-5 text-emerald-600" />
+                        <TrendingUp className="h-5 w-5 text-emerald-600" strokeWidth={2} />
                         Progressione Tempi per Distanza
                       </h3>
-                      <div className="grid gap-6 lg:grid-cols-2">
+                      <div className="grid gap-4 lg:grid-cols-2">
                         {Object.entries(stats.timeProgressionByDistance)
                           .slice(0, 4)
                           .map(([distance, progression]) => (
@@ -1406,46 +1406,46 @@ export default function StatistichePage() {
               )}
 
               {activeTab === 'advanced' && (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {/* Metriche avanzate principali */}
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <SummaryCard
                       title="Velocità media"
                       value={stats.avgSpeed ? `${stats.avgSpeed.toFixed(2)} m/s` : 'N/D'}
                       subtitle={stats.avgSpeed ? `≈ ${(stats.avgSpeed * 3.6).toFixed(1)} km/h` : 'Registra tempi per calcolare'}
-                      icon={<Zap className="h-5 w-5" />}
+                      icon={<Zap className="h-5 w-5" strokeWidth={2} />}
                       accent="bg-amber-100 text-amber-600"
                     />
                     <SummaryCard
                       title="Densità allenamento"
                       value={`${stats.trainingDensity.toFixed(1)} /settimana`}
                       subtitle="Frequenza media sessioni"
-                      icon={<Calendar className="h-5 w-5" />}
+                      icon={<Calendar className="h-5 w-5" strokeWidth={2} />}
                       accent="bg-sky-100 text-sky-600"
                     />
                     <SummaryCard
                       title="Carico di lavoro"
                       value={formatNumber(Math.round(stats.workload))}
                       subtitle="Volume × Intensità"
-                      icon={<Activity className="h-5 w-5" />}
+                      icon={<Activity className="h-5 w-5" strokeWidth={2} />}
                       accent="bg-violet-100 text-violet-600"
                     />
                     <SummaryCard
                       title="Recupero ottimale"
                       value={stats.optimalRecovery ? `${Math.round(stats.optimalRecovery)} s` : 'N/D'}
                       subtitle="Medio nelle migliori performance"
-                      icon={<Clock className="h-5 w-5" />}
+                      icon={<Clock className="h-5 w-5" strokeWidth={2} />}
                       accent="bg-emerald-100 text-emerald-600"
                     />
                   </div>
 
                   {/* Trend di miglioramento */}
                   {stats.improvementTrend !== null && (
-                    <div className="rounded-3xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 p-6 shadow-sm">
+                    <div className="rounded-3xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 p-5 shadow-sm">
                       <div className="flex items-start justify-between">
                         <div>
                           <h3 className="flex items-center gap-2 text-lg font-semibold text-emerald-900">
-                            <TrendingUp className="h-6 w-6 text-emerald-600" />
+                            <TrendingUp className="h-5 w-5 text-emerald-600" strokeWidth={2} />
                             Trend di Miglioramento
                           </h3>
                           <p className="mt-2 text-sm text-emerald-700">
@@ -1478,9 +1478,9 @@ export default function StatistichePage() {
 
                   {/* Confronto con periodo precedente */}
                   {stats.comparisonPreviousPeriod && (
-                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                       <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
-                        <BarChart className="h-5 w-5 text-indigo-600" />
+                        <BarChart className="h-5 w-5 text-indigo-600" strokeWidth={2} />
                         Confronto con Periodo Precedente
                       </h3>
                       <div className="grid gap-4 md:grid-cols-3">
