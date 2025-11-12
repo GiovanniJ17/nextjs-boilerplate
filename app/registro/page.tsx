@@ -2128,8 +2128,8 @@ export default function RegistroPage() {
                     </div>
                   </div>
 
-                  {/* Distanza, Serie, Ripetizioni, Recuperi */}
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {/* Distanza, Serie, Ripetizioni, Recupero tra rep, Recupero serie */}
+                  <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium text-slate-700">Distanza (m)</Label>
                       <Input
@@ -2168,7 +2168,7 @@ export default function RegistroPage() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-700">Recupero tra rep. (s)</Label>
+                      <Label className="text-xs font-medium text-slate-700">Recupero rep. (s)</Label>
                       <Input
                         name="rest_between_reps_s"
                         type="number"
@@ -2179,12 +2179,9 @@ export default function RegistroPage() {
                         className="h-9"
                       />
                     </div>
-                  </div>
 
-                  {/* Recupero serie + Intensità */}
-                  <div className="grid gap-3 lg:grid-cols-2">
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-700">Recupero tra serie (s)</Label>
+                      <Label className="text-xs font-medium text-slate-700">Recupero serie (s)</Label>
                       <Input
                         name="rest_between_sets_s"
                         type="number"
@@ -2195,9 +2192,11 @@ export default function RegistroPage() {
                         className="h-9"
                       />
                     </div>
+                  </div>
 
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-700">Intensità percepita</Label>
+                  {/* Intensità percepita */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700">Intensità percepita</Label>
                       <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
                         <input
                           type="range"
@@ -2250,7 +2249,6 @@ export default function RegistroPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
 
                   {/* Note esercizio */}
                   <div className="space-y-1.5">
