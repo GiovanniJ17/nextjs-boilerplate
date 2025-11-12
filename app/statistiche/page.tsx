@@ -2156,35 +2156,37 @@ export default function StatistichePage() {
                           />
                         </ComposedChart>
                       </ResponsiveContainer>
-                      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {stats.monthlyProgress.slice(-2).map((month, idx) => (
-                          <div key={idx} className="rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 border border-slate-200">
-                            <p className="font-bold text-slate-800 mb-2 text-base">{month.month}</p>
-                            <div className="space-y-1.5 text-sm text-slate-600">
-                              <div className="flex items-center gap-2">
-                                <span className="text-lg">📊</span>
-                                <span>{month.sessions} sessioni</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-lg">📏</span>
-                                <span>{(month.distance / 1000).toFixed(1)} km</span>
-                              </div>
-                              {month.avgSpeed && (
+                      {stats.monthlyProgress.slice(-2).length > 0 && (
+                        <div className={`mt-6 grid gap-3 ${stats.monthlyProgress.slice(-2).length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
+                          {stats.monthlyProgress.slice(-2).map((month, idx) => (
+                            <div key={idx} className="rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 border border-slate-200">
+                              <p className="font-bold text-slate-800 mb-2 text-base">{month.month}</p>
+                              <div className="space-y-1.5 text-sm text-slate-600">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-lg">⚡</span>
-                                  <span>{(month.avgSpeed * 3.6).toFixed(1)} km/h</span>
+                                  <span className="text-lg">📊</span>
+                                  <span>{month.sessions} sessioni</span>
                                 </div>
-                              )}
-                              {month.pbs > 0 && (
                                 <div className="flex items-center gap-2">
-                                  <span className="text-lg">⭐</span>
-                                  <span className="font-semibold text-amber-600">{month.pbs} PB</span>
+                                  <span className="text-lg">📏</span>
+                                  <span>{(month.distance / 1000).toFixed(1)} km</span>
                                 </div>
-                              )}
+                                {month.avgSpeed && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg">⚡</span>
+                                    <span>{(month.avgSpeed * 3.6).toFixed(1)} km/h</span>
+                                  </div>
+                                )}
+                                {month.pbs > 0 && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg">⭐</span>
+                                    <span className="font-semibold text-amber-600">{month.pbs} PB</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
