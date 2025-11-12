@@ -1473,7 +1473,14 @@ export default function RegistroPage() {
           notes: metric.notes || null,
         };
 
-        if (isMetricSession) {
+        if (sessionForm.type === 'massimale') {
+          // Massimali: salvano solo valore (peso in kg)
+          payload.category = 'massimale';
+          payload.value = parseDecimalInput(metric.value);
+          payload.unit = 'kg';
+          payload.intensity = parseDecimalInput(metric.intensity);
+        } else if (sessionForm.type === 'test' || sessionForm.type === 'gara') {
+          // Test e gare: salvano distanza, tempo, recupero
           payload.category = 'test';
           payload.metric_target = metric.metric_target || null;
           payload.distance_m = parseIntegerInput(metric.distance_m);
@@ -1483,6 +1490,7 @@ export default function RegistroPage() {
           payload.intensity = parseDecimalInput(metric.intensity);
           payload.unit = 's';
         } else {
+          // Altri tipi di metriche
           payload.category = metric.category || null;
           payload.metric_target = metric.metric_target || null;
           payload.value = parseDecimalInput(metric.value);
@@ -2582,7 +2590,9 @@ export default function RegistroPage() {
                                       const rpeValue = rpeInput?.value;
                                       
                                       if (!timeValue) {
-                                        alert('Inserisci un tempo per applicare a tutte le ripetizioni');
+                                        notifyError('Inserisci un tempo', {
+                                          description: 'Compila il campo tempo per applicarlo a tutte le ripetizioni.'
+                                        });
                                         return;
                                       }
 
@@ -2601,7 +2611,9 @@ export default function RegistroPage() {
                                       timeInput.value = '';
                                       if (rpeInput) rpeInput.value = '';
                                       
-                                      alert(`✓ Tempo applicato a ${group.entries.length} ripetizioni`);
+                                      notifySuccess('Compilazione completata', {
+                                        description: `Tempo${rpeValue ? ' e RPE' : ''} applicato a ${group.entries.length} ripetizioni.`
+                                      });
                                     }}
                                     className="h-9 bg-sky-600 hover:bg-sky-700"
                                   >
