@@ -608,9 +608,9 @@ export default function RegistroPage() {
           return '';
         };
 
-        const getDefaultTarget = () => {
-          if (sessionForm.type === 'massimale') return massimaliExercises[0];
-          return '';
+        const getDefaultMetricName = () => {
+          if (sessionForm.type === 'massimale') return massimaliExercises[0]; // Squat by default
+          return 'Prova 1';
         };
 
         if (prev.length === 0) {
@@ -618,19 +618,18 @@ export default function RegistroPage() {
             {
               ...defaultMetric,
               category: 'test',
-              metric_name: 'Prova 1',
+              metric_name: getDefaultMetricName(),
               unit: getDefaultUnit(),
-              metric_target: getDefaultTarget(),
             },
           ];
         }
 
-        // Update existing metrics with correct unit and target based on session type
+        // Update existing metrics with correct unit based on session type
         return prev.map(metric => ({
           ...metric,
           category: 'test',
           unit: metric.unit || getDefaultUnit(),
-          metric_target: metric.metric_target || getDefaultTarget(),
+          metric_name: metric.metric_name || getDefaultMetricName(),
         }));
       }
 
@@ -2779,14 +2778,31 @@ export default function RegistroPage() {
                                 )}
                               </div>
                               <div className="space-y-1.5">
-                                <Label className="text-xs font-medium text-slate-700">Prova / Distanza</Label>
-                                <Input
-                                  name="metric_name"
-                                  value={metric.metric_name}
-                                  onChange={event => updateMetric(index, event)}
-                                  placeholder="Es. Test 150m massimo sforzo"
-                                  className="h-9"
-                                />
+                                <Label className="text-xs font-medium text-slate-700">
+                                  {sessionForm.type === 'massimale' ? 'Esercizio' : 'Prova / Distanza'}
+                                </Label>
+                                {sessionForm.type === 'massimale' ? (
+                                  <select
+                                    name="metric_name"
+                                    value={metric.metric_name}
+                                    onChange={event => updateMetric(index, event)}
+                                    className="flex h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white transition-colors placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    {massimaliExercises.map(exercise => (
+                                      <option key={exercise} value={exercise}>
+                                        {exercise}
+                                      </option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <Input
+                                    name="metric_name"
+                                    value={metric.metric_name}
+                                    onChange={event => updateMetric(index, event)}
+                                    placeholder="Es. Test 150m massimo sforzo"
+                                    className="h-9"
+                                  />
+                                )}
                               </div>
                             </div>
 
