@@ -936,7 +936,7 @@ export default function StatistichePage() {
                 <button
                   type="button"
                   onClick={() => setTypeFilter(prev => (prev === topType.label ? '' : topType.label))}
-                  className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/30 px-3 py-1 text-[11px] font-medium text-white transition hover:border-white/60 hover:bg-white/10"
+                  className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/30 px-3 py-1 text-[11px] font-medium text-white transition-colors hover:border-white/60 hover:bg-white/10"
                 >
                   <Filter className="h-3 w-3" /> Filtra su {topType.label}
                 </button>
@@ -1172,7 +1172,7 @@ export default function StatistichePage() {
                         <button
                           type="button"
                           onClick={() => setTypeFilter('')}
-                          className="text-xs font-medium text-slate-400 transition hover:text-slate-600"
+                          className="text-xs font-medium text-slate-400 transition-colors hover:text-slate-600"
                         >
                           Azzera filtro
                         </button>

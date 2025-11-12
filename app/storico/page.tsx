@@ -825,7 +825,7 @@ export default function StoricoPage() {
                     )}
                   >
                     {viewMode === 'timeline' && (
-                      <span className="absolute left-[7px] top-8 h-3 w-3 rounded-full border-2 border-white bg-sky-500 shadow transition group-hover:scale-110" />
+                      <span className="absolute left-[7px] top-8 h-3 w-3 rounded-full border-2 border-white bg-sky-500 shadow transition-colors group-hover:scale-110" />
                     )}
                     <div className={cn('rounded-3xl border border-slate-200 bg-white shadow-sm transition', viewMode === 'timeline' && 'ml-4')}>
                       <div className="flex items-start justify-between">
@@ -839,7 +839,7 @@ export default function StoricoPage() {
                               toggleSession(session.id);
                             }
                           }}
-                          className="flex flex-1 cursor-pointer items-center justify-between gap-4 rounded-3xl px-5 py-4 text-left transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                          className="flex flex-1 cursor-pointer items-center justify-between gap-4 rounded-3xl px-5 py-4 text-left transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
                         >
                           <div className="flex flex-1 flex-col gap-3">
                             <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
@@ -921,7 +921,7 @@ export default function StoricoPage() {
                             type="button"
                             onClick={() => requestDeleteSession(session.id)}
                             disabled={deletingSessionId === session.id}
-                            className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 p-2 text-rose-600 transition hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 p-2 text-rose-600 transition-colors hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
                             aria-label="Elimina sessione"
                           >
                             {deletingSessionId === session.id ? (

@@ -1502,7 +1502,7 @@ export default function RegistroPage() {
               <p className="text-sm font-medium text-slate-900">{completedSteps} di {stepProgress.length} completati</p>
               <div className="mt-1 h-1.5 w-32 overflow-hidden rounded-full bg-slate-100">
                 <div
-                  className="h-full rounded-full bg-sky-500 transition-all duration-300"
+                  className="h-full rounded-full bg-sky-500 transition-colors"
                   style={{ width: progressBarWidth }}
                 />
               </div>
@@ -1619,7 +1619,7 @@ export default function RegistroPage() {
                         </button>
                         <button
                           type="button"
-                          className="absolute right-1 top-1 inline-flex items-center gap-1 rounded-full border border-transparent bg-white/80 px-2 py-1 text-[10px] font-semibold text-slate-400 transition hover:border-red-200 hover:text-red-500"
+                          className="absolute right-1 top-1 inline-flex items-center gap-1 rounded-full border border-transparent bg-white/80 px-2 py-1 text-[10px] font-semibold text-slate-400 transition-colors hover:border-red-200 hover:text-red-500"
                           onClick={() => requestDeleteBlock(block.id)}
                           disabled={blockActionLoading === block.id}
                           aria-label={`Elimina ${block.name}`}
@@ -2070,7 +2070,7 @@ export default function RegistroPage() {
                       <button
                         type="button"
                         onClick={() => removeExercise(block.id, index)}
-                        className="inline-flex items-center gap-1 rounded-full border border-red-200 px-3 py-1 text-xs font-medium text-red-500 transition hover:bg-red-50"
+                        className="inline-flex items-center gap-1 rounded-full border border-red-200 px-3 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50"
                       >
                         <Trash2 className="h-3 w-3" /> Rimuovi
                       </button>
@@ -2254,7 +2254,7 @@ export default function RegistroPage() {
                           <button
                             type="button"
                             onClick={() => duplicateLastSeries(block.id, index)}
-                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100"
+                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100"
                             disabled={seriesGroups.length === 0}
                           >
                             <PlusCircle className="h-3 w-3" /> Duplica ultima serie
@@ -2262,7 +2262,7 @@ export default function RegistroPage() {
                           <button
                             type="button"
                             onClick={() => addSeries(block.id, index)}
-                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
                           >
                             <ListPlus className="h-3 w-3" /> Aggiungi serie
                           </button>
@@ -2316,7 +2316,7 @@ export default function RegistroPage() {
                           <button
                             type="button"
                             onClick={() => addSeries(block.id, index)}
-                            className="mt-4 inline-flex items-center gap-2 rounded-full bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700"
+                            className="mt-4 inline-flex items-center gap-2 rounded-full bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-sky-700"
                           >
                             <PlusCircle className="h-3 w-3" /> Aggiungi la prima serie
                           </button>
@@ -2334,14 +2334,14 @@ export default function RegistroPage() {
                                   <button
                                     type="button"
                                     onClick={() => addRepetition(block.id, index, group.seriesNumber)}
-                                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+                                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
                                   >
                                     <ListPlus className="h-3 w-3" /> Aggiungi ripetizione
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => removeSeries(block.id, index, group.seriesNumber)}
-                                    className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-medium text-rose-500 transition hover:bg-rose-50"
+                                    className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-medium text-rose-500 transition-colors hover:bg-rose-50"
                                   >
                                     <Trash2 className="h-3 w-3" /> Rimuovi serie
                                   </button>
@@ -2492,7 +2492,7 @@ export default function RegistroPage() {
                     onClick={() => addExercise(block.id)}
                     className="group flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-slate-300 py-3 text-sm text-slate-600 hover:border-sky-300 hover:bg-sky-50"
                   >
-                    <PlusCircle className="h-4 w-4 transition group-hover:text-sky-600" />
+                    <PlusCircle className="h-4 w-4 transition-colors group-hover:text-sky-600" />
                     Aggiungi esercizio al blocco
                   </Button>
                 </div>
@@ -2505,7 +2505,7 @@ export default function RegistroPage() {
                 onClick={addBlock}
                 className="group flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-sky-300 bg-sky-50/50 py-4 text-sky-700 hover:border-sky-400 hover:bg-sky-100"
               >
-                <Package className="h-5 w-5 transition group-hover:text-sky-600" strokeWidth={2} />
+                <Package className="h-5 w-5 transition-colors group-hover:text-sky-600" strokeWidth={2} />
                 Aggiungi nuovo blocco di ripetute
               </Button>
               </CardContent>
@@ -2556,7 +2556,7 @@ export default function RegistroPage() {
                             key={`${suggestion.metric_name}-${suggestion.category}`}
                             type="button"
                             onClick={() => handleAddMetricFromSuggestion(suggestion)}
-                            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600 transition hover:border-sky-200 hover:text-sky-600"
+                            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600 transition-colors hover:border-sky-200 hover:text-sky-600"
                             title={suggestion.hint}
                           >
                             <PlusCircle className="h-3 w-3" />
