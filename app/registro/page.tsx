@@ -129,6 +129,11 @@ const sessionTypes = [
     hint: 'Competizioni ufficiali o simulazioni complete',
   },
   {
+    value: 'massimale',
+    label: 'Test massimali',
+    hint: 'Test di forza massima: squat, girata, stacco, trazioni',
+  },
+  {
     value: 'scarico',
     label: 'Scarico attivo',
     hint: 'Sessioni leggere di rigenerazione sempre in pista',
@@ -186,6 +191,7 @@ const sessionTypeIcons: Record<string, LucideIcon> = {
   pista: Activity,
   test: Target,
   gara: Trophy,
+  massimale: Weight,
   scarico: Wind,
   recupero: RefreshCcw,
   altro: PlusCircle,
@@ -214,6 +220,16 @@ const massimaliExercises = [
   'Stacco',
   'Trazioni',
 ];
+
+// Helper per determinare se una sessione è di tipo metrica/test
+function isMetricSessionType(sessionType: string): boolean {
+  return sessionType === 'test' || sessionType === 'gara' || sessionType === 'massimale';
+}
+
+// Helper per determinare se una sessione è di allenamento con ripetute
+function isTrainingSessionType(sessionType: string): boolean {
+  return !isMetricSessionType(sessionType);
+}
 
 function buildRangeBackground(value: string | number, min = 1, max = 10): CSSProperties {
   const parsed = typeof value === 'number' ? value : Number(value);
@@ -563,7 +579,8 @@ export default function RegistroPage() {
   const [usingCustomLocation, setUsingCustomLocation] = useState(false);
   const [customLocation, setCustomLocation] = useState('');
 
-  const isTestOrRaceSession = sessionForm.type === 'test' || sessionForm.type === 'gara';
+  // Check if session type requires metrics (test/gara/massimale) instead of exercises
+  const isMetricSession = isMetricSessionType(sessionForm.type);
 
   // Mobile accordion state
   const [expandedSection, setExpandedSection] = useState<'details' | 'exercises' | 'metrics' | null>('details');
@@ -581,23 +598,43 @@ export default function RegistroPage() {
 
   useEffect(() => {
     setMetrics(prev => {
-      if (isTestOrRaceSession) {
+      if (isMetricSession) {
+        // Auto-fill based on session type
+        const getDefaultUnit = () => {
+          if (sessionForm.type === 'massimale') return 'kg';
+          if (sessionForm.type === 'test' || sessionForm.type === 'gara') return 's';
+          return '';
+        };
+
+        const getDefaultTarget = () => {
+          if (sessionForm.type === 'massimale') return massimaliExercises[0];
+          return '';
+        };
+
         if (prev.length === 0) {
           return [
             {
               ...defaultMetric,
               category: 'test',
               metric_name: 'Prova 1',
+              unit: getDefaultUnit(),
+              metric_target: getDefaultTarget(),
             },
           ];
         }
 
-        return prev.map(metric => ({ ...metric, category: 'test' }));
+        // Update existing metrics with correct unit and target based on session type
+        return prev.map(metric => ({
+          ...metric,
+          category: 'test',
+          unit: metric.unit || getDefaultUnit(),
+          metric_target: metric.metric_target || getDefaultTarget(),
+        }));
       }
 
       return [];
     });
-  }, [isTestOrRaceSession]);
+  }, [isMetricSession, sessionForm.type]);
 
   async function fetchBlocks() {
     setLoadingBlocks(true);
@@ -651,7 +688,7 @@ export default function RegistroPage() {
   }, [exerciseBlocks]);
 
   const metricSuggestions = useMemo(() => {
-    if (isTestOrRaceSession) {
+    if (isMetricSession) {
       return [] as MetricSuggestion[];
     }
 
@@ -679,12 +716,12 @@ export default function RegistroPage() {
     }
 
     return Array.from(collected.values());
-  }, [exerciseBlocks, isTestOrRaceSession, sessionForm.type]);
+  }, [exerciseBlocks, isMetricSession, sessionForm.type]);
 
   const stepProgress = useMemo<StepDefinition[]>(() => {
     const detailsComplete = Boolean(sessionForm.date && sessionForm.type && sessionForm.location);
     const exercisesComplete =
-      isTestOrRaceSession ||
+      isMetricSession ||
       (exerciseBlocks.length > 0 &&
         exerciseBlocks.every(block => 
           block.exercises.every(ex => ex.name.trim() && ex.discipline_type && ex.sets && ex.repetitions)
@@ -693,7 +730,7 @@ export default function RegistroPage() {
       ? true
       : metrics.every(metric => {
           if (!metric.metric_name.trim()) return true;
-          if (isTestOrRaceSession) {
+          if (isMetricSession) {
             return Boolean(metric.time_s && metric.distance_m);
           }
           return Boolean(metric.value);
@@ -729,7 +766,7 @@ export default function RegistroPage() {
     }
 
     return base;
-  }, [exerciseBlocks, isTestOrRaceSession, metrics, sessionForm.date, sessionForm.location, sessionForm.type]);
+  }, [exerciseBlocks, isMetricSession, metrics, sessionForm.date, sessionForm.location, sessionForm.type]);
 
   const completedSteps = stepProgress.filter(step => step.status === 'done').length;
   const progressValue =
@@ -1078,8 +1115,8 @@ export default function RegistroPage() {
       ...prev,
       {
         ...defaultMetric,
-        category: isTestOrRaceSession ? 'test' : defaultMetric.category,
-        metric_name: isTestOrRaceSession ? `Prova ${prev.length + 1}` : '',
+        category: isMetricSession ? 'test' : defaultMetric.category,
+        metric_name: isMetricSession ? `Prova ${prev.length + 1}` : '',
       },
     ]);
   }
@@ -1112,29 +1149,7 @@ export default function RegistroPage() {
   function handleMetricCategorySelect(index: number, category: string) {
     setMetrics(prev => {
       const copy = [...prev];
-      const currentMetric = copy[index];
-      
-      // Auto-fill in base alla categoria selezionata
-      if (category === 'massimale') {
-        // Massimali: unità in kg, suggerimento primo esercizio
-        copy[index] = { 
-          ...currentMetric, 
-          category,
-          unit: 'kg',
-          metric_target: currentMetric.metric_target || massimaliExercises[0],
-        };
-      } else if (category === 'test' || category === 'prestazione') {
-        // Test e Prestazioni: unità in secondi
-        copy[index] = { 
-          ...currentMetric, 
-          category,
-          unit: 's',
-        };
-      } else {
-        // Altre categorie: solo categoria
-        copy[index] = { ...currentMetric, category };
-      }
-      
+      copy[index] = { ...copy[index], category };
       return copy;
     });
   }
@@ -1201,7 +1216,7 @@ export default function RegistroPage() {
     if (!sessionForm.type) validation.type = 'Seleziona il tipo di sessione';
     if (!sessionForm.location) validation.location = 'Indica il luogo della sessione';
 
-    if (!isTestOrRaceSession) {
+    if (!isMetricSession) {
       exerciseBlocks.forEach((block) => {
         block.exercises.forEach((ex, index) => {
           const errorPrefix = `exercise-${block.id}-${index}`;
@@ -1215,7 +1230,7 @@ export default function RegistroPage() {
 
     metrics.forEach((metric, index) => {
       if (!metric.metric_name.trim()) return;
-      if (isTestOrRaceSession) {
+      if (isMetricSession) {
         if (!metric.distance_m) {
           validation[`metric-${index}-distance_m`] = 'Indica la distanza della prova';
         }
@@ -1286,7 +1301,7 @@ export default function RegistroPage() {
         if (!firstErrorSection) firstErrorSection = 'details';
       }
       
-      if (!isTestOrRaceSession) {
+      if (!isMetricSession) {
         const exerciseErrors = exerciseBlocks.some(block =>
           block.exercises.some(ex => !ex.name.trim() || !ex.discipline_type || !ex.sets || !ex.repetitions)
         );
@@ -1298,7 +1313,7 @@ export default function RegistroPage() {
       
       const metricErrors = metrics.some((metric) => {
         if (!metric.metric_name.trim()) return false;
-        if (isTestOrRaceSession) {
+        if (isMetricSession) {
           return !metric.distance_m || !metric.time_s;
         }
         return !metric.value;
@@ -1347,7 +1362,7 @@ export default function RegistroPage() {
         throw sessionError ?? new Error('Sessione non creata');
       }
 
-      if (!isTestOrRaceSession) {
+      if (!isMetricSession) {
         // Inserisci i blocchi di esercizi
         for (const block of exerciseBlocks) {
           const { data: insertedBlock, error: blockError } = await supabase
@@ -1436,7 +1451,7 @@ export default function RegistroPage() {
           notes: metric.notes || null,
         };
 
-        if (isTestOrRaceSession) {
+        if (isMetricSession) {
           payload.category = 'test';
           payload.metric_target = metric.metric_target || null;
           payload.distance_m = parseIntegerInput(metric.distance_m);
@@ -1897,7 +1912,7 @@ export default function RegistroPage() {
 
         {/* Ripetute */}
         <div ref={sectionRefs.exercises} className="scroll-mt-24">
-          {isTestOrRaceSession ? (
+          {isMetricSession ? (
             <Card className="border-slate-200 shadow-sm">
               <CardHeader 
                 className="pb-2.5 cursor-pointer md:cursor-default"
@@ -1923,15 +1938,16 @@ export default function RegistroPage() {
                   <Target className="h-5 w-5" strokeWidth={2} />
                 </div>
                 <p className="text-lg text-slate-800 font-semibold">
-                  Ripetute e risultati disabilitati
+                  Ripetute disabilitate per questo tipo di sessione
                 </p>
                 <p className="text-sm text-slate-600">
-                  Per le sessioni di tipo <span className="font-semibold text-slate-700">test</span> o{' '}
-                  <span className="font-semibold text-slate-700">gara</span> focalizzati sulla sezione «Metriche &amp;
-                  Test».
+                  Le sessioni di tipo <span className="font-semibold text-slate-700">test</span>,{' '}
+                  <span className="font-semibold text-slate-700">gara</span> o{' '}
+                  <span className="font-semibold text-slate-700">massimale</span> utilizzano la sezione{' '}
+                  <span className="font-semibold text-sky-600">«Metriche &amp; Test»</span>.
                 </p>
                 <p className="text-xs text-slate-500">
-                  Questa scheda resta disponibile quando registri allenamenti standard in pista.
+                  Seleziona un tipo di allenamento standard (pista, scarico, recupero) per registrare ripetute ed esercizi.
                 </p>
               </CardContent>
             </Card>
@@ -2614,31 +2630,71 @@ export default function RegistroPage() {
 
         {/* Metriche */}
         <div ref={sectionRefs.metrics} className="scroll-mt-24">
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader 
-              className="pb-2.5 cursor-pointer md:cursor-default"
-              onClick={() => setExpandedSection(prev => prev === 'metrics' ? null : 'metrics')}
-            >
-              <CardTitle className="flex items-center justify-between text-lg text-slate-800">
-                <span className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-sky-600" strokeWidth={2} /> Metriche e test
-                </span>
-                <ChevronDown 
-                  className={cn(
-                    "h-5 w-5 text-slate-400 transition-transform md:hidden",
-                    expandedSection === 'metrics' && "rotate-180"
-                  )} 
-                />
-              </CardTitle>
-            </CardHeader>
-            <CardContent className={cn(
-              "space-y-4 p-4",
-              expandedSection !== 'metrics' && "hidden md:block"
-            )}>
-              {metrics.length === 0 ? (
+          {!isMetricSession ? (
+            <Card className="border-slate-200 shadow-sm">
+              <CardHeader 
+                className="pb-2.5 cursor-pointer md:cursor-default"
+                onClick={() => setExpandedSection(prev => prev === 'metrics' ? null : 'metrics')}
+              >
+                <CardTitle className="flex items-center justify-between text-lg text-slate-800">
+                  <span className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-slate-600" strokeWidth={2} /> Metriche e test
+                  </span>
+                  <ChevronDown 
+                    className={cn(
+                      "h-5 w-5 text-slate-400 transition-transform md:hidden",
+                      expandedSection === 'metrics' && "rotate-180"
+                    )} 
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent className={cn(
+                "flex flex-col items-center gap-3 pb-4 text-center",
+                expandedSection !== 'metrics' && "hidden md:flex"
+              )}>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
+                  <Target className="h-5 w-5" strokeWidth={2} />
+                </div>
+                <p className="text-lg text-slate-800 font-semibold">
+                  Sezione riservata a test, gare e massimali
+                </p>
+                <p className="text-sm text-slate-600">
+                  Per registrare metriche, test o massimali cambia il tipo di sessione in:{' '}
+                  <span className="font-semibold text-amber-600">Test</span>,{' '}
+                  <span className="font-semibold text-rose-600">Gara</span> o{' '}
+                  <span className="font-semibold text-emerald-600">Massimale</span>.
+                </p>
+                <p className="text-xs text-slate-500">
+                  Gli allenamenti standard utilizzano la sezione «Ripetute» per registrare esercizi e serie.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-slate-200 shadow-sm">
+              <CardHeader 
+                className="pb-2.5 cursor-pointer md:cursor-default"
+                onClick={() => setExpandedSection(prev => prev === 'metrics' ? null : 'metrics')}
+              >
+                <CardTitle className="flex items-center justify-between text-lg text-slate-800">
+                  <span className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-sky-600" strokeWidth={2} /> Metriche e test
+                  </span>
+                  <ChevronDown 
+                    className={cn(
+                      "h-5 w-5 text-slate-400 transition-transform md:hidden",
+                      expandedSection === 'metrics' && "rotate-180"
+                    )} 
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent className={cn(
+                "space-y-4 p-4",
+                expandedSection !== 'metrics' && "hidden md:block"
+              )}>
+                {metrics.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-5 text-center text-sm text-slate-500">
                   <p>
-                    {isTestOrRaceSession
+                    {isMetricSession
                       ? 'Aggiungi le prove della gara o del test: distanza, tempo e recupero.'
                       : 'Collega metriche come tempi test, valori massimali o dati di recupero alla sessione.'}
                   </p>
@@ -2649,12 +2705,12 @@ export default function RegistroPage() {
                     className="mt-3 gap-2 rounded-full border-slate-300"
                   >
                     <PlusCircle className="h-4 w-4" />
-                    {isTestOrRaceSession ? 'Aggiungi prova' : 'Aggiungi metrica'}
+                    {isMetricSession ? 'Aggiungi prova' : 'Aggiungi metrica'}
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {!isTestOrRaceSession && metricSuggestions.length > 0 && (
+                  {!isMetricSession && metricSuggestions.length > 0 && (
                     <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3.5">
                       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
@@ -2690,7 +2746,7 @@ export default function RegistroPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                             <Activity className="h-4 w-4 text-slate-500" />
-                            {isTestOrRaceSession ? `Prova #${index + 1}` : `Metrica #${index + 1}`}
+                            {isMetricSession ? `Prova #${index + 1}` : `Metrica #${index + 1}`}
                           </div>
                           <button
                             type="button"
@@ -2701,7 +2757,7 @@ export default function RegistroPage() {
                           </button>
                         </div>
 
-                        {isTestOrRaceSession ? (
+                        {isMetricSession ? (
                           <div className="mt-3 space-y-3">
                             <div className="grid gap-3 sm:grid-cols-2">
                               <div className="space-y-1.5">
@@ -2876,9 +2932,9 @@ export default function RegistroPage() {
                             <div className="mt-4 grid gap-4 md:grid-cols-4">
                               <div className="space-y-1">
                                 <Label className="text-xs font-semibold text-slate-600">
-                                  {metric.category === 'massimale' ? 'Esercizio' : 'Target / Test'}
+                                  {sessionForm.type === 'massimale' ? 'Esercizio' : 'Target / Test'}
                                 </Label>
-                                {metric.category === 'massimale' ? (
+                                {sessionForm.type === 'massimale' ? (
                                   <select
                                     name="metric_target"
                                     value={metric.metric_target}
@@ -2921,9 +2977,9 @@ export default function RegistroPage() {
                                   value={metric.unit}
                                   onChange={event => updateMetric(index, event)}
                                   placeholder="kg, s, cm..."
-                                  readOnly={metric.category === 'massimale' || metric.category === 'test' || metric.category === 'prestazione'}
+                                  readOnly={sessionForm.type === 'massimale' || sessionForm.type === 'test' || sessionForm.type === 'gara'}
                                   className={cn(
-                                    (metric.category === 'massimale' || metric.category === 'test' || metric.category === 'prestazione') && 
+                                    (sessionForm.type === 'massimale' || sessionForm.type === 'test' || sessionForm.type === 'gara') && 
                                     'bg-slate-50 cursor-not-allowed'
                                   )}
                                 />
@@ -2951,12 +3007,13 @@ export default function RegistroPage() {
                     className="flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-slate-300 py-3 text-slate-600 hover:border-sky-300 hover:bg-sky-50"
                   >
                     <PlusCircle className="h-4 w-4" />
-                    {isTestOrRaceSession ? 'Aggiungi un’altra prova' : 'Aggiungi un’altra metrica'}
+                    {isMetricSession ? 'Aggiungi un’altra prova' : 'Aggiungi un’altra metrica'}
                   </Button>
                 </div>
               )}
             </CardContent>
           </Card>
+          )}
         </div>
       </div>
 

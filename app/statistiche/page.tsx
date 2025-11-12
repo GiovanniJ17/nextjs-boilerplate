@@ -61,6 +61,7 @@ const sessionTypeFilters = [
   { value: 'pista', label: 'Pista' },
   { value: 'test', label: 'Test' },
   { value: 'gara', label: 'Gara' },
+  { value: 'massimale', label: 'Massimali' },
   { value: 'scarico', label: 'Scarico' },
   { value: 'recupero', label: 'Recupero' },
   { value: 'altro', label: 'Altro' },
