@@ -898,7 +898,8 @@ export default function StoricoPage() {
                   0
                 );
                 
-                const totalVolume = session.exercise_blocks.reduce((blockSum, block) => {
+                // Calcola volume da exercise_blocks
+                const volumeFromExercises = session.exercise_blocks.reduce((blockSum, block) => {
                   return blockSum + block.exercises.reduce((exSum, exercise) => {
                     const distance = exercise.distance_m || 0;
                     const sets = exercise.sets || 0;
@@ -907,6 +908,14 @@ export default function StoricoPage() {
                     return exSum + distance * sets * reps;
                   }, 0);
                 }, 0);
+                
+                // Calcola volume da metrics (per test e gare)
+                const volumeFromMetrics = session.metrics.reduce((sum, metric) => {
+                  const distance = metric.distance_m || 0;
+                  return sum + distance;
+                }, 0);
+                
+                const totalVolume = volumeFromExercises + volumeFromMetrics;
                 
                 const allResults = session.exercise_blocks.flatMap(block =>
                   block.exercises.flatMap(exercise => exercise.results ?? [])
