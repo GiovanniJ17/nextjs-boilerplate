@@ -235,6 +235,7 @@ export default function StoricoPage() {
   const [sessionToDelete, setSessionToDelete] = useState<{ id: string; label: string } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10); // Modificabile se necessario
+  const [filtersExpanded, setFiltersExpanded] = useState(false); // Filtri collassati su mobile
 
   useEffect(() => {
     void loadBlocks();
@@ -624,10 +625,38 @@ export default function StoricoPage() {
         className="sticky top-0 z-10 bg-slate-50 pb-2 pt-2"
       >
         <Card className="border-slate-200 shadow-lg">
-        <CardContent className="p-4 sm:p-5 space-y-4 sm:space-y-5">
+        <CardContent className="p-3 sm:p-5 space-y-3 sm:space-y-5">
+          
+          {/* Mobile: Pulsante per espandere/collassare filtri */}
+          <button
+            onClick={() => setFiltersExpanded(!filtersExpanded)}
+            className="flex lg:hidden w-full items-center justify-between rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 px-4 py-3 text-left transition-colors hover:from-sky-100 hover:to-blue-100 active:from-sky-200 active:to-blue-200"
+          >
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-sky-600" />
+              <span className="text-sm font-semibold text-slate-700">Filtri e Ricerca</span>
+              {(search || typeFilter || blockFilter || fromDate || toDate) && (
+                <span className="rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                  ATTIVI
+                </span>
+              )}
+            </div>
+            <ChevronDown 
+              className={cn(
+                "h-5 w-5 text-slate-400 transition-transform",
+                filtersExpanded && "rotate-180"
+              )} 
+            />
+          </button>
+
+          {/* Sezioni filtri - sempre visibili su desktop, collassabili su mobile */}
+          <div className={cn(
+            "space-y-4 sm:space-y-5",
+            !filtersExpanded && "hidden lg:block"
+          )}>
           
           {/* PERIODO Section */}
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-slate-500" />
               <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Periodo</h3>
@@ -803,6 +832,8 @@ export default function StoricoPage() {
               </div>
             </div>
           </div>
+          
+          </div> {/* Fine div filtri collassabile */}
 
         </CardContent>
       </Card>
@@ -950,7 +981,8 @@ export default function StoricoPage() {
                       className={cn('rounded-2xl border border-slate-200 bg-white shadow-sm transition', viewMode === 'timeline' && 'ml-4')}
                       whileHover={cardHover}
                     >
-                      <div className="flex items-start justify-between">
+                      {/* Mobile-optimized compact header */}
+                      <div className="flex items-start justify-between gap-2">
                         <div
                           role="button"
                           tabIndex={0}
@@ -961,98 +993,100 @@ export default function StoricoPage() {
                               toggleSession(session.id);
                             }
                           }}
-                          className="flex flex-1 cursor-pointer items-center justify-between gap-4 rounded-2xl px-4 py-3.5 text-left transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                          className="flex flex-1 cursor-pointer items-start gap-3 rounded-2xl px-3 sm:px-4 py-3 text-left transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 active:bg-slate-100"
                         >
-                          <div className="flex flex-1 flex-col gap-3">
-                            <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
-                              <span className="inline-flex items-center gap-1 font-semibold text-slate-600">
-                                <Calendar className="h-3 w-3" /> {formatDate(session.date)}
-                              </span>
-                              <div className="flex flex-wrap items-center gap-2">
-                                {highlightBadges.map(badge => {
-                                  const Icon = badge.icon;
-                                  return (
-                                    <span
-                                      key={badge.label}
-                                      className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600"
-                                    >
-                                      <Icon className="h-3 w-3" /> {badge.value}
-                                    </span>
-                                  );
-                                })}
-                              </div>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-                            <span
-                              className={cn(
-                                'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs',
-                                typeToken ? `${typeToken.bg} ${typeToken.text}` : 'bg-slate-200 text-slate-600'
-                              )}
-                            >
-                              <Activity className="h-3 w-3" /> {typeLabel}
-                            </span>
-                            {session.phase && (
-                              <span className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-xs text-amber-600">
-                                <Target className="h-3 w-3" /> {session.phase}
-                              </span>
-                            )}
-                            {session.block?.name && (
-                              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-600">
-                                <FolderKanban className="h-3 w-3" /> {session.block.name}
-                              </span>
-                            )}
-                          </div>
-                          {disciplineBadges.length > 0 && (
-                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-                              {disciplineBadges.map(badge => (
-                                <span
-                                  key={badge.key}
-                                  className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600"
-                                >
-                                  <Sparkles className="h-3 w-3 text-sky-500" /> {badge.label}
-                                  <span className="text-slate-400">×{badge.count}</span>
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
-                            {session.location && (
-                              <span className="inline-flex items-center gap-1">
-                                <MapPin className="h-3 w-3" /> {session.location}
-                              </span>
-                            )}
-                            <span className="inline-flex items-center gap-1">
-                              <Activity className="h-3 w-3" /> {totalExercises} esercizi
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              <BarChart3 className="h-3 w-3" />
-                              {totalVolume ? `${totalVolume.toLocaleString('it-IT')} m` : 'Volume n/d'}
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              <FileText className="h-3 w-3" /> {totalMetrics} metriche
-                            </span>
-                          </div>
-                          {session.notes && <p className="text-sm text-slate-600 line-clamp-2">{session.notes}</p>}
-                          </div>
-                          <div className="rounded-full border border-slate-200 bg-white p-2 text-slate-500">
+                          {/* Icona espandi/comprimi a sinistra su mobile */}
+                          <div className="flex-shrink-0 mt-0.5 rounded-full border border-slate-200 bg-white p-1.5 text-slate-500">
                             {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </div>
-                        </div>
-                        <div className="pr-5 pt-4">
-                          <button
-                            type="button"
-                            onClick={() => requestDeleteSession(session.id)}
-                            disabled={deletingSessionId === session.id}
-                            className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 p-2 text-rose-600 transition-colors hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
-                            aria-label="Elimina sessione"
-                          >
-                            {deletingSessionId === session.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
+                          
+                          <div className="flex flex-1 flex-col gap-2.5 sm:gap-3 min-w-0">
+                            {/* Data e tipo - sempre visibili */}
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                              <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700 text-sm">
+                                <Calendar className="h-3.5 w-3.5 flex-shrink-0" /> 
+                                {formatDate(session.date)}
+                              </span>
+                              <span
+                                className={cn(
+                                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium w-fit',
+                                  typeToken ? `${typeToken.bg} ${typeToken.text}` : 'bg-slate-200 text-slate-600'
+                                )}
+                              >
+                                <Activity className="h-3 w-3 flex-shrink-0" /> {typeLabel}
+                              </span>
+                            </div>
+
+                            {/* Badges principali - compatti su mobile */}
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                              {highlightBadges.slice(0, 2).map(badge => {
+                                const Icon = badge.icon;
+                                return (
+                                  <span
+                                    key={badge.label}
+                                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] sm:text-[11px] font-medium text-slate-600"
+                                  >
+                                    <Icon className="h-3 w-3 flex-shrink-0" /> {badge.value}
+                                  </span>
+                                );
+                              })}
+                              {session.phase && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] sm:text-xs text-amber-600 font-medium">
+                                  <Target className="h-3 w-3 flex-shrink-0" /> {session.phase}
+                                </span>
+                              )}
+                              {session.block?.name && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] sm:text-xs text-emerald-600 font-medium truncate max-w-[150px]">
+                                  <FolderKanban className="h-3 w-3 flex-shrink-0" /> 
+                                  <span className="truncate">{session.block.name}</span>
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Info secondarie - nascoste su mobile piccolo */}
+                            <div className="hidden sm:flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                              {session.location && (
+                                <span className="inline-flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" /> {session.location}
+                                </span>
+                              )}
+                              <span className="inline-flex items-center gap-1">
+                                <Activity className="h-3 w-3" /> {totalExercises} es.
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <BarChart3 className="h-3 w-3" />
+                                {totalVolume ? `${(totalVolume / 1000).toFixed(1)} km` : 'N/D'}
+                              </span>
+                              {totalMetrics > 0 && (
+                                <span className="inline-flex items-center gap-1">
+                                  <FileText className="h-3 w-3" /> {totalMetrics} metr.
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Note - solo preview su mobile */}
+                            {session.notes && (
+                              <p className="text-xs sm:text-sm text-slate-600 line-clamp-1 sm:line-clamp-2">
+                                {session.notes}
+                              </p>
                             )}
-                          </button>
+                          </div>
                         </div>
+                        
+                        {/* Pulsante elimina - più grande e touch-friendly */}
+                        <button
+                          type="button"
+                          onClick={() => requestDeleteSession(session.id)}
+                          disabled={deletingSessionId === session.id}
+                          className="flex-shrink-0 mt-3 inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 p-2 sm:p-2.5 text-rose-600 transition-colors hover:bg-rose-100 active:bg-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation"
+                          aria-label="Elimina sessione"
+                        >
+                          {deletingSessionId === session.id ? (
+                            <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                          )}
+                        </button>
                       </div>
 
                       <AnimatePresence initial={false}>

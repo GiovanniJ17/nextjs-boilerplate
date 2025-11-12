@@ -1759,6 +1759,7 @@ export default function StatistichePage() {
                               height={36}
                               iconType="circle"
                               wrapperStyle={{ fontSize: '12px', paddingTop: '15px' }}
+                              formatter={(value, entry: any) => entry.payload.range}
                             />
                           </PieChart>
                         </ResponsiveContainer>
