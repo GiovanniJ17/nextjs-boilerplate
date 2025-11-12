@@ -637,71 +637,69 @@ export default function StoricoPage() {
               <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Filtri</h3>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* Tipo sessione */}
+            {/* Tipo sessione - Full width */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-600">Tipo sessione</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {sessionTypeOptions.map(option => {
+                  const isActive = typeFilter === option.value;
+                  return (
+                    <button
+                      key={option.value || 'all'}
+                      type="button"
+                      onClick={() => setTypeFilter(prev => (prev === option.value ? '' : option.value))}
+                      className={cn(
+                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                        isActive
+                          ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Blocco - Conditional full width */}
+            {blocks.length > 0 && (
               <div className="space-y-2">
-                <Label className="text-xs font-medium text-slate-600">Tipo sessione</Label>
+                <Label className="text-xs font-medium text-slate-600">Blocco allenamento</Label>
                 <div className="flex flex-wrap gap-1.5">
-                  {sessionTypeOptions.map(option => {
-                    const isActive = typeFilter === option.value;
+                  <button
+                    type="button"
+                    onClick={() => setBlockFilter('')}
+                    className={cn(
+                      'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                      !blockFilter
+                        ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
+                    )}
+                  >
+                    Tutti
+                  </button>
+                  {blocks.map(block => {
+                    const isSelected = blockFilter === block.id;
                     return (
                       <button
-                        key={option.value || 'all'}
+                        key={block.id}
                         type="button"
-                        onClick={() => setTypeFilter(prev => (prev === option.value ? '' : option.value))}
+                        onClick={() => setBlockFilter(prev => (prev === block.id ? '' : block.id ?? ''))}
                         className={cn(
                           'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                          isActive
-                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
+                          isSelected
+                            ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
                         )}
                       >
-                        {option.label}
+                        {block.name ?? 'Senza nome'}
                       </button>
                     );
                   })}
                 </div>
               </div>
-
-              {/* Blocco */}
-              {blocks.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium text-slate-600">Blocco allenamento</Label>
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setBlockFilter('')}
-                      className={cn(
-                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                        !blockFilter
-                          ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
-                      )}
-                    >
-                      Tutti
-                    </button>
-                    {blocks.map(block => {
-                      const isSelected = blockFilter === block.id;
-                      return (
-                        <button
-                          key={block.id}
-                          type="button"
-                          onClick={() => setBlockFilter(prev => (prev === block.id ? '' : block.id ?? ''))}
-                          className={cn(
-                            'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                            isSelected
-                              ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
-                              : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
-                          )}
-                        >
-                          {block.name ?? 'Senza nome'}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           <div className="border-t border-slate-200"></div>
