@@ -880,14 +880,6 @@ export default function StatistichePage() {
     // 11. Alert e suggerimenti intelligenti
     const alerts: StatsSnapshot['alerts'] = [];
 
-    // Alert sovrallenamento
-    if (trainingDensity > 5) {
-      alerts.push({
-        type: 'warning',
-        message: `Ti stai allenando ${trainingDensity.toFixed(1)} giorni a settimana. Considera di includere più giorni di recupero.`,
-      });
-    }
-
     // Alert intensità troppo alta
     const highIntensityPercentage = (highIntensitySessions / totalSessions) * 100;
     if (highIntensityPercentage > 70) {
@@ -922,14 +914,6 @@ export default function StatistichePage() {
           message: `Volume ${volumeChange > 0 ? 'aumentato' : 'diminuito'} del ${Math.abs(volumeChange).toFixed(0)}% rispetto al periodo precedente.`,
         });
       }
-    }
-
-    // Densità troppo bassa
-    if (trainingDensity < 2 && totalSessions > 0) {
-      alerts.push({
-        type: 'info',
-        message: `Ti stai allenando solo ${trainingDensity.toFixed(1)} giorni a settimana. Considera di aumentare la frequenza.`,
-      });
     }
 
     // ============================================
