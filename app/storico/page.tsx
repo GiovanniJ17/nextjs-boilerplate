@@ -421,11 +421,6 @@ export default function StoricoPage() {
             ? `${focusStats.avgIntensity.toFixed(1)}/10`
             : '—',
       },
-      {
-        icon: Sparkles,
-        label: 'Sessioni test',
-        value: historicalStats.testsCount.toLocaleString('it-IT'),
-      },
     ],
     [focusStats, historicalStats]
   );
@@ -592,9 +587,9 @@ export default function StoricoPage() {
           </motion.div>
         </div>
         
-        {/* Stats in hero - 5 cards on one row */}
+        {/* Stats in hero - 4 cards uniform */}
         <motion.div 
-          className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
+          className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
