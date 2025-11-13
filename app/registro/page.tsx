@@ -1585,7 +1585,9 @@ export default function RegistroPage() {
       setCustomLocation('');
       setShowBlockForm(false);
     } catch (error) {
-      console.error('Errore salvataggio:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Errore salvataggio:', error);
+      }
       
       // Estrai informazioni dettagliate dall'errore
       let errorMessage = 'Riprova più tardi o verifica la connessione.';

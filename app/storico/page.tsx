@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
+import { useLocalStorage } from '@/lib/useLocalStorage';
 import {
   Activity,
   BarChart3,
@@ -229,10 +230,10 @@ const metricCategoryIconsMap: Record<string, LucideIcon> = {
 export default function StoricoPage() {
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [blocks, setBlocks] = useState<TrainingBlock[]>([]);
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [blockFilter, setBlockFilter] = useState('');
+  const [fromDate, setFromDate] = useLocalStorage('storico-fromDate', '');
+  const [toDate, setToDate] = useLocalStorage('storico-toDate', '');
+  const [typeFilter, setTypeFilter] = useLocalStorage('storico-typeFilter', '');
+  const [blockFilter, setBlockFilter] = useLocalStorage('storico-blockFilter', '');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [openSession, setOpenSession] = useState<string | null>(null);
@@ -297,7 +298,7 @@ export default function StoricoPage() {
         `
       )
       .order('date', { ascending: false })
-      .limit(100);
+      .limit(500); // Aumentato da 100 a 500 per dataset più completo
 
     if (fromDate) query = query.gte('date', fromDate);
     if (toDate) query = query.lte('date', toDate);
@@ -810,7 +811,7 @@ export default function StoricoPage() {
                     <button
                       key={option.value || 'all'}
                       type="button"
-                      onClick={() => setTypeFilter(prev => (prev === option.value ? '' : option.value))}
+                      onClick={() => setTypeFilter(typeFilter === option.value ? '' : option.value)}
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isActive
@@ -847,7 +848,7 @@ export default function StoricoPage() {
                     <button
                       key={block.id}
                       type="button"
-                      onClick={() => setBlockFilter(prev => (prev === block.id ? '' : block.id ?? ''))}
+                      onClick={() => setBlockFilter(blockFilter === block.id ? '' : block.id ?? '')}
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isSelected

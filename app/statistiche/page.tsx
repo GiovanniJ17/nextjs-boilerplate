@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { cn } from '@/lib/utils';
+import { useLocalStorage } from '@/lib/useLocalStorage';
 import {
   calculateRPEDistribution,
   analyzeRecovery,
@@ -284,16 +285,23 @@ function formatDateInput(date: Date) {
 }
 
 export default function StatistichePage() {
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
-  const [distanceFilter, setDistanceFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [blockFilter, setBlockFilter] = useState('');
+  const [fromDate, setFromDate] = useLocalStorage('stats-fromDate', '');
+  const [toDate, setToDate] = useLocalStorage('stats-toDate', '');
+  const [distanceFilter, setDistanceFilter] = useLocalStorage('stats-distanceFilter', 'all');
+  const [typeFilter, setTypeFilter] = useLocalStorage('stats-typeFilter', '');
+  const [blockFilter, setBlockFilter] = useLocalStorage('stats-blockFilter', '');
   const [blocks, setBlocks] = useState<TrainingBlock[]>([]);
   const [stats, setStats] = useState<StatsSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'base' | 'graphs' | 'advanced' | 'insights'>('base');
   const [rangePreset, setRangePreset] = useState<string>('');
+  const [debouncedFilters, setDebouncedFilters] = useState({
+    fromDate: '',
+    toDate: '',
+    typeFilter: '',
+    blockFilter: '',
+    distanceFilter: 'all'
+  });
 
   async function loadBlocks() {
     const { data } = await supabase.from('training_blocks').select('id, name').order('start_date', {
@@ -306,6 +314,9 @@ export default function StatistichePage() {
 
   const loadStats = useCallback(async () => {
     setLoading(true);
+
+    // Usa filtri debounced per ridurre query al DB
+    const { fromDate: dFromDate, toDate: dToDate, typeFilter: dTypeFilter, blockFilter: dBlockFilter, distanceFilter: dDistanceFilter } = debouncedFilters;
 
     // Ottimizzazione: single query con join invece di 3 query separate
     let sessionQuery = supabase
@@ -321,10 +332,10 @@ export default function StatistichePage() {
       `)
       .order('date', { ascending: false });
 
-    if (fromDate) sessionQuery = sessionQuery.gte('date', fromDate);
-    if (toDate) sessionQuery = sessionQuery.lte('date', toDate);
-    if (typeFilter) sessionQuery = sessionQuery.eq('type', typeFilter);
-    if (blockFilter) sessionQuery = sessionQuery.eq('block_id', blockFilter);
+    if (dFromDate) sessionQuery = sessionQuery.gte('date', dFromDate);
+    if (dToDate) sessionQuery = sessionQuery.lte('date', dToDate);
+    if (dTypeFilter) sessionQuery = sessionQuery.eq('type', dTypeFilter);
+    if (dBlockFilter) sessionQuery = sessionQuery.eq('block_id', dBlockFilter);
 
     const { data: sessionsData, error: sessionsError } = await sessionQuery;
 
@@ -387,7 +398,7 @@ export default function StatistichePage() {
     }
 
     const distanceFilteredExercises = exercises.filter(exercise =>
-      matchesDistance(exercise.distance_m, distanceFilter)
+      matchesDistance(exercise.distance_m, dDistanceFilter)
     );
     const filteredExerciseIds = new Set(distanceFilteredExercises.map(exercise => exercise.id));
     const filteredResults = results.filter(result => result.exercise_id && filteredExerciseIds.has(result.exercise_id));
@@ -1195,11 +1206,25 @@ export default function StatistichePage() {
     });
 
     setLoading(false);
-  }, [blockFilter, distanceFilter, fromDate, toDate, typeFilter]);
+  }, [debouncedFilters]);
 
   useEffect(() => {
     void loadBlocks();
   }, []);
+
+  // Debouncing filtri (500ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilters({
+        fromDate,
+        toDate,
+        typeFilter,
+        blockFilter,
+        distanceFilter
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [fromDate, toDate, typeFilter, blockFilter, distanceFilter]);
 
   useEffect(() => {
     void loadStats();
@@ -1401,7 +1426,7 @@ export default function StatistichePage() {
                 <p className="mt-2 text-xs text-white/80">Prevalenza: {topType.label}</p>
                 <button
                   type="button"
-                  onClick={() => setTypeFilter(prev => (prev === topType.label ? '' : topType.label))}
+                  onClick={() => setTypeFilter(typeFilter === topType.label ? '' : topType.label)}
                   className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/30 px-3 py-1 text-[11px] font-medium text-white transition-colors hover:border-white/60 hover:bg-white/10"
                 >
                   <Filter className="h-3 w-3" /> Filtra su {topType.label}
@@ -1507,7 +1532,7 @@ export default function StatistichePage() {
                       <button
                         key={option.value || 'all'}
                         type="button"
-                        onClick={() => setTypeFilter(prev => (prev === option.value ? '' : option.value))}
+                        onClick={() => setTypeFilter(typeFilter === option.value ? '' : option.value)}
                         className={cn(
                           'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                           isActive
@@ -1546,7 +1571,7 @@ export default function StatistichePage() {
                       <button
                         key={block.id}
                         type="button"
-                        onClick={() => setBlockFilter(prev => (prev === block.id ? '' : block.id ?? ''))}
+                        onClick={() => setBlockFilter(blockFilter === block.id ? '' : block.id ?? '')}
                         className={cn(
                           'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                           isActive
@@ -1721,7 +1746,7 @@ export default function StatistichePage() {
                               <button
                                 key={item.label}
                                 type="button"
-                                onClick={() => setTypeFilter(prev => (prev === item.label ? '' : item.label))}
+                                onClick={() => setTypeFilter(typeFilter === item.label ? '' : item.label)}
                                 className={cn(
                                   'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium transition',
                                   isActive
