@@ -1011,7 +1011,7 @@ export default function StatistichePage() {
     sessionsToAnalyze.forEach(session => {
       if (!session.date) return;
       
-      // Trova tutte le performance di questa sessione
+      // Trova tutte le performance di questa sessione (sia da esercizi che da metriche)
       const sessionPerformances = performances.filter(p => {
         const exercise = Array.from(exerciseById.values()).find(ex => {
           if (!ex.block_id) return false;
@@ -1020,8 +1020,18 @@ export default function StatistichePage() {
         return exercise != null && p.distance;
       });
       
-      if (sessionPerformances.length === 0) return;
+      // Aggiungi performance dalle metriche di questa sessione
+      const sessionMetrics = distanceFilteredMetrics.filter(m => m.session_id === session.id);
+      sessionMetrics.forEach(metric => {
+        if (metric.distance_m && metric.time_s) {
+          sessionPerformances.push({
+            distance: metric.distance_m,
+            time: metric.time_s,
+          });
+        }
+      });
       
+      // Anche sessioni senza performance (es. solo massimali senza tempo) vengono conteggiate
       const totalDistance = sessionPerformances.reduce((sum, p) => sum + (p.distance || 0), 0);
       const speeds = sessionPerformances
         .filter(p => p.distance && p.time)
