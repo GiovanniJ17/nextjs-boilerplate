@@ -199,6 +199,7 @@ const metricCategoryLabels: Record<string, string> = {
   fisico: 'Fisico',
   recupero: 'Recupero',
   test: 'Test',
+  massimale: 'Massimale',
   altro: 'Altro',
 };
 
@@ -207,6 +208,7 @@ const metricCategoryTokens: Record<string, { bg: string; text: string }> = {
   fisico: { bg: 'bg-emerald-100', text: 'text-emerald-600' },
   recupero: { bg: 'bg-purple-100', text: 'text-purple-600' },
   test: { bg: 'bg-amber-100', text: 'text-amber-600' },
+  massimale: { bg: 'bg-green-100', text: 'text-green-600' },
   altro: { bg: 'bg-slate-200', text: 'text-slate-600' },
 };
 
@@ -215,6 +217,7 @@ const metricCategoryIconsMap: Record<string, LucideIcon> = {
   fisico: Weight,
   recupero: Droplets,
   test: Target,
+  massimale: Weight,
   altro: FileText,
 };
 
