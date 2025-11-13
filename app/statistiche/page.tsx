@@ -677,7 +677,11 @@ export default function StatistichePage() {
       ? speedCalculations.reduce((sum, s) => sum + s, 0) / speedCalculations.length
       : null;
 
-    // 5. Densità allenamento (sessioni per settimana)
+    // 5. Densità allenamento (giorni unici per settimana, non sessioni)
+    const uniqueTrainingDates = new Set(
+      sessions.filter(s => s.date).map(s => s.date!)
+    );
+    
     const dateRange = sessions.reduce((range, s) => {
       if (!s.date) return range;
       const date = new Date(s.date).getTime();
@@ -690,7 +694,7 @@ export default function StatistichePage() {
     const weeks = dateRange.min && dateRange.max
       ? Math.max(1, (dateRange.max - dateRange.min) / (7 * 24 * 60 * 60 * 1000))
       : 1;
-    const trainingDensity = totalSessions / weeks;
+    const trainingDensity = uniqueTrainingDates.size / weeks;
 
     // 6. Carico di lavoro (volume × intensità media)
     const workload = avgIntensity ? (totalDistance * avgIntensity) / 10 : 0;
@@ -880,7 +884,7 @@ export default function StatistichePage() {
     if (trainingDensity > 5) {
       alerts.push({
         type: 'warning',
-        message: `Stai allenandoti ${trainingDensity.toFixed(1)} volte a settimana. Considera di includere più giorni di recupero.`,
+        message: `Ti stai allenando ${trainingDensity.toFixed(1)} giorni a settimana. Considera di includere più giorni di recupero.`,
       });
     }
 
@@ -924,7 +928,7 @@ export default function StatistichePage() {
     if (trainingDensity < 2 && totalSessions > 0) {
       alerts.push({
         type: 'info',
-        message: `Stai allenandoti solo ${trainingDensity.toFixed(1)} volte a settimana. Considera di aumentare la frequenza.`,
+        message: `Ti stai allenando solo ${trainingDensity.toFixed(1)} giorni a settimana. Considera di aumentare la frequenza.`,
       });
     }
 
@@ -2353,8 +2357,8 @@ export default function StatistichePage() {
                     />
                     <SummaryCard
                       title="Densità allenamento"
-                      value={`${stats.trainingDensity.toFixed(1)} /settimana`}
-                      subtitle="Frequenza media sessioni"
+                      value={`${stats.trainingDensity.toFixed(1)} giorni/settimana`}
+                      subtitle="Frequenza media giorni allenamento"
                       icon={<Calendar className="h-5 w-5" strokeWidth={2} />}
                       accent="bg-sky-100 text-sky-600"
                     />
