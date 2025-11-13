@@ -1504,18 +1504,18 @@ export default function StoricoPage() {
                                             </p>
                                           </div>
                                           <div className="rounded-xl bg-slate-50 px-3 py-2">
-            {/* Paginazione */}
-            {sortedSessions.length > itemsPerPage && (
-              <div className="pt-4 border-t border-slate-200">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  itemsPerPage={itemsPerPage}
-                  totalItems={sortedSessions.length}
-                />
-              </div>
-            )}                      </div>
+                                            <p className="text-[10px] uppercase text-slate-500">Target</p>
+                                            <p className="text-sm font-semibold text-slate-700">{metric.metric_target ?? '—'}</p>
+                                          </div>
+                                        </div>
+                                      )}
+                                      {isPerformanceMetric && metric.metric_target && (
+                                        <p className="mt-3 text-xs text-slate-500">Contesto: {metric.metric_target}</p>
+                                      )}
+                                      {metric.notes && (
+                                        <p className="mt-2 text-xs text-slate-500">{metric.notes}</p>
+                                      )}
+                                    </div>
                                   );
                                 })}
                               </div>
