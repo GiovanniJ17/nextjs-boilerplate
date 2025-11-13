@@ -39,6 +39,8 @@ import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { FilterBar, FilterItem } from '@/components/ui/filter-bar';
 import { Pagination } from '@/components/ui/pagination';
+import { SessionsSkeleton } from '@/components/ui/skeleton';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { 
   pageTransition, 
   fadeInUp, 
@@ -628,6 +630,7 @@ export default function StoricoPage() {
   }
 
   return (
+    <ErrorBoundary>
     <motion.div 
       className="space-y-4"
       variants={pageTransition}
@@ -1025,9 +1028,7 @@ export default function StoricoPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {loading ? (
-            <div className="flex items-center justify-center gap-3 py-20 text-sm text-slate-500">
-              <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2} /> Caricamento delle sessioni...
-            </div>
+            <SessionsSkeleton />
           ) : sortedSessions.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 py-12 px-6 text-center">
               <div className="mx-auto max-w-md space-y-3">
@@ -1565,5 +1566,6 @@ export default function StoricoPage() {
         onConfirm={confirmDeleteSession}
       />
     </motion.div>
+    </ErrorBoundary>
   );
 }

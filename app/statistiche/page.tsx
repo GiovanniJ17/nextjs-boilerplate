@@ -65,6 +65,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { StatsSkeleton } from '@/components/ui/skeleton';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import {
   LineChart,
   Line,
@@ -1340,6 +1342,7 @@ export default function StatistichePage() {
   );
 
   return (
+    <ErrorBoundary>
     <motion.div 
       className="space-y-4"
       variants={pageTransition}
@@ -1347,6 +1350,10 @@ export default function StatistichePage() {
       animate="visible"
       exit="exit"
     >
+      {loading ? (
+        <StatsSkeleton />
+      ) : (
+        <>
       <motion.section 
         className="rounded-3xl bg-gradient-to-br from-indigo-500 via-sky-500 to-cyan-500 p-5 text-white shadow-xl"
         variants={fadeInUp}
@@ -2958,7 +2965,10 @@ export default function StatistichePage() {
         </CardContent>
       </Card>
       </motion.div>
+      </>
+      )}
     </motion.div>
+    </ErrorBoundary>
   );
 }
 
