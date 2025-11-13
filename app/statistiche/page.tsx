@@ -398,6 +398,11 @@ export default function StatistichePage() {
       if (metric.session_id) sessionIdsWithFilteredContent.add(metric.session_id);
     });
     
+    // Filtra le sessioni in base al filtro distanza (usato in tutte le analisi)
+    const sessionsToAnalyze = distanceFilter === 'all' 
+      ? sessions 
+      : sessions.filter(s => sessionIdsWithFilteredContent.has(s.id));
+    
     const totalSessions = distanceFilter === 'all' 
       ? sessions.length 
       : sessionIdsWithFilteredContent.size;
@@ -1002,11 +1007,6 @@ export default function StatistichePage() {
       speeds: number[];
       hasPB: boolean;
     }>();
-    
-    // Filtra le sessioni in base al filtro distanza
-    const sessionsToAnalyze = distanceFilter === 'all' 
-      ? sessions 
-      : sessions.filter(s => sessionIdsWithFilteredContent.has(s.id));
     
     sessionsToAnalyze.forEach(session => {
       if (!session.date) return;
