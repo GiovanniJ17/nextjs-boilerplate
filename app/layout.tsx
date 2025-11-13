@@ -1,19 +1,7 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import "./globals.css";
 import { MainNav } from "@/components/MainNav";
 import { AppToaster } from "@/components/ui/app-toaster";
-import { ThemeProvider } from "@/components/theme-provider";
-
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 5,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#0ea5e9" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
-  ],
-  colorScheme: "light dark",
-};
 
 export const metadata: Metadata = {
   title: {
@@ -25,6 +13,9 @@ export const metadata: Metadata = {
   authors: [{ name: "Tracker Velocista" }],
   creator: "Tracker Velocista",
   publisher: "Tracker Velocista",
+  themeColor: "#0ea5e9",
+  colorScheme: "light",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -66,27 +57,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="it" suppressHydrationWarning>
+    <html lang="it" className="light" style={{ colorScheme: 'light' }}>
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                const theme = localStorage.getItem('tracker-theme') || 'system';
-                const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                const activeTheme = theme === 'system' ? systemTheme : theme;
-                document.documentElement.classList.add(activeTheme);
-              } catch (e) {}
-            `,
-          }}
-        />
+        <meta name="color-scheme" content="light" />
       </head>
-      <body className="min-h-screen font-sans antialiased">
-        <ThemeProvider defaultTheme="system" storageKey="tracker-theme">
-          <MainNav />
-          <main className="page-shell mx-auto max-w-5xl px-4 py-8">{children}</main>
-          <AppToaster />
-        </ThemeProvider>
+      <body className="bg-slate-50 text-slate-900 min-h-screen font-sans antialiased">
+        <MainNav />
+        <main className="page-shell mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <AppToaster />
       </body>
     </html>
   );

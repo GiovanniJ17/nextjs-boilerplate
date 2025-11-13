@@ -9,40 +9,18 @@
 /* Base Styles */
 html,
 body {
-  @apply antialiased;
+  @apply bg-slate-50 text-slate-900 antialiased;
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   min-height: 100%;
 }
 
 :root {
-  /* Light Mode Colors */
-  --background: 248 250 252; /* slate-50 */
-  --foreground: 15 23 42; /* slate-900 */
-  
-  --card: 255 255 255; /* white */
-  --card-foreground: 15 23 42; /* slate-900 */
-  
-  --border: 226 232 240; /* slate-200 */
-  --input: 203 213 225; /* slate-300 */
-  
+  /* Colors */
   --primary: 14 165 233; /* sky-500 */
   --primary-dark: 2 132 199; /* sky-600 */
-  --primary-foreground: 255 255 255; /* white */
-  
   --success: 34 197 94; /* green-500 */
-  --success-foreground: 255 255 255; /* white */
-  
   --warning: 251 146 60; /* orange-400 */
-  --warning-foreground: 255 255 255; /* white */
-  
   --danger: 239 68 68; /* red-500 */
-  --danger-foreground: 255 255 255; /* white */
-  
-  --muted: 241 245 249; /* slate-100 */
-  --muted-foreground: 71 85 105; /* slate-600 */
-  
-  --accent: 240 249 255; /* sky-50 */
-  --accent-foreground: 14 165 233; /* sky-500 */
   
   /* Spacing - Ottimizzato per densità */
   --spacing-xs: 0.375rem;  /* 6px */
@@ -71,48 +49,6 @@ body {
   --icon-lg: 1.5rem;       /* 24px */
 }
 
-.dark {
-  /* Dark Mode Colors */
-  --background: 15 23 42; /* slate-900 */
-  --foreground: 241 245 249; /* slate-100 */
-  
-  --card: 30 41 59; /* slate-800 */
-  --card-foreground: 241 245 249; /* slate-100 */
-  
-  --border: 51 65 85; /* slate-700 */
-  --input: 71 85 105; /* slate-600 */
-  
-  --primary: 56 189 248; /* sky-400 */
-  --primary-dark: 14 165 233; /* sky-500 */
-  --primary-foreground: 15 23 42; /* slate-900 */
-  
-  --success: 74 222 128; /* green-400 */
-  --success-foreground: 15 23 42; /* slate-900 */
-  
-  --warning: 251 146 60; /* orange-400 */
-  --warning-foreground: 15 23 42; /* slate-900 */
-  
-  --danger: 248 113 113; /* red-400 */
-  --danger-foreground: 15 23 42; /* slate-900 */
-  
-  --muted: 51 65 85; /* slate-700 */
-  --muted-foreground: 148 163 184; /* slate-400 */
-  
-  --accent: 30 58 138; /* blue-900 */
-  --accent-foreground: 56 189 248; /* sky-400 */
-  
-  /* Dark mode shadows - subtler */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
-}
-
-/* Apply theme colors to body */
-body {
-  background-color: rgb(var(--background));
-  color: rgb(var(--foreground));
-}
-
 /* ========================================
    COMPONENTS
    ======================================== */
@@ -127,60 +63,36 @@ body {
 }
 
 .page-title {
-  @apply text-xl font-bold;
-  color: rgb(var(--foreground));
+  @apply text-xl font-bold text-slate-900;
 }
 
 /* Cards - Spacing ottimizzato */
 .card {
-  @apply rounded-lg border p-4 shadow-sm;
-  background-color: rgb(var(--card));
-  border-color: rgb(var(--border));
-  color: rgb(var(--card-foreground));
+  @apply rounded-lg border border-slate-200 bg-white p-4 shadow-sm;
 }
 
 .card-compact {
-  @apply rounded-lg border p-3 shadow-sm;
-  background-color: rgb(var(--card));
-  border-color: rgb(var(--border));
-  color: rgb(var(--card-foreground));
+  @apply rounded-lg border border-slate-200 bg-white p-3 shadow-sm;
 }
 
 .card-header {
-  @apply mb-3 flex items-center justify-between border-b pb-2.5;
-  border-color: rgb(var(--border) / 0.5);
+  @apply mb-3 flex items-center justify-between border-b border-slate-100 pb-2.5;
 }
 
 /* Forms */
 input,
 select,
 textarea {
-  @apply w-full rounded-md border px-3 py-2 text-sm 
-         outline-none transition-colors duration-150
-         focus:ring-2;
-  background-color: rgb(var(--card));
-  border-color: rgb(var(--input));
-  color: rgb(var(--foreground));
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: rgb(var(--muted-foreground) / 0.7);
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: rgb(var(--primary));
-  ring-color: rgb(var(--primary) / 0.2);
+  @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm 
+         text-slate-900 placeholder-slate-400 outline-none
+         transition-colors duration-150
+         focus:border-sky-500 focus:ring-2 focus:ring-sky-100;
 }
 
 input:disabled,
 select:disabled,
 textarea:disabled {
-  @apply cursor-not-allowed;
-  background-color: rgb(var(--muted));
-  color: rgb(var(--muted-foreground));
+  @apply cursor-not-allowed bg-slate-50 text-slate-500;
 }
 
 .form-grid {
@@ -199,19 +111,15 @@ textarea:disabled {
 
 /* Stats & Metrics - Consistenza */
 .stat-card {
-  @apply rounded-lg border p-3.5;
-  background-color: rgb(var(--card));
-  border-color: rgb(var(--border));
+  @apply rounded-lg border border-slate-200 bg-white p-3.5;
 }
 
 .stat-value {
-  @apply text-xl font-bold;
-  color: rgb(var(--foreground));
+  @apply text-xl font-bold text-slate-900;
 }
 
 .stat-label {
-  @apply text-xs font-medium;
-  color: rgb(var(--muted-foreground));
+  @apply text-xs font-medium text-slate-600;
 }
 
 /* Badges - Dimensioni uniformi */
@@ -220,34 +128,28 @@ textarea:disabled {
 }
 
 .badge-primary {
-  background-color: rgb(var(--primary) / 0.15);
-  color: rgb(var(--primary));
+  @apply bg-sky-100 text-sky-700;
 }
 
 .badge-success {
-  background-color: rgb(var(--success) / 0.15);
-  color: rgb(var(--success));
+  @apply bg-green-100 text-green-700;
 }
 
 .badge-warning {
-  background-color: rgb(var(--warning) / 0.15);
-  color: rgb(var(--warning));
+  @apply bg-orange-100 text-orange-700;
 }
 
 .badge-neutral {
-  background-color: rgb(var(--muted));
-  color: rgb(var(--muted-foreground));
+  @apply bg-slate-100 text-slate-700;
 }
 
 /* Section Headers - Consistenza */
 .section-header {
-  @apply mb-3 flex items-center gap-2 text-sm font-semibold;
-  color: rgb(var(--foreground));
+  @apply mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900;
 }
 
 .section-divider {
-  @apply my-3 border-t;
-  border-color: rgb(var(--border));
+  @apply my-3 border-t border-slate-200;
 }
 
 /* ========================================
