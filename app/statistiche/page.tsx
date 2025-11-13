@@ -403,9 +403,9 @@ export default function StatistichePage() {
       ? sessions 
       : sessions.filter(s => sessionIdsWithFilteredContent.has(s.id));
     
-    const totalSessions = distanceFilter === 'all' 
-      ? sessions.length 
-      : sessionIdsWithFilteredContent.size;
+    // Conta giorni di allenamento unici invece di singole sessioni
+    const uniqueTrainingDays = new Set(sessionsToAnalyze.map(s => s.date).filter(Boolean));
+    const totalSessions = uniqueTrainingDays.size;
     const totalExerciseDistance = distanceFilteredExercises.reduce((sum, exercise) => {
       const distance = exercise.distance_m || 0;
       const sets = exercise.sets || 0;
@@ -1000,8 +1000,8 @@ export default function StatistichePage() {
     });
     const locationStats = analyzeLocationStats(locationData);
 
-    // 6. Progressi mensili - RAGGRUPPA PER SESSIONE (solo quelle con contenuto filtrato)
-    const sessionProgressMap = new Map<string, {
+    // 6. Progressi mensili - RAGGRUPPA PER GIORNO (non per sessione singola)
+    const dayProgressMap = new Map<string, {
       date: string;
       totalDistance: number;
       speeds: number[];
@@ -1043,21 +1043,30 @@ export default function StatistichePage() {
         return pb && pb.time === p.time;
       });
       
-      sessionProgressMap.set(session.id, {
-        date: session.date,
-        totalDistance,
-        speeds,
-        hasPB,
-      });
+      // Raggruppa per data (giorno) invece che per sessione
+      if (!dayProgressMap.has(session.date)) {
+        dayProgressMap.set(session.date, {
+          date: session.date,
+          totalDistance,
+          speeds: [...speeds],
+          hasPB,
+        });
+      } else {
+        // Se già esiste una sessione in questo giorno, aggrega i dati
+        const dayData = dayProgressMap.get(session.date)!;
+        dayData.totalDistance += totalDistance;
+        dayData.speeds.push(...speeds);
+        dayData.hasPB = dayData.hasPB || hasPB;
+      }
     });
     
-    const monthlyProgressData = Array.from(sessionProgressMap.values()).map(sessionData => ({
-      date: sessionData.date,
-      distance: sessionData.totalDistance,
-      avgSpeed: sessionData.speeds.length > 0
-        ? sessionData.speeds.reduce((sum, s) => sum + s, 0) / sessionData.speeds.length
+    const monthlyProgressData = Array.from(dayProgressMap.values()).map(dayData => ({
+      date: dayData.date,
+      distance: dayData.totalDistance,
+      avgSpeed: dayData.speeds.length > 0
+        ? dayData.speeds.reduce((sum, s) => sum + s, 0) / dayData.speeds.length
         : null,
-      isPB: sessionData.hasPB,
+      isPB: dayData.hasPB,
     }));
     
     const monthlyProgress = calculateMonthlyProgress(monthlyProgressData);
@@ -1231,7 +1240,7 @@ export default function StatistichePage() {
   const heroStats = useMemo(
     () => [
       {
-        label: 'Sessioni filtrate',
+        label: 'Giorni allenamento',
         value: stats ? formatNumber(stats.totalSessions) : '—',
         icon: Activity,
       },
