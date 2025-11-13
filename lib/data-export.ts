@@ -130,18 +130,36 @@ export async function backupData() {
       throw new Error("Supabase non configurato. Aggiungi le variabili d'ambiente nelle impostazioni di Cloudflare Pages");
     }
     
+    // Fetch completo con tutte le tabelle correlate usando join
     const { data: sessions, error } = await supabase
       .from("training_sessions")
-      .select("*")
+      .select(`
+        *,
+        exercise_blocks (
+          *,
+          exercises (
+            *,
+            exercise_results (*)
+          )
+        ),
+        metrics (*)
+      `)
       .order("date", { ascending: false });
 
     if (error) throw error;
 
+    // Fetch anche training_blocks separatamente
+    const { data: trainingBlocks } = await supabase
+      .from("training_blocks")
+      .select("*")
+      .order("start_date", { ascending: false });
+
     const backup = {
-      version: "1.0",
+      version: "2.0", // Versione aggiornata per backup completo
       exportDate: new Date().toISOString(),
       totalSessions: sessions?.length || 0,
       sessions: sessions || [],
+      training_blocks: trainingBlocks || [],
     };
 
     const dataStr = JSON.stringify(backup, null, 2);
@@ -178,6 +196,9 @@ export async function restoreData(file: File): Promise<{ success: boolean; error
       throw new Error("File di backup non valido");
     }
 
+    // Gestisci sia versione 1.0 (solo sessions) che 2.0 (completo)
+    const isFullBackup = backup.version === "2.0";
+
     // Fetch existing sessions per check duplicati
     const { data: existingSessions } = await supabase
       .from("training_sessions")
@@ -190,6 +211,26 @@ export async function restoreData(file: File): Promise<{ success: boolean; error
     let imported = 0;
     let duplicates = 0;
 
+    // Importa training_blocks se presente (solo per v2.0)
+    const blockIdMapping = new Map<string, string>(); // old_id -> new_id
+    if (isFullBackup && backup.training_blocks && Array.isArray(backup.training_blocks)) {
+      for (const block of backup.training_blocks) {
+        const oldId = block.id;
+        const { id, created_at, ...blockData } = block;
+        
+        const { data: newBlock, error } = await supabase
+          .from("training_blocks")
+          .insert([blockData])
+          .select("id")
+          .single();
+        
+        if (!error && newBlock) {
+          blockIdMapping.set(oldId, newBlock.id);
+        }
+      }
+    }
+
+    // Importa sessions con tutte le relazioni
     for (const session of backup.sessions) {
       const key = `${session.date}-${session.type}-${session.location}`;
       
@@ -198,14 +239,108 @@ export async function restoreData(file: File): Promise<{ success: boolean; error
         continue;
       }
 
-      // Rimuovi id, block_id e created_at per evitare conflitti
-      const { id, block_id, created_at, ...sessionData } = session;
+      const oldSessionId = session.id;
+      const oldBlockId = session.block_id;
 
-      const { error } = await supabase.from("training_sessions").insert([sessionData]);
+      // Prepara dati sessione
+      const { id, block_id, created_at, exercise_blocks, metrics, ...sessionData } = session;
+      
+      // Mappa block_id se presente
+      if (oldBlockId && blockIdMapping.has(oldBlockId)) {
+        sessionData.block_id = blockIdMapping.get(oldBlockId);
+      }
 
-      if (!error) {
-        imported++;
-        existingKeys.add(key);
+      // Inserisci sessione
+      const { data: newSession, error: sessionError } = await supabase
+        .from("training_sessions")
+        .insert([sessionData])
+        .select("id")
+        .single();
+
+      if (sessionError || !newSession) {
+        console.error("Errore inserimento sessione:", sessionError);
+        continue;
+      }
+
+      const newSessionId = newSession.id;
+      imported++;
+      existingKeys.add(key);
+
+      // Importa exercise_blocks se presente (solo per v2.0)
+      if (isFullBackup && exercise_blocks && Array.isArray(exercise_blocks)) {
+        for (const block of exercise_blocks) {
+          const oldBlockId = block.id;
+          const { id, session_id, created_at, exercises, ...blockData } = block;
+
+          const { data: newBlock, error: blockError } = await supabase
+            .from("exercise_blocks")
+            .insert([{ ...blockData, session_id: newSessionId }])
+            .select("id")
+            .single();
+
+          if (blockError || !newBlock) {
+            console.error("Errore inserimento exercise_block:", blockError);
+            continue;
+          }
+
+          const newBlockId = newBlock.id;
+
+          // Importa exercises
+          if (exercises && Array.isArray(exercises)) {
+            for (const exercise of exercises) {
+              const { id, block_id, created_at, exercise_results, ...exerciseData } = exercise;
+
+              const { data: newExercise, error: exerciseError } = await supabase
+                .from("exercises")
+                .insert([{ ...exerciseData, block_id: newBlockId }])
+                .select("id")
+                .single();
+
+              if (exerciseError || !newExercise) {
+                console.error("Errore inserimento exercise:", exerciseError);
+                continue;
+              }
+
+              const newExerciseId = newExercise.id;
+
+              // Importa exercise_results
+              if (exercise_results && Array.isArray(exercise_results)) {
+                const resultsToInsert = exercise_results.map(result => {
+                  const { id, exercise_id, created_at, ...resultData } = result;
+                  return { ...resultData, exercise_id: newExerciseId };
+                });
+
+                if (resultsToInsert.length > 0) {
+                  const { error: resultsError } = await supabase
+                    .from("exercise_results")
+                    .insert(resultsToInsert);
+
+                  if (resultsError) {
+                    console.error("Errore inserimento exercise_results:", resultsError);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Importa metrics se presente (solo per v2.0)
+      if (isFullBackup && metrics && Array.isArray(metrics)) {
+        const metricsToInsert = metrics.map(metric => {
+          const { id, session_id, created_at, ...metricData } = metric;
+          return { ...metricData, session_id: newSessionId };
+        });
+
+        if (metricsToInsert.length > 0) {
+          const { error: metricsError } = await supabase
+            .from("metrics")
+            .insert(metricsToInsert);
+
+          if (metricsError) {
+            console.error("Errore inserimento metrics:", metricsError);
+          }
+        }
       }
     }
 
