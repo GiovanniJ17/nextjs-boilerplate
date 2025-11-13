@@ -617,15 +617,20 @@ export default function StatistichePage() {
       const weekData = weeklyVolumeMap.get(weekKey)!;
       weekData.dates.add(session.date);
       
-      // Calcola volume per questa sessione
+      // Calcola volume da esercizi
       const sessionExercises = distanceFilteredExercises.filter(ex => {
         if (!ex.block_id) return false;
         return blockIdToSessionId.get(ex.block_id) === session.id;
       });
-      const sessionVolume = sessionExercises.reduce((sum, ex) => {
+      const exerciseVolume = sessionExercises.reduce((sum, ex) => {
         return sum + (ex.distance_m || 0) * (ex.sets || 0) * (ex.repetitions || 0);
       }, 0);
-      weekData.volume += sessionVolume;
+      
+      // Calcola volume da metrics (per sessioni test/gara)
+      const sessionMetrics = distanceFilteredMetrics.filter(m => m.session_id === session.id);
+      const metricVolume = sessionMetrics.reduce((sum, m) => sum + (m.distance_m || 0), 0);
+      
+      weekData.volume += exerciseVolume + metricVolume;
     });
 
     const weeklyVolume = Array.from(weeklyVolumeMap.entries())
