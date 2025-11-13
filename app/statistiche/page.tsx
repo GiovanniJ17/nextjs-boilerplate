@@ -553,7 +553,7 @@ export default function StatistichePage() {
 
     // 1. Volume settimanale
     const weeklyVolumeMap = new Map<string, { volume: number; sessions: Set<string> }>();
-    sessions.forEach(session => {
+    sessionsToAnalyze.forEach(session => {
       if (!session.date) return;
       const date = new Date(session.date);
       // Calcola il lunedì della settimana
@@ -742,11 +742,29 @@ export default function StatistichePage() {
             .in('block_id', prevBlockIds);
 
           if (prevExercises) {
-            const prevVolume = (prevExercises as any[]).reduce((sum, ex) => 
+            // Filtra gli esercizi del periodo precedente per distanza
+            const filteredPrevExercises = (prevExercises as any[]).filter(ex => 
+              matchesDistance(ex.distance_m, distanceFilter)
+            );
+            
+            // Conta solo le sessioni che hanno esercizi con la distanza filtrata
+            const prevSessionIdsWithContent = new Set();
+            if (prevBlocks) {
+              (prevBlocks as any[]).forEach(block => {
+                const hasMatchingExercise = filteredPrevExercises.some(
+                  ex => ex.block_id === block.id
+                );
+                if (hasMatchingExercise && block.session_id) {
+                  prevSessionIdsWithContent.add(block.session_id);
+                }
+              });
+            }
+            
+            const prevVolume = filteredPrevExercises.reduce((sum, ex) => 
               sum + (ex.distance_m || 0) * (ex.sets || 0) * (ex.repetitions || 0), 0
             );
             
-            const prevIntensities = (prevExercises as any[])
+            const prevIntensities = filteredPrevExercises
               .map(ex => ex.intensity)
               .filter((v): v is number => typeof v === 'number');
             const prevAvgIntensity = prevIntensities.length
@@ -754,7 +772,7 @@ export default function StatistichePage() {
               : 0;
 
             comparisonPreviousPeriod = {
-              sessions: prevSessions.length,
+              sessions: distanceFilter === 'all' ? prevSessions.length : prevSessionIdsWithContent.size,
               volume: prevVolume,
               avgIntensity: prevAvgIntensity,
             };
@@ -766,7 +784,7 @@ export default function StatistichePage() {
     // 10. Performance per giorno della settimana
     const performanceByDay = new Map<number, { times: number[]; count: number }>();
     
-    sessions.forEach(session => {
+    sessionsToAnalyze.forEach(session => {
       if (!session.date) return;
       const dayOfWeek = new Date(session.date).getDay();
       
@@ -895,7 +913,7 @@ export default function StatistichePage() {
 
     // 2. Analisi recupero
     const recoveryData: { sessionId: string; value: number; type: 'rep' | 'set' }[] = [];
-    sessions.forEach(session => {
+    sessionsToAnalyze.forEach(session => {
       const sessionExercises = distanceFilteredExercises.filter(ex => {
         if (!ex.block_id) return false;
         return blockIdToSessionId.get(ex.block_id) === session.id;
@@ -956,7 +974,7 @@ export default function StatistichePage() {
 
     // 5. Statistiche per località (placeholder - da implementare con location field)
     const locationData: { location: string; sessionId: string; avgTime: number | null }[] = [];
-    sessions.forEach(session => {
+    sessionsToAnalyze.forEach(session => {
       const sessionPerfs = performances.filter(p => {
         const exercise = Array.from(exerciseById.values()).find(ex => {
           if (!ex.block_id) return false;
@@ -977,7 +995,7 @@ export default function StatistichePage() {
     });
     const locationStats = analyzeLocationStats(locationData);
 
-    // 6. Progressi mensili - RAGGRUPPA PER SESSIONE
+    // 6. Progressi mensili - RAGGRUPPA PER SESSIONE (solo quelle con contenuto filtrato)
     const sessionProgressMap = new Map<string, {
       date: string;
       totalDistance: number;
@@ -985,7 +1003,12 @@ export default function StatistichePage() {
       hasPB: boolean;
     }>();
     
-    sessions.forEach(session => {
+    // Filtra le sessioni in base al filtro distanza
+    const sessionsToAnalyze = distanceFilter === 'all' 
+      ? sessions 
+      : sessions.filter(s => sessionIdsWithFilteredContent.has(s.id));
+    
+    sessionsToAnalyze.forEach(session => {
       if (!session.date) return;
       
       // Trova tutte le performance di questa sessione
