@@ -163,12 +163,11 @@ const sessionTypes = [
 ];
 
 const disciplineTypes = [
+  { value: 'ripetute_scioltezza', label: 'Ripetute in scioltezza' },
   { value: 'accelerazioni', label: 'Accelerazioni' },
-  { value: 'partenze', label: 'Partenze dai blocchi' },
-  { value: 'allunghi', label: 'Allunghi / progressioni' },
-  { value: 'resistenza', label: 'Resistenza lattacida' },
+  { value: 'ripetute_standard', label: 'Ripetute standard' },
   { value: 'tecnica', label: 'Tecnica di corsa' },
-  { value: 'mobilità', label: 'Mobilità specifica' },
+  { value: 'resistenza', label: 'Resistenza' },
 ];
 
 const metricCategories: MetricCategory[] = [
@@ -284,7 +283,7 @@ const defaultExerciseResult: ExerciseResultForm = {
 
 const defaultExercise: ExerciseForm = {
   name: '',
-  discipline_type: 'accelerazioni',
+  discipline_type: '',
   distance_m: '',
   sets: '1',
   repetitions: '1',
