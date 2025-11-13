@@ -1,8 +1,19 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { MainNav } from "@/components/MainNav";
 import { AppToaster } from "@/components/ui/app-toaster";
 import { ThemeProvider } from "@/components/theme-provider";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#0ea5e9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
+  colorScheme: "light dark",
+};
 
 export const metadata: Metadata = {
   title: {
@@ -14,12 +25,6 @@ export const metadata: Metadata = {
   authors: [{ name: "Tracker Velocista" }],
   creator: "Tracker Velocista",
   publisher: "Tracker Velocista",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#0ea5e9" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
-  ],
-  colorScheme: "light dark",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

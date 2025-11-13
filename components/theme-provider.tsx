@@ -24,19 +24,21 @@ export function ThemeProvider({
   storageKey = "tracker-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme);
+  const [theme, setTheme] = useState<Theme>(() => defaultTheme);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem(storageKey) as Theme | null;
-    if (stored) {
-      setTheme(stored);
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(storageKey) as Theme | null;
+      if (stored) {
+        setTheme(stored);
+      }
     }
   }, [storageKey]);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || typeof window === "undefined") return;
 
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
@@ -55,20 +57,17 @@ export function ThemeProvider({
   const value = {
     theme,
     setTheme: (newTheme: Theme) => {
-      localStorage.setItem(storageKey, newTheme);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(storageKey, newTheme);
+      }
       setTheme(newTheme);
     },
-    resolvedTheme: (() => {
-      if (theme === "system") {
-        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-      }
-      return theme;
-    })(),
+    resolvedTheme: typeof window !== "undefined" && theme === "system"
+      ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+      : theme === "system" 
+      ? "light" 
+      : theme,
   };
-
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
