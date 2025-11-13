@@ -1110,13 +1110,15 @@ export default function StoricoPage() {
                             animate="visible"
                             exit="exit"
                           >
-                          <div className="grid gap-4 py-4 lg:grid-cols-2">
-                            <div className="space-y-3">
-                              <h3 className="text-sm font-semibold text-slate-700">Blocchi ed Esercizi</h3>
-                              {session.exercise_blocks.length === 0 ? (
-                                <p className="text-xs text-slate-500">Nessun blocco registrato.</p>
-                              ) : (
-                                session.exercise_blocks
+                          {/* Grid dinamico: 1 colonna se solo esercizi O solo metriche, 2 colonne se entrambi */}
+                          <div className={cn(
+                            "grid gap-4 py-4",
+                            session.exercise_blocks.length > 0 && session.metrics.length > 0 ? "lg:grid-cols-2" : "lg:grid-cols-1"
+                          )}>
+                            {session.exercise_blocks.length > 0 && (
+                              <div className="space-y-3">
+                                <h3 className="text-sm font-semibold text-slate-700">Blocchi ed Esercizi</h3>
+                                {session.exercise_blocks
                                   .sort((a, b) => (a.block_number ?? 0) - (b.block_number ?? 0))
                                   .map(block => (
                                     <div
@@ -1254,16 +1256,14 @@ export default function StoricoPage() {
                                         </div>
                                       )}
                                     </div>
-                                  ))
-                              )}
-                            </div>
+                                  ))}
+                              </div>
+                            )}
 
-                            <div className="space-y-3">
-                              <h3 className="text-sm font-semibold text-slate-700">Metriche collegate</h3>
-                              {session.metrics.length === 0 ? (
-                                <p className="text-xs text-slate-500">Nessuna metrica associata.</p>
-                              ) : (
-                                session.metrics.map(metric => {
+                            {session.metrics.length > 0 && (
+                              <div className="space-y-3">
+                                <h3 className="text-sm font-semibold text-slate-700">Metriche collegate</h3>
+                                {session.metrics.map(metric => {
                                   const categoryKey = metric.category ?? 'altro';
                                   const token = metricCategoryTokens[categoryKey] ?? metricCategoryTokens.altro;
                                   const CategoryIcon = metricCategoryIconsMap[categoryKey] ?? FileText;
@@ -1340,9 +1340,9 @@ export default function StoricoPage() {
                                       )}
                                     </div>
                                   );
-                                })
-                              )}
-                            </div>
+                                })}
+                              </div>
+                            )}
                           </div>
                         </motion.div>
                       )}
