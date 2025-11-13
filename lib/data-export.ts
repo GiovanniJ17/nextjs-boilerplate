@@ -6,6 +6,12 @@ export async function exportToExcel() {
   try {
     console.log("Starting Excel export...");
     
+    // Check se Supabase è configurato
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || 
+        process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co') {
+      throw new Error("Supabase non configurato. Aggiungi le variabili d'ambiente NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    }
+    
     // Fetch tutti i dati
     const { data: sessions, error } = await supabase
       .from("allenamenti")
@@ -14,7 +20,7 @@ export async function exportToExcel() {
 
     console.log("Fetched sessions:", sessions?.length, "Error:", error);
 
-    if (error) throw error;
+    if (error) throw new Error(`Errore database: ${error.message}`);
     if (!sessions || sessions.length === 0) {
       throw new Error("Nessun allenamento da esportare");
     }
@@ -142,6 +148,12 @@ export async function exportToExcel() {
 // Backup completo dei dati
 export async function backupData() {
   try {
+    // Check se Supabase è configurato
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || 
+        process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co') {
+      throw new Error("Supabase non configurato. Aggiungi le variabili d'ambiente nelle impostazioni di Cloudflare Pages");
+    }
+    
     const { data: sessions, error } = await supabase
       .from("allenamenti")
       .select("*")
@@ -177,6 +189,12 @@ export async function backupData() {
 // Restore dati da backup
 export async function restoreData(file: File): Promise<{ success: boolean; error?: string; count?: number; duplicates?: number }> {
   try {
+    // Check se Supabase è configurato
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || 
+        process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co') {
+      throw new Error("Supabase non configurato. Aggiungi le variabili d'ambiente nelle impostazioni di Cloudflare Pages");
+    }
+    
     const text = await file.text();
     const backup = JSON.parse(text);
 
