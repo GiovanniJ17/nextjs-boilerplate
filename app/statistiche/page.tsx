@@ -293,9 +293,18 @@ export default function StatistichePage() {
   const loadStats = useCallback(async () => {
     setLoading(true);
 
+    // Ottimizzazione: single query con join invece di 3 query separate
     let sessionQuery = supabase
       .from('training_sessions')
-      .select('id, date, type, block_id')
+      .select(`
+        id, date, type, block_id,
+        exercise_blocks:exercise_blocks (
+          id, session_id, block_number, name, rest_after_block_s,
+          exercises:exercises (
+            id, block_id, exercise_number, discipline_type, distance_m, sets, repetitions, intensity, rest_between_sets_s
+          )
+        )
+      `)
       .order('date', { ascending: false });
 
     if (fromDate) sessionQuery = sessionQuery.gte('date', fromDate);
@@ -311,39 +320,27 @@ export default function StatistichePage() {
       return;
     }
 
-    const sessions = sessionsData as SessionRow[];
+    const sessions = sessionsData as any[];
     const sessionIds = sessions.map(session => session.id);
 
+    // Flatten exercise_blocks e exercises per elaborazione
     let exercises: ExerciseRow[] = [];
     let blocks: ExerciseBlockRow[] = [];
     const blockIdToSessionId = new Map<string, string>();
     
-    if (sessionIds.length > 0) {
-      const { data: blocksData } = await supabase
-        .from('exercise_blocks')
-        .select('id, session_id, block_number, name, rest_after_block_s')
-        .in('session_id', sessionIds)
-        .order('block_number', { ascending: true });
-      
-      if (blocksData && blocksData.length > 0) {
-        blocks = blocksData as ExerciseBlockRow[];
-        blocks.forEach(block => {
+    sessions.forEach(session => {
+      if (session.exercise_blocks) {
+        session.exercise_blocks.forEach((block: any) => {
+          blocks.push(block);
           if (block.session_id) {
             blockIdToSessionId.set(block.id, block.session_id);
           }
+          if (block.exercises) {
+            exercises.push(...block.exercises);
+          }
         });
-        
-        const blockIds = blocks.map(block => block.id);
-        const { data: exercisesData } = await supabase
-          .from('exercises')
-          .select('id, block_id, exercise_number, discipline_type, distance_m, sets, repetitions, intensity, rest_between_sets_s')
-          .in('block_id', blockIds)
-          .order('exercise_number', { ascending: true });
-        if (exercisesData) {
-          exercises = exercisesData as ExerciseRow[];
-        }
       }
-    }
+    });
 
     let results: ResultRow[] = [];
     const exerciseIds = exercises.map(exercise => exercise.id);
