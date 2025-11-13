@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { MainNav } from "@/components/MainNav";
 import { AppToaster } from "@/components/ui/app-toaster";
+import { OfflineIndicator } from "@/components/ui/offline-indicator";
 
 export const metadata: Metadata = {
   title: {
@@ -65,6 +66,7 @@ export default function RootLayout({
         <MainNav />
         <main className="page-shell mx-auto max-w-5xl px-4 py-8">{children}</main>
         <AppToaster />
+        <OfflineIndicator />
       </body>
     </html>
   );

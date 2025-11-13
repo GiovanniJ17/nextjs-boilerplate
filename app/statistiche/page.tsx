@@ -67,6 +67,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StatsSkeleton } from '@/components/ui/skeleton';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { DataManagement } from '@/components/ui/data-management';
 import {
   LineChart,
   Line,
@@ -1622,6 +1623,23 @@ export default function StatistichePage() {
             </div>
           </div>
 
+        </CardContent>
+      </Card>
+      </motion.div>
+
+      {/* DATA MANAGEMENT SECTION */}
+      <motion.div variants={fadeInUp}>
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base text-slate-800">
+            <Download className="h-5 w-5 text-sky-600" /> Gestione Dati
+          </CardTitle>
+          <p className="text-xs text-slate-600 mt-1">
+            Esporta, backup e ripristina i tuoi allenamenti
+          </p>
+        </CardHeader>
+        <CardContent>
+          <DataManagement />
         </CardContent>
       </Card>
       </motion.div>
