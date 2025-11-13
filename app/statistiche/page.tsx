@@ -482,33 +482,47 @@ export default function StatistichePage() {
 
     const metricsCount = metrics.length;
 
-    const highIntensitySessionIds = new Set<string>();
+    // Mappa session ID -> data per contare giorni invece di sessioni
+    const sessionIdToDate = new Map<string, string>();
+    sessionsToAnalyze.forEach(s => {
+      if (s.id && s.date) sessionIdToDate.set(s.id, s.date);
+    });
+
+    const highIntensityDates = new Set<string>();
     distanceFilteredExercises.forEach(exercise => {
       if ((exercise.intensity || 0) >= 8 && exercise.block_id) {
         const sessionId = blockIdToSessionId.get(exercise.block_id);
-        if (sessionId) highIntensitySessionIds.add(sessionId);
+        if (sessionId) {
+          const date = sessionIdToDate.get(sessionId);
+          if (date) highIntensityDates.add(date);
+        }
       }
     });
     distanceFilteredMetrics.forEach(metric => {
       if ((metric.intensity || 0) >= 8 && metric.session_id) {
-        highIntensitySessionIds.add(metric.session_id);
+        const date = sessionIdToDate.get(metric.session_id);
+        if (date) highIntensityDates.add(date);
       }
     });
-    const highIntensitySessions = highIntensitySessionIds.size;
+    const highIntensitySessions = highIntensityDates.size;
 
-    const lowIntensitySessionIds = new Set<string>();
+    const lowIntensityDates = new Set<string>();
     distanceFilteredExercises.forEach(exercise => {
       if ((exercise.intensity || 0) <= 4 && exercise.block_id) {
         const sessionId = blockIdToSessionId.get(exercise.block_id);
-        if (sessionId) lowIntensitySessionIds.add(sessionId);
+        if (sessionId) {
+          const date = sessionIdToDate.get(sessionId);
+          if (date) lowIntensityDates.add(date);
+        }
       }
     });
     distanceFilteredMetrics.forEach(metric => {
       if ((metric.intensity || 0) <= 4 && metric.session_id) {
-        lowIntensitySessionIds.add(metric.session_id);
+        const date = sessionIdToDate.get(metric.session_id);
+        if (date) lowIntensityDates.add(date);
       }
     });
-    const lowIntensitySessions = lowIntensitySessionIds.size;
+    const lowIntensitySessions = lowIntensityDates.size;
 
     const typeBreakdownMap = sessions.reduce<Record<string, number>>((acc, session) => {
       const key = session.type ?? 'Altro';
@@ -557,7 +571,7 @@ export default function StatistichePage() {
     // ============================================
 
     // 1. Volume settimanale
-    const weeklyVolumeMap = new Map<string, { volume: number; sessions: Set<string> }>();
+    const weeklyVolumeMap = new Map<string, { volume: number; dates: Set<string> }>();
     sessionsToAnalyze.forEach(session => {
       if (!session.date) return;
       const date = new Date(session.date);
@@ -569,11 +583,11 @@ export default function StatistichePage() {
       const weekKey = monday.toISOString().split('T')[0];
       
       if (!weeklyVolumeMap.has(weekKey)) {
-        weeklyVolumeMap.set(weekKey, { volume: 0, sessions: new Set() });
+        weeklyVolumeMap.set(weekKey, { volume: 0, dates: new Set() });
       }
       
       const weekData = weeklyVolumeMap.get(weekKey)!;
-      weekData.sessions.add(session.id);
+      weekData.dates.add(session.date);
       
       // Calcola volume per questa sessione
       const sessionExercises = distanceFilteredExercises.filter(ex => {
@@ -590,7 +604,7 @@ export default function StatistichePage() {
       .map(([week, data]) => ({
         week: new Date(week).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
         volume: data.volume,
-        sessions: data.sessions.size,
+        sessions: data.dates.size,
       }))
       .sort((a, b) => new Date(a.week).getTime() - new Date(b.week).getTime())
       .slice(-8); // Ultime 8 settimane
@@ -735,7 +749,7 @@ export default function StatistichePage() {
         
         const { data: prevBlocks } = await supabase
           .from('exercise_blocks')
-          .select('id')
+          .select('id, session_id')
           .in('session_id', prevSessionIds);
 
         if (prevBlocks && prevBlocks.length > 0) {
@@ -743,7 +757,7 @@ export default function StatistichePage() {
           
           const { data: prevExercises } = await supabase
             .from('exercises')
-            .select('distance_m, sets, repetitions, intensity')
+            .select('distance_m, sets, repetitions, intensity, block_id')
             .in('block_id', prevBlockIds);
 
           if (prevExercises) {
@@ -753,15 +767,38 @@ export default function StatistichePage() {
             );
             
             // Conta solo le sessioni che hanno esercizi con la distanza filtrata
-            const prevSessionIdsWithContent = new Set();
+            const prevSessionIdsWithContent = new Set<string>();
+            const prevBlockIdToSessionId = new Map<string, string>();
             if (prevBlocks) {
               (prevBlocks as any[]).forEach(block => {
+                if (block.id && block.session_id) {
+                  prevBlockIdToSessionId.set(block.id, block.session_id);
+                }
                 const hasMatchingExercise = filteredPrevExercises.some(
-                  ex => ex.block_id === block.id
+                  (ex: any) => ex.block_id === block.id
                 );
                 if (hasMatchingExercise && block.session_id) {
                   prevSessionIdsWithContent.add(block.session_id);
                 }
+              });
+            }
+            
+            // Mappa session ID -> data per periodo precedente
+            const prevSessionIdToDate = new Map<string, string>();
+            prevSessions.forEach((s: any) => {
+              if (s.id && s.date) prevSessionIdToDate.set(s.id, s.date);
+            });
+            
+            // Conta giorni di allenamento unici nel periodo precedente
+            const prevUniqueDates = new Set<string>();
+            if (distanceFilter === 'all') {
+              prevSessions.forEach((s: any) => {
+                if (s.date) prevUniqueDates.add(s.date);
+              });
+            } else {
+              prevSessionIdsWithContent.forEach(sessionId => {
+                const date = prevSessionIdToDate.get(sessionId);
+                if (date) prevUniqueDates.add(date);
               });
             }
             
@@ -777,7 +814,7 @@ export default function StatistichePage() {
               : 0;
 
             comparisonPreviousPeriod = {
-              sessions: distanceFilter === 'all' ? prevSessions.length : prevSessionIdsWithContent.size,
+              sessions: prevUniqueDates.size,
               volume: prevVolume,
               avgIntensity: prevAvgIntensity,
             };
@@ -1735,7 +1772,7 @@ export default function StatistichePage() {
                             }}
                             formatter={(value: any, name: string) => {
                               if (name === 'volume') return [`${(Number(value) / 1000).toFixed(1)} km`, 'Volume'];
-                              if (name === 'sessions') return [value, 'Sessioni'];
+                              if (name === 'sessions') return [value, 'Giorni'];
                               return [value, name];
                             }}
                           />
@@ -1756,7 +1793,7 @@ export default function StatistichePage() {
                             dataKey="sessions" 
                             fill="#8b5cf6" 
                             radius={[8, 8, 0, 0]}
-                            name="Sessioni"
+                            name="Giorni"
                           />
                         </RechartsBarChart>
                       </ResponsiveContainer>
