@@ -1,112 +1,86 @@
--- Estensione per UUID (se non già attiva)
-create extension if not exists "uuid-ossp";
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
 
--- ==========================================
--- 1. Blocchi di allenamento (macro / mesocicli)
--- ==========================================
-create table training_blocks (
-  id uuid primary key default uuid_generate_v4(),
-  name text not null,                 -- es: "Preparazione indoor Gennaio"
-  start_date date not null,
-  end_date date not null,
-  goal text,                          -- es: "Migliorare velocità sui 60m"
+CREATE TABLE public.exercise_blocks (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  session_id uuid,
+  block_number integer NOT NULL,
+  name text,
+  rest_after_block_s integer,
   notes text,
-  created_at timestamp with time zone default now()
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT exercise_blocks_pkey PRIMARY KEY (id),
+  CONSTRAINT exercise_blocks_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.training_sessions(id)
 );
-
--- ==========================================
--- 2. Sessioni giornaliere
--- ==========================================
-create table training_sessions (
-  id uuid primary key default uuid_generate_v4(),
-  block_id uuid references training_blocks(id) on delete set null,
-  date date not null,
-  type text check (type in ('pista', 'palestra', 'test', 'gara', 'scarico', 'recupero', 'altro')),
-  title text,                         -- es: "Test 150m e 60m"
-  location text,
-  phase text,                         -- es: "accumulo", "intensificazione", "gara"
+CREATE TABLE public.exercise_results (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  exercise_id uuid,
+  set_number integer,
+  repetition_number integer,
+  time_s numeric,
+  weight_kg numeric,
+  rpe numeric CHECK (rpe >= 0::numeric AND rpe <= 10::numeric),
   notes text,
-  created_at timestamp with time zone default now()
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT exercise_results_pkey PRIMARY KEY (id),
+  CONSTRAINT exercise_results_exercise_id_fkey FOREIGN KEY (exercise_id) REFERENCES public.exercises(id)
 );
-
-create index idx_training_sessions_date on training_sessions(date);
-
--- ==========================================
--- 3. Blocchi di esercizi (gruppi di esercizi in sequenza)
--- ==========================================
-create table exercise_blocks (
-  id uuid primary key default uuid_generate_v4(),
-  session_id uuid references training_sessions(id) on delete cascade,
-  block_number int not null,              -- ordine del blocco nella sessione (1, 2, 3...)
-  name text,                              -- es: "Riscaldamento", "Parte principale", "Serie velocità"
-  rest_after_block_s int,                 -- recupero dopo questo blocco (prima del prossimo)
+CREATE TABLE public.exercises (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  discipline_type text CHECK (discipline_type = ANY (ARRAY['accelerazioni'::text, 'partenze'::text, 'allunghi'::text, 'resistenza'::text, 'tecnica'::text, 'mobilità'::text])),
+  distance_m integer,
+  sets integer DEFAULT 1,
+  repetitions integer DEFAULT 1,
+  rest_between_reps_s integer,
+  rest_between_sets_s integer,
+  intensity numeric CHECK (intensity >= 0::numeric AND intensity <= 10::numeric),
+  effort_type text CHECK (effort_type = ANY (ARRAY['basso'::text, 'medio'::text, 'alto'::text, 'massimo'::text])),
   notes text,
-  created_at timestamp with time zone default now()
+  created_at timestamp with time zone DEFAULT now(),
+  block_id uuid NOT NULL,
+  exercise_number integer NOT NULL,
+  CONSTRAINT exercises_pkey PRIMARY KEY (id),
+  CONSTRAINT exercises_block_id_fkey FOREIGN KEY (block_id) REFERENCES public.exercise_blocks(id)
 );
-
-create index idx_exercise_blocks_session on exercise_blocks(session_id);
-create index idx_exercise_blocks_order on exercise_blocks(session_id, block_number);
-
--- ==========================================
--- 4. Dettagli esercizi (all'interno dei blocchi)
--- ==========================================
-create table exercises (
-  id uuid primary key default uuid_generate_v4(),
-  block_id uuid references exercise_blocks(id) on delete cascade,
-  exercise_number int not null,            -- ordine dell'esercizio nel blocco (1, 2, 3...)
-  name text not null,                      -- es: "3x80m", "Squat", "100m"
-  discipline_type text check (discipline_type in ('accelerazioni', 'partenze', 'allunghi', 'resistenza', 'tecnica', 'mobilità')),
-  distance_m int,
-  sets int default 1,
-  repetitions int default 1,
-  rest_between_reps_s int,                 -- recupero tra ripetizioni dentro la serie
-  rest_between_sets_s int,                 -- recupero tra serie
-  intensity numeric(3,1) check (intensity >= 0 and intensity <= 10),
-  effort_type text check (effort_type in ('basso', 'medio', 'alto', 'massimo')),
-  notes text,
-  created_at timestamp with time zone default now()
-);
-
-create index idx_exercises_block on exercises(block_id);
-create index idx_exercises_order on exercises(block_id, exercise_number);
-
--- ==========================================
--- 5. Risultati puntuali degli esercizi
--- ==========================================
-create table exercise_results (
-  id uuid primary key default uuid_generate_v4(),
-  exercise_id uuid references exercises(id) on delete cascade,
-  set_number int,                          -- numero della serie (1, 2, 3...)
-  repetition_number int,                   -- numero della ripetizione (1, 2, 3...)
-  time_s numeric(6,2),
-  weight_kg numeric(6,2),
-  rpe numeric(3,1) check (rpe >= 0 and rpe <= 10),
-  notes text,
-  created_at timestamp with time zone default now()
-);
-
-create index idx_results_exercise on exercise_results(exercise_id);
-create index idx_results_order on exercise_results(exercise_id, set_number, repetition_number);
-
--- ==========================================
--- 6. Metriche, test e gare associati alla sessione
--- ==========================================
-create table metrics (
-  id uuid primary key default uuid_generate_v4(),
-  session_id uuid references training_sessions(id) on delete cascade,
-  date date not null,
-  metric_name text not null,
-  category text check (category in ('gara', 'test', 'massimale')),
+CREATE TABLE public.metrics (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  session_id uuid,
+  date date NOT NULL,
+  metric_name text NOT NULL,
+  category text CHECK (category = ANY (ARRAY['gara'::text, 'test'::text, 'massimale'::text])),
   metric_target text,
-  value numeric(10,2),
+  value numeric,
   unit text,
-  distance_m int,
-  time_s numeric(6,2),
-  recovery_post_s int,
-  intensity numeric(3,1) check (intensity >= 0 and intensity <= 10),
+  distance_m integer,
+  time_s numeric,
+  recovery_post_s integer,
+  intensity numeric CHECK (intensity >= 0::numeric AND intensity <= 10::numeric),
   notes text,
-  created_at timestamp with time zone default now()
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT metrics_pkey PRIMARY KEY (id),
+  CONSTRAINT metrics_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.training_sessions(id)
 );
-
-create index idx_metrics_session on metrics(session_id);
-create index idx_metrics_date on metrics(date);
+CREATE TABLE public.training_blocks (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  start_date date NOT NULL,
+  end_date date NOT NULL,
+  goal text,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT training_blocks_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.training_sessions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  block_id uuid,
+  date date NOT NULL,
+  type text CHECK (type = ANY (ARRAY['pista'::text, 'palestra'::text, 'test'::text, 'gara'::text, 'scarico'::text, 'recupero'::text, 'altro'::text])),
+  title text,
+  location text,
+  phase text,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT training_sessions_pkey PRIMARY KEY (id),
+  CONSTRAINT training_sessions_block_id_fkey FOREIGN KEY (block_id) REFERENCES public.training_blocks(id)
+);
