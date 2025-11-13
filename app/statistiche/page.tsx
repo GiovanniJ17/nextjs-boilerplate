@@ -91,10 +91,14 @@ import {
 } from '@/lib/animations';
 
 const distanceOptions = [
-  { value: 'all', label: 'Tutte le distanze' },
+  { value: 'all', label: 'Tutte' },
+  { value: '60', label: '60m' },
+  { value: '100', label: '100m' },
+  { value: '200', label: '200m' },
+  { value: '400', label: '400m' },
   { value: 'short', label: 'Sprint corti (< 80m)' },
-  { value: 'mid', label: 'Sprint medi (80-200m)' },
-  { value: 'long', label: 'Sprint lunghi (> 200m)' },
+  { value: 'mid', label: 'Medi (80-200m)' },
+  { value: 'long', label: 'Lunghi (> 200m)' },
 ];
 
 const sessionTypeFilters = [
@@ -109,9 +113,13 @@ const sessionTypeFilters = [
 ];
 
 const rangePresets = [
+  { key: '7', label: 'Ultimi 7 giorni', days: 7 },
+  { key: '14', label: 'Ultimi 14 giorni', days: 14 },
   { key: '30', label: 'Ultimi 30 giorni', days: 30 },
   { key: '90', label: 'Ultimi 90 giorni', days: 90 },
-  { key: 'season', label: 'Stagione in corso', monthsBack: 6 },
+  { key: 'month', label: 'Questo mese', type: 'current-month' as const },
+  { key: 'year', label: 'Quest\'anno', type: 'current-year' as const },
+  { key: 'season', label: 'Stagione (6 mesi)', monthsBack: 6 },
 ];
 
 type TrainingBlock = {
@@ -255,6 +263,12 @@ type StatsSnapshot = {
 
 function matchesDistance(distance: number | null, filter: string) {
   if (filter === 'all' || distance == null) return true;
+  // Distanze specifiche (con tolleranza ±5m)
+  if (filter === '60') return distance >= 55 && distance <= 65;
+  if (filter === '100') return distance >= 95 && distance <= 105;
+  if (filter === '200') return distance >= 195 && distance <= 205;
+  if (filter === '400') return distance >= 395 && distance <= 405;
+  // Categorie generiche
   if (filter === 'short') return distance < 80;
   if (filter === 'mid') return distance >= 80 && distance <= 200;
   if (filter === 'long') return distance > 200;
@@ -1221,6 +1235,12 @@ export default function StatistichePage() {
     } else if (preset?.monthsBack) {
       start = new Date(today);
       start.setMonth(today.getMonth() - preset.monthsBack, 1);
+    } else if ((preset as any)?.type === 'current-month') {
+      // Primo giorno del mese corrente
+      start = new Date(today.getFullYear(), today.getMonth(), 1);
+    } else if ((preset as any)?.type === 'current-year') {
+      // Primo giorno dell'anno corrente
+      start = new Date(today.getFullYear(), 0, 1);
     }
 
     setRangePreset(key);
@@ -1249,12 +1269,16 @@ export default function StatistichePage() {
 
   const tabs = useMemo(
     () => [
-      { key: 'base', label: 'Panoramica' },
-      { key: 'graphs', label: 'Grafici' },
-      { key: 'advanced', label: 'Analisi Avanzate' },
-      { key: 'insights', label: 'Insights & Consigli' },
+      { key: 'base', label: 'Panoramica', badge: null },
+      { key: 'graphs', label: 'Grafici', badge: null },
+      { key: 'advanced', label: 'Analisi Avanzate', badge: null },
+      { 
+        key: 'insights', 
+        label: 'Insights & Consigli', 
+        badge: stats?.smartInsights?.length || stats?.alerts?.length || null 
+      },
     ],
-    []
+    [stats]
   );
 
   const topType = useMemo(() => {
@@ -1588,9 +1612,25 @@ export default function StatistichePage() {
       >
       <Card className="border-slate-200 shadow-lg">
         <CardHeader className="pb-2.5">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-slate-800">
-            <TrendingUp className="h-5 w-5 text-sky-600" strokeWidth={2} /> Andamento
-          </CardTitle>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-slate-800">
+              <TrendingUp className="h-5 w-5 text-sky-600" strokeWidth={2} /> Andamento
+            </CardTitle>
+            {stats && (
+              <div className="text-sm text-slate-600">
+                {stats.totalSessions > 0 ? (
+                  <span>
+                    Analizzando <strong className="text-sky-600">{stats.totalSessions}</strong> {stats.totalSessions === 1 ? 'sessione' : 'sessioni'}
+                  </span>
+                ) : (
+                  <span className="text-amber-600">
+                    <AlertTriangle className="inline h-4 w-4 mr-1" />
+                    Nessuna sessione nel periodo selezionato
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-1.5 sm:gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-xs sm:text-sm">
@@ -1605,7 +1645,19 @@ export default function StatistichePage() {
                     : 'text-slate-600 hover:bg-white'
                 }`}
               >
-                {tab.label}
+                <span className="flex items-center justify-center gap-1.5">
+                  {tab.label}
+                  {tab.badge && tab.badge > 0 && (
+                    <span className={cn(
+                      'inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold',
+                      activeTab === tab.key
+                        ? 'bg-white text-sky-600'
+                        : 'bg-amber-500 text-white'
+                    )}>
+                      {tab.badge}
+                    </span>
+                  )}
+                </span>
               </button>
             ))}
           </div>
