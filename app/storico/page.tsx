@@ -1021,7 +1021,7 @@ export default function StoricoPage() {
                               </span>
                               <span
                                 className={cn(
-                                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium w-fit',
+                                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium w-fit self-center',
                                   typeToken ? `${typeToken.bg} ${typeToken.text}` : 'bg-slate-200 text-slate-600'
                                 )}
                               >
@@ -1090,7 +1090,7 @@ export default function StoricoPage() {
                           type="button"
                           onClick={() => requestDeleteSession(session.id)}
                           disabled={deletingSessionId === session.id}
-                          className="flex-shrink-0 mt-3 inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 p-2 sm:p-2.5 text-rose-600 transition-colors hover:bg-rose-100 active:bg-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation"
+                          className="flex-shrink-0 self-center inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 p-2 sm:p-2.5 text-rose-600 transition-colors hover:bg-rose-100 active:bg-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation"
                           aria-label="Elimina sessione"
                         >
                           {deletingSessionId === session.id ? (
