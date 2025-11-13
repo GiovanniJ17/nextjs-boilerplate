@@ -180,28 +180,28 @@ export async function restoreData(file: File): Promise<{ success: boolean; error
 
     // Fetch existing sessions per check duplicati
     const { data: existingSessions } = await supabase
-      .from("allenamenti")
-      .select("data, tipo_allenamento, distanza_totale");
+      .from("training_sessions")
+      .select("date, type, location");
 
     const existingKeys = new Set(
-      existingSessions?.map((s) => `${s.data}-${s.tipo_allenamento}-${s.distanza_totale}`) || []
+      existingSessions?.map((s) => `${s.date}-${s.type}-${s.location}`) || []
     );
 
     let imported = 0;
     let duplicates = 0;
 
     for (const session of backup.sessions) {
-      const key = `${session.data}-${session.tipo_allenamento}-${session.distanza_totale}`;
+      const key = `${session.date}-${session.type}-${session.location}`;
       
       if (existingKeys.has(key)) {
         duplicates++;
         continue;
       }
 
-      // Rimuovi id per evitare conflitti
-      const { id, ...sessionData } = session;
+      // Rimuovi id, block_id e created_at per evitare conflitti
+      const { id, block_id, created_at, ...sessionData } = session;
 
-      const { error } = await supabase.from("allenamenti").insert([sessionData]);
+      const { error } = await supabase.from("training_sessions").insert([sessionData]);
 
       if (!error) {
         imported++;
