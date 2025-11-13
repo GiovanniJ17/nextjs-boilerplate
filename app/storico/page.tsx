@@ -172,9 +172,12 @@ const sessionTypeOptions = [
 ];
 
 const smartRangeOptions = [
+  { key: '7', label: 'Ultimi 7 giorni', days: 7 },
   { key: '14', label: 'Ultimi 14 giorni', days: 14 },
+  { key: '30', label: 'Ultimi 30 giorni', days: 30 },
   { key: '90', label: 'Ultimi 90 giorni', days: 90 },
-  { key: '42', label: 'Ultime 6 settimane', days: 42 },
+  { key: 'month', label: 'Questo mese', days: 'current-month' as const },
+  { key: 'year', label: 'Quest\'anno', days: 'current-year' as const },
 ];
 
 const sessionTypeTokens: Record<string, { bg: string; text: string }> = {
@@ -188,10 +191,12 @@ const sessionTypeTokens: Record<string, { bg: string; text: string }> = {
 };
 
 const quickSearches = [
-  { label: 'Ultimi test', query: 'test' },
-  { label: 'Note con "gara"', query: 'gara' },
-  { label: 'Sessioni in pista', query: 'pista' },
-  { label: 'Forza', query: 'forza' },
+  { label: 'Test', query: 'test' },
+  { label: 'Gara', query: 'gara' },
+  { label: 'Pista', query: 'pista' },
+  { label: 'Palestra', query: 'palestra' },
+  { label: 'Ripetute', query: 'ripetute' },
+  { label: 'Resistenza', query: 'resistenza' },
 ];
 
 const metricCategoryLabels: Record<string, string> = {
@@ -237,8 +242,11 @@ export default function StoricoPage() {
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const [sessionToDelete, setSessionToDelete] = useState<{ id: string; label: string } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10); // Modificabile se necessario
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [filtersExpanded, setFiltersExpanded] = useState(false); // Filtri collassati su mobile
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [sortBy, setSortBy] = useState<'date' | 'volume' | 'intensity'>('date');
 
   useEffect(() => {
     void loadBlocks();
@@ -249,6 +257,14 @@ export default function StoricoPage() {
     if (!search.trim()) {
       setActiveQuickSearch(null);
     }
+  }, [search]);
+
+  // Debouncing per la ricerca (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
   }, [search]);
 
   async function loadBlocks() {
@@ -440,8 +456,18 @@ export default function StoricoPage() {
     }
 
     const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - option.days + 1);
+    let start = new Date();
+
+    if (option.days === 'current-month') {
+      // Primo giorno del mese corrente
+      start = new Date(end.getFullYear(), end.getMonth(), 1);
+    } else if (option.days === 'current-year') {
+      // Primo giorno dell'anno corrente
+      start = new Date(end.getFullYear(), 0, 1);
+    } else {
+      // Sottrai i giorni specificati
+      start.setDate(end.getDate() - (option.days as number) + 1);
+    }
 
     setFromDate(start.toISOString().slice(0, 10));
     setToDate(end.toISOString().slice(0, 10));
@@ -508,8 +534,8 @@ export default function StoricoPage() {
   }
 
   const filteredSessions = useMemo(() => {
-    if (!search.trim()) return sessions;
-    const term = search.trim().toLowerCase();
+    if (!debouncedSearch.trim()) return sessions;
+    const term = debouncedSearch.trim().toLowerCase();
     return sessions.filter(session => {
       const sessionString = [
         session.type,
@@ -529,20 +555,72 @@ export default function StoricoPage() {
         .toLowerCase();
       return sessionString.includes(term);
     });
-  }, [search, sessions]);
+  }, [debouncedSearch, sessions]);
+
+  // Ordinamento sessioni
+  const sortedSessions = useMemo(() => {
+    const sorted = [...filteredSessions];
+    sorted.sort((a, b) => {
+      if (sortBy === 'date') {
+        const dateA = new Date(a.date ?? '').getTime();
+        const dateB = new Date(b.date ?? '').getTime();
+        return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+      } else if (sortBy === 'volume') {
+        const volumeA = a.exercise_blocks.reduce((sum, block) => {
+          return sum + block.exercises.reduce((exSum, ex) => {
+            const dist = ex.distance_m || 0;
+            const sets = ex.sets || 0;
+            const reps = ex.repetitions || 0;
+            return exSum + (dist * sets * reps);
+          }, 0);
+        }, 0);
+        const volumeB = b.exercise_blocks.reduce((sum, block) => {
+          return sum + block.exercises.reduce((exSum, ex) => {
+            const dist = ex.distance_m || 0;
+            const sets = ex.sets || 0;
+            const reps = ex.repetitions || 0;
+            return exSum + (dist * sets * reps);
+          }, 0);
+        }, 0);
+        return sortOrder === 'desc' ? volumeB - volumeA : volumeA - volumeB;
+      } else if (sortBy === 'intensity') {
+        const intensityA = a.exercise_blocks.reduce((sum, block) => {
+          const intensities = block.exercises.map(ex => ex.intensity || 0);
+          return sum + (intensities.length > 0 ? intensities.reduce((a, b) => a + b, 0) / intensities.length : 0);
+        }, 0) / (a.exercise_blocks.length || 1);
+        const intensityB = b.exercise_blocks.reduce((sum, block) => {
+          const intensities = block.exercises.map(ex => ex.intensity || 0);
+          return sum + (intensities.length > 0 ? intensities.reduce((a, b) => a + b, 0) / intensities.length : 0);
+        }, 0) / (b.exercise_blocks.length || 1);
+        return sortOrder === 'desc' ? intensityB - intensityA : intensityA - intensityB;
+      }
+      return 0;
+    });
+    return sorted;
+  }, [filteredSessions, sortBy, sortOrder]);
 
   // Calcola paginazione
-  const totalPages = Math.ceil(filteredSessions.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedSessions.length / itemsPerPage);
   const paginatedSessions = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return filteredSessions.slice(startIndex, endIndex);
-  }, [filteredSessions, currentPage, itemsPerPage]);
+    return sortedSessions.slice(startIndex, endIndex);
+  }, [sortedSessions, currentPage, itemsPerPage]);
 
   // Reset pagina quando cambiano i filtri
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, typeFilter, blockFilter, fromDate, toDate]);
+  }, [debouncedSearch, typeFilter, blockFilter, fromDate, toDate]);
+
+  // Scroll automatico all'inizio della lista quando cambia pagina
+  useEffect(() => {
+    if (currentPage > 1) {
+      const storicoSection = document.getElementById('storico-sessions-list');
+      if (storicoSection) {
+        storicoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }, [currentPage]);
 
   function toggleSession(id: string) {
     setOpenSession(prev => (prev === id ? null : id));
@@ -838,35 +916,110 @@ export default function StoricoPage() {
       </motion.div>
 
       <motion.div variants={fadeInUp}>
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
-            <FolderKanban className="h-5 w-5 text-sky-600" strokeWidth={2} /> Storico sessioni
-          </CardTitle>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-500">Vista</span>
-            {[
-              { value: 'list' as const, label: 'Compatta' },
-              { value: 'timeline' as const, label: 'Timeline' },
-            ].map(option => {
-              const isActive = viewMode === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setViewMode(option.value)}
-                  className={cn(
-                    'rounded-full border px-3 py-1 font-medium transition',
-                    isActive
-                      ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-500 hover:border-sky-200 hover:text-sky-600'
-                  )}
-                  aria-pressed={isActive}
+      <Card className="border-slate-200 shadow-sm" id="storico-sessions-list">
+        <CardHeader className="space-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
+              <FolderKanban className="h-5 w-5 text-sky-600" strokeWidth={2} /> Storico sessioni
+            </CardTitle>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-slate-500">Vista</span>
+              {[
+                { value: 'list' as const, label: 'Compatta' },
+                { value: 'timeline' as const, label: 'Timeline' },
+              ].map(option => {
+                const isActive = viewMode === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setViewMode(option.value)}
+                    className={cn(
+                      'rounded-full border px-3 py-1 font-medium transition',
+                      isActive
+                        ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-500 hover:border-sky-200 hover:text-sky-600'
+                    )}
+                    aria-pressed={isActive}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          
+          {/* Riga risultati, ordinamento e items per pagina */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-slate-200 pt-3">
+            {/* Counter risultati */}
+            <div className="text-sm text-slate-600">
+              {sortedSessions.length === sessions.length ? (
+                <span>
+                  Mostrando <strong className="text-slate-800">{sortedSessions.length}</strong> {sortedSessions.length === 1 ? 'sessione' : 'sessioni'}
+                </span>
+              ) : (
+                <span>
+                  Mostrando <strong className="text-sky-600">{sortedSessions.length}</strong> di <strong className="text-slate-800">{sessions.length}</strong> sessioni
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Ordinamento */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500">Ordina per:</span>
+                <div className="flex gap-1">
+                  {[
+                    { value: 'date' as const, label: 'Data' },
+                    { value: 'volume' as const, label: 'Volume' },
+                    { value: 'intensity' as const, label: 'Intensità' },
+                  ].map(option => {
+                    const isActive = sortBy === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setSortBy(option.value)}
+                        className={cn(
+                          'rounded-full border px-2.5 py-1 text-xs font-medium transition',
+                          isActive
+                            ? 'border-violet-500 bg-violet-50 text-violet-700 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-500 hover:border-violet-200 hover:text-violet-600'
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                    className="rounded-full border border-slate-200 bg-white px-2 py-1 text-slate-500 hover:border-violet-200 hover:text-violet-600 transition"
+                    title={sortOrder === 'desc' ? 'Discendente' : 'Ascendente'}
+                  >
+                    {sortOrder === 'desc' ? '↓' : '↑'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Items per pagina */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500">Per pagina:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 hover:border-slate-300 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                 >
-                  {option.label}
-                </button>
-              );
-            })}
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -874,9 +1027,38 @@ export default function StoricoPage() {
             <div className="flex items-center justify-center gap-3 py-20 text-sm text-slate-500">
               <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2} /> Caricamento delle sessioni...
             </div>
-          ) : filteredSessions.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 py-12 text-center text-sm text-slate-500">
-              Nessun allenamento trovato. Modifica i filtri o registra una nuova sessione!
+          ) : sortedSessions.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 py-12 px-6 text-center">
+              <div className="mx-auto max-w-md space-y-3">
+                <div className="flex justify-center">
+                  <div className="rounded-full bg-slate-200 p-3">
+                    <Search className="h-6 w-6 text-slate-400" />
+                  </div>
+                </div>
+                <h3 className="text-base font-semibold text-slate-700">
+                  {debouncedSearch ? 'Nessun risultato per la ricerca' : 'Nessuna sessione trovata'}
+                </h3>
+                <p className="text-sm text-slate-500">
+                  {debouncedSearch ? (
+                    <>
+                      Non ci sono sessioni che corrispondono a <strong className="text-slate-700">'{debouncedSearch}'</strong>.
+                      <br />Prova a modificare i filtri o la ricerca.
+                    </>
+                  ) : (
+                    'Modifica i filtri attivi o registra una nuova sessione!'
+                  )}
+                </p>
+                {(debouncedSearch || typeFilter || blockFilter || fromDate || toDate) && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={resetFilters}
+                    className="mx-auto mt-4 gap-2"
+                  >
+                    <RotateCcw className="h-4 w-4" /> Reset tutti i filtri
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             <>
@@ -1322,18 +1504,18 @@ export default function StoricoPage() {
                                             </p>
                                           </div>
                                           <div className="rounded-xl bg-slate-50 px-3 py-2">
-                                            <p className="text-[10px] uppercase text-slate-500">Target</p>
-                                            <p className="text-sm font-semibold text-slate-700">{metric.metric_target ?? '—'}</p>
-                                          </div>
-                                        </div>
-                                      )}
-                                      {isPerformanceMetric && metric.metric_target && (
-                                        <p className="mt-3 text-xs text-slate-500">Contesto: {metric.metric_target}</p>
-                                      )}
-                                      {metric.notes && (
-                                        <p className="mt-2 text-xs text-slate-500">{metric.notes}</p>
-                                      )}
-                                    </div>
+            {/* Paginazione */}
+            {sortedSessions.length > itemsPerPage && (
+              <div className="pt-4 border-t border-slate-200">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  itemsPerPage={itemsPerPage}
+                  totalItems={sortedSessions.length}
+                />
+              </div>
+            )}                      </div>
                                   );
                                 })}
                               </div>
