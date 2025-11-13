@@ -43,6 +43,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useKeyboardShortcuts } from '@/lib/keyboard-shortcuts';
+import { useAutoSave } from '@/lib/useAutoSave';
+import { AutoSaveIndicator } from '@/components/ui/auto-save-indicator';
+import { DraftRestoreDialog } from '@/components/ui/draft-restore-dialog';
+import { ShortcutsHelp } from '@/components/ui/shortcuts-help';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { notifyError, notifySuccess } from '@/lib/notifications';
@@ -617,6 +622,7 @@ export default function RegistroPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [usingCustomLocation, setUsingCustomLocation] = useState(false);
   const [customLocation, setCustomLocation] = useState('');
+  const [showDraftDialog, setShowDraftDialog] = useState(false);
 
   // Check if session type requires metrics (test/gara/massimale) instead of exercises
   const isMetricSession = isMetricSessionType(sessionForm.type);
@@ -631,9 +637,52 @@ export default function RegistroPage() {
   } as const;
   const numberFormatter = useMemo(() => new Intl.NumberFormat('it-IT'), []);
 
+  // Auto-save hook
+  const formDataForSave = useMemo(() => ({
+    sessionForm,
+    exerciseBlocks,
+    metrics,
+    isMetricSession,
+  }), [sessionForm, exerciseBlocks, metrics, isMetricSession]);
+
+  const { lastSaved, hasDraft, loadDraft, clearDraft, isSaving } = useAutoSave(formDataForSave, {
+    key: 'session-draft',
+    interval: 30000, // 30 secondi
+    enabled: true,
+  });
+
+  // Keyboard shortcuts
+  const shortcuts = [
+    {
+      key: 's',
+      ctrl: true,
+      description: 'Salva sessione',
+      action: () => void handleSubmit(),
+      preventDefault: true,
+    },
+    {
+      key: 'Escape',
+      description: 'Chiudi form blocco',
+      action: () => {
+        if (showBlockForm) {
+          setShowBlockForm(false);
+        }
+      },
+    },
+  ];
+
+  useKeyboardShortcuts(shortcuts);
+
   useEffect(() => {
     void fetchBlocks();
   }, []);
+
+  // Check draft on mount
+  useEffect(() => {
+    if (hasDraft) {
+      setShowDraftDialog(true);
+    }
+  }, [hasDraft]);
 
   useEffect(() => {
     setMetrics(prev => {
@@ -685,6 +734,21 @@ export default function RegistroPage() {
       setTrainingBlocks(data as TrainingBlock[]);
     }
     setLoadingBlocks(false);
+  }
+
+  function handleRestoreDraft() {
+    const draft = loadDraft();
+    if (draft) {
+      setSessionForm(draft.sessionForm);
+      setExerciseBlocks(draft.exerciseBlocks);
+      setMetrics(draft.metrics);
+    }
+    setShowDraftDialog(false);
+  }
+
+  function handleDiscardDraft() {
+    clearDraft();
+    setShowDraftDialog(false);
   }
 
   const volumePreview = useMemo(() => {
@@ -1571,6 +1635,10 @@ export default function RegistroPage() {
       notifySuccess('Allenamento registrato', {
         description: 'La sessione è stata aggiunta allo storico.',
       });
+      
+      // Cancella la bozza salvata
+      clearDraft();
+      
       setSessionForm(defaultSession);
       setExerciseBlocks([
         {
@@ -1654,16 +1722,24 @@ export default function RegistroPage() {
             </p>
           </div>
 
-          <motion.div 
-            className="rounded-3xl bg-white/10 px-6 py-5 text-center"
-            variants={scaleIn}
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          >
-            <p className="text-xs uppercase tracking-widest text-white/60">Completamento</p>
-            <p className="text-4xl font-semibold">{progressValue}%</p>
-            <p className="text-xs text-white/60">{completedSteps} di {stepProgress.length} step</p>
-          </motion.div>
+          <div className="flex items-center gap-4">
+            <AutoSaveIndicator 
+              lastSaved={lastSaved} 
+              isSaving={isSaving}
+              className="hidden md:flex"
+            />
+            
+            <motion.div 
+              className="rounded-3xl bg-white/10 px-6 py-5 text-center"
+              variants={scaleIn}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            >
+              <p className="text-xs uppercase tracking-widest text-white/60">Completamento</p>
+              <p className="text-4xl font-semibold">{progressValue}%</p>
+              <p className="text-xs text-white/60">{completedSteps} di {stepProgress.length} step</p>
+            </motion.div>
+          </div>
         </div>
         
         {/* Stats in hero */}
@@ -3347,6 +3423,18 @@ export default function RegistroPage() {
           Salva allenamento
         </Button>
       </div>
+
+      {/* Draft Restore Dialog */}
+      <DraftRestoreDialog
+        isOpen={showDraftDialog}
+        onRestore={handleRestoreDraft}
+        onDiscard={handleDiscardDraft}
+        draftDate={lastSaved ?? undefined}
+      />
+
+      {/* Keyboard Shortcuts Help */}
+      <ShortcutsHelp shortcuts={shortcuts} />
+
       <ConfirmDialog
         open={blockToDelete != null}
         title="Eliminare il blocco?"
