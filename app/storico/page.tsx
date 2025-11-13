@@ -994,7 +994,7 @@ export default function StoricoPage() {
                       whileHover={cardHover}
                     >
                       {/* Mobile-optimized compact header */}
-                      <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center justify-between gap-2">
                         <div
                           role="button"
                           tabIndex={0}
@@ -1090,7 +1090,7 @@ export default function StoricoPage() {
                           type="button"
                           onClick={() => requestDeleteSession(session.id)}
                           disabled={deletingSessionId === session.id}
-                          className="flex-shrink-0 self-center inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 p-2 sm:p-2.5 text-rose-600 transition-colors hover:bg-rose-100 active:bg-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation"
+                          className="flex-shrink-0 mr-3 inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 p-2 sm:p-2.5 text-rose-600 transition-colors hover:bg-rose-100 active:bg-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation"
                           aria-label="Elimina sessione"
                         >
                           {deletingSessionId === session.id ? (
