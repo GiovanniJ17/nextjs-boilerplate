@@ -384,7 +384,23 @@ export default function StatistichePage() {
       return matchesDistance(metric.distance_m, distanceFilter);
     });
 
-    const totalSessions = sessions.length;
+    // Conta solo le sessioni che hanno effettivamente esercizi o metriche con la distanza filtrata
+    const sessionIdsWithFilteredContent = new Set<string>();
+    
+    // Aggiungi session_id da exercises filtrati
+    distanceFilteredExercises.forEach(exercise => {
+      const sessionId = exercise.block_id ? blockIdToSessionId.get(exercise.block_id) : null;
+      if (sessionId) sessionIdsWithFilteredContent.add(sessionId);
+    });
+    
+    // Aggiungi session_id da metrics filtrati
+    distanceFilteredMetrics.forEach(metric => {
+      if (metric.session_id) sessionIdsWithFilteredContent.add(metric.session_id);
+    });
+    
+    const totalSessions = distanceFilter === 'all' 
+      ? sessions.length 
+      : sessionIdsWithFilteredContent.size;
     const totalExerciseDistance = distanceFilteredExercises.reduce((sum, exercise) => {
       const distance = exercise.distance_m || 0;
       const sets = exercise.sets || 0;
