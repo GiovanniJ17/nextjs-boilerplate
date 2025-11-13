@@ -369,6 +369,13 @@ export default function StoricoPage() {
           });
         });
       });
+      
+      // Aggiungi volume da metrics (sessioni test/gara)
+      session.metrics.forEach(metric => {
+        if (metric.distance_m) {
+          totalVolume += metric.distance_m;
+        }
+      });
     });
 
     const averageRpe =
@@ -576,7 +583,7 @@ export default function StoricoPage() {
             const reps = ex.repetitions || 0;
             return exSum + (dist * sets * reps);
           }, 0);
-        }, 0);
+        }, 0) + a.metrics.reduce((sum, m) => sum + (m.distance_m || 0), 0);
         const volumeB = b.exercise_blocks.reduce((sum, block) => {
           return sum + block.exercises.reduce((exSum, ex) => {
             const dist = ex.distance_m || 0;
@@ -584,7 +591,7 @@ export default function StoricoPage() {
             const reps = ex.repetitions || 0;
             return exSum + (dist * sets * reps);
           }, 0);
-        }, 0);
+        }, 0) + b.metrics.reduce((sum, m) => sum + (m.distance_m || 0), 0);
         return sortOrder === 'desc' ? volumeB - volumeA : volumeA - volumeB;
       } else if (sortBy === 'intensity') {
         const intensityA = a.exercise_blocks.reduce((sum, block) => {

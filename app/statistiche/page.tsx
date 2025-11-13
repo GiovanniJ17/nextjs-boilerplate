@@ -797,13 +797,24 @@ export default function StatistichePage() {
             .select('distance_m, sets, repetitions, intensity, block_id')
             .in('block_id', prevBlockIds);
 
+          // Fetch anche metrics del periodo precedente
+          const { data: prevMetrics } = await supabase
+            .from('metrics')
+            .select('distance_m, intensity, session_id')
+            .in('session_id', prevSessionIds);
+
           if (prevExercises) {
             // Filtra gli esercizi del periodo precedente per distanza
             const filteredPrevExercises = (prevExercises as any[]).filter(ex => 
               matchesDistance(ex.distance_m, distanceFilter)
             );
             
-            // Conta solo le sessioni che hanno esercizi con la distanza filtrata
+            // Filtra i metrics del periodo precedente per distanza
+            const filteredPrevMetrics = (prevMetrics || []).filter((m: any) => 
+              matchesDistance(m.distance_m, distanceFilter)
+            );
+            
+            // Conta solo le sessioni che hanno esercizi o metrics con la distanza filtrata
             const prevSessionIdsWithContent = new Set<string>();
             const prevBlockIdToSessionId = new Map<string, string>();
             if (prevBlocks) {
@@ -819,6 +830,13 @@ export default function StatistichePage() {
                 }
               });
             }
+            
+            // Aggiungi anche sessioni con metrics filtrati
+            filteredPrevMetrics.forEach((m: any) => {
+              if (m.session_id) {
+                prevSessionIdsWithContent.add(m.session_id);
+              }
+            });
             
             // Mappa session ID -> data per periodo precedente
             const prevSessionIdToDate = new Map<string, string>();
@@ -839,13 +857,21 @@ export default function StatistichePage() {
               });
             }
             
-            const prevVolume = filteredPrevExercises.reduce((sum, ex) => 
+            const prevExerciseVolume = filteredPrevExercises.reduce((sum, ex) => 
               sum + (ex.distance_m || 0) * (ex.sets || 0) * (ex.repetitions || 0), 0
             );
+            const prevMetricVolume = filteredPrevMetrics.reduce((sum: number, m: any) => 
+              sum + (m.distance_m || 0), 0
+            );
+            const prevVolume = prevExerciseVolume + prevMetricVolume;
             
-            const prevIntensities = filteredPrevExercises
+            const prevExerciseIntensities = filteredPrevExercises
               .map(ex => ex.intensity)
               .filter((v): v is number => typeof v === 'number');
+            const prevMetricIntensities = filteredPrevMetrics
+              .map((m: any) => m.intensity)
+              .filter((v): v is number => typeof v === 'number');
+            const prevIntensities = [...prevExerciseIntensities, ...prevMetricIntensities];
             const prevAvgIntensity = prevIntensities.length
               ? prevIntensities.reduce((sum, v) => sum + v, 0) / prevIntensities.length
               : 0;
@@ -1186,15 +1212,30 @@ export default function StatistichePage() {
         return blockSessions.some(s => s.id === sessionId);
       });
       
-      const totalDistance = blockExercises.reduce((sum, ex) => 
+      // Calcola distanza da esercizi
+      const exerciseDistance = blockExercises.reduce((sum, ex) => 
         sum + (ex.distance_m || 0) * (ex.sets || 0) * (ex.repetitions || 0), 0
       );
       
-      const intensities = blockExercises
+      // Calcola distanza da metrics per sessioni test/gara del blocco
+      const blockSessionIds = blockSessions.map(s => s.id);
+      const blockMetrics = distanceFilteredMetrics.filter(m => 
+        m.session_id && blockSessionIds.includes(m.session_id)
+      );
+      const metricDistance = blockMetrics.reduce((sum, m) => sum + (m.distance_m || 0), 0);
+      
+      const totalDistance = exerciseDistance + metricDistance;
+      
+      // Calcola intensità da esercizi e metrics
+      const exerciseIntensities = blockExercises
         .map(ex => ex.intensity)
         .filter((v): v is number => typeof v === 'number');
-      const avgIntensity = intensities.length
-        ? intensities.reduce((sum, v) => sum + v, 0) / intensities.length
+      const metricIntensities = blockMetrics
+        .map(m => m.intensity)
+        .filter((v): v is number => typeof v === 'number');
+      const allIntensities = [...exerciseIntensities, ...metricIntensities];
+      const avgIntensity = allIntensities.length
+        ? allIntensities.reduce((sum, v) => sum + v, 0) / allIntensities.length
         : null;
       
       return {
