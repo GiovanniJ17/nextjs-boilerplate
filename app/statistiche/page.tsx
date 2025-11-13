@@ -862,8 +862,8 @@ export default function StatistichePage() {
       if (!session.date) return;
       const dayOfWeek = new Date(session.date).getDay();
       
-      const sessionPerformances = performances.filter(p => {
-        // Trova se questa performance appartiene a questa sessione
+      // Trova performance da esercizi
+      const sessionExercisePerformances = performances.filter(p => {
         const exercise = Array.from(exerciseById.values()).find(ex => {
           if (!ex.block_id) return false;
           return blockIdToSessionId.get(ex.block_id) === session.id;
@@ -871,13 +871,23 @@ export default function StatistichePage() {
         return exercise != null;
       });
 
+      // Trova performance da metrics
+      const sessionMetricPerformances = metricPerformances.filter(mp => {
+        const metric = distanceFilteredMetrics.find(m => 
+          m.session_id === session.id && m.time_s === mp.time
+        );
+        return metric != null;
+      });
+
+      const allSessionPerformances = [...sessionExercisePerformances, ...sessionMetricPerformances];
+
       if (!performanceByDay.has(dayOfWeek)) {
         performanceByDay.set(dayOfWeek, { times: [], count: 0 });
       }
 
       const dayData = performanceByDay.get(dayOfWeek)!;
       dayData.count += 1;
-      sessionPerformances.forEach(p => {
+      allSessionPerformances.forEach(p => {
         if (p.time) dayData.times.push(p.time);
       });
     });
@@ -941,16 +951,30 @@ export default function StatistichePage() {
         return blockIdToSessionId.get(ex.block_id) === s.id;
       });
       
-      const volume = sessionExercises.reduce((sum, ex) => 
+      // Calcola volume da esercizi
+      const exerciseVolume = sessionExercises.reduce((sum, ex) => 
         sum + (ex.distance_m || 0) * (ex.sets || 0) * (ex.repetitions || 0), 0
       );
 
-      const intensities = sessionExercises
+      // Calcola volume da metrics (per sessioni tipo test/gara)
+      const sessionMetrics = distanceFilteredMetrics.filter(m => m.session_id === s.id);
+      const metricVolume = sessionMetrics.reduce((sum, m) => sum + (m.distance_m || 0), 0);
+
+      const volume = exerciseVolume + metricVolume;
+
+      // Calcola intensità da esercizi e metrics
+      const exerciseIntensities = sessionExercises
         .map(ex => ex.intensity)
         .filter((v): v is number => typeof v === 'number');
       
-      const rpe = intensities.length
-        ? intensities.reduce((sum, v) => sum + v, 0) / intensities.length
+      const metricIntensities = sessionMetrics
+        .map(m => m.intensity)
+        .filter((v): v is number => typeof v === 'number');
+      
+      const allIntensities = [...exerciseIntensities, ...metricIntensities];
+      
+      const rpe = allIntensities.length
+        ? allIntensities.reduce((sum, v) => sum + v, 0) / allIntensities.length
         : undefined;
 
       return {
@@ -997,16 +1021,26 @@ export default function StatistichePage() {
         let sessionType: string | null = null;
         let perfDate = '';
         
+        // Cerca prima negli esercizi
         for (const session of sessions) {
-          const hasPerformance = performances.some(perf => {
-            const exercise = Array.from(exerciseById.values()).find(ex => {
-              if (!ex.block_id) return false;
-              return blockIdToSessionId.get(ex.block_id) === session.id;
-            });
-            return exercise != null;
+          const hasExercisePerformance = Array.from(exerciseById.values()).some(ex => {
+            if (!ex.block_id) return false;
+            const sessionId = blockIdToSessionId.get(ex.block_id);
+            return sessionId === session.id && ex.distance_m === p.distance;
           });
           
-          if (hasPerformance) {
+          if (hasExercisePerformance) {
+            sessionType = session.type || null;
+            perfDate = session.date || '';
+            break;
+          }
+          
+          // Cerca nei metrics
+          const hasMetricPerformance = distanceFilteredMetrics.some(m =>
+            m.session_id === session.id && m.distance_m === p.distance && m.time_s === p.time
+          );
+          
+          if (hasMetricPerformance) {
             sessionType = session.type || null;
             perfDate = session.date || '';
             break;
@@ -1030,10 +1064,11 @@ export default function StatistichePage() {
     }));
     const trainingLoad = calculateTrainingLoad(trainingLoadData);
 
-    // 5. Statistiche per località (placeholder - da implementare con location field)
+    // 5. Statistiche per località
     const locationData: { location: string; sessionId: string; avgTime: number | null }[] = [];
     sessionsToAnalyze.forEach(session => {
-      const sessionPerfs = performances.filter(p => {
+      // Performance da esercizi
+      const sessionExercisePerfs = performances.filter(p => {
         const exercise = Array.from(exerciseById.values()).find(ex => {
           if (!ex.block_id) return false;
           return blockIdToSessionId.get(ex.block_id) === session.id;
@@ -1041,12 +1076,22 @@ export default function StatistichePage() {
         return exercise != null;
       });
       
-      const avgTime = sessionPerfs.length
-        ? sessionPerfs.reduce((sum, p) => sum + p.time, 0) / sessionPerfs.length
+      // Performance da metrics
+      const sessionMetricPerfs = metricPerformances.filter(mp => {
+        const metric = distanceFilteredMetrics.find(m => 
+          m.session_id === session.id && m.time_s === mp.time
+        );
+        return metric != null;
+      });
+      
+      const allPerfs = [...sessionExercisePerfs, ...sessionMetricPerfs];
+      
+      const avgTime = allPerfs.length
+        ? allPerfs.reduce((sum, p) => sum + p.time, 0) / allPerfs.length
         : null;
       
       locationData.push({
-        location: 'Default', // TODO: add location field to sessions
+        location: session.location || 'Non specificato',
         sessionId: session.id,
         avgTime,
       });
