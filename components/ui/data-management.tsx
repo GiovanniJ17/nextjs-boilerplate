@@ -5,7 +5,11 @@ import { Download, Upload, Database, CheckCircle, AlertCircle } from "lucide-rea
 import { backupData, restoreData, exportToExcel } from "@/lib/data-export";
 import { toast } from "sonner";
 
-export function DataManagement() {
+interface DataManagementProps {
+  onDataChange?: () => void;
+}
+
+export function DataManagement({ onDataChange }: DataManagementProps = {}) {
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -55,6 +59,8 @@ export function DataManagement() {
       );
       // Reset file input
       if (fileInputRef.current) fileInputRef.current.value = "";
+      // Notifica il parent per ricaricare i dati
+      onDataChange?.();
     } else {
       toast.error(`❌ Errore restore: ${result.error}`);
     }

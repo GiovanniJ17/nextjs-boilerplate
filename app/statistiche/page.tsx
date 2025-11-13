@@ -391,8 +391,8 @@ export default function StatistichePage() {
         )
         .in('session_id', sessionIds);
 
-      if (fromDate) metricsQuery = metricsQuery.gte('date', fromDate);
-      if (toDate) metricsQuery = metricsQuery.lte('date', toDate);
+      if (dFromDate) metricsQuery = metricsQuery.gte('date', dFromDate);
+      if (dToDate) metricsQuery = metricsQuery.lte('date', dToDate);
 
       const { data: metricsData } = await metricsQuery;
       if (metricsData) {
@@ -407,9 +407,9 @@ export default function StatistichePage() {
     const filteredResults = results.filter(result => result.exercise_id && filteredExerciseIds.has(result.exercise_id));
 
     const distanceFilteredMetrics = metrics.filter(metric => {
-      if (distanceFilter === 'all') return true;
+      if (dDistanceFilter === 'all') return true;
       if (metric.distance_m == null) return false;
-      return matchesDistance(metric.distance_m, distanceFilter);
+      return matchesDistance(metric.distance_m, dDistanceFilter);
     });
 
     // Conta solo le sessioni che hanno effettivamente esercizi o metriche con la distanza filtrata
@@ -427,7 +427,7 @@ export default function StatistichePage() {
     });
     
     // Filtra le sessioni in base al filtro distanza (usato in tutte le analisi)
-    const sessionsToAnalyze = distanceFilter === 'all' 
+    const sessionsToAnalyze = dDistanceFilter === 'all' 
       ? sessions 
       : sessions.filter(s => sessionIdsWithFilteredContent.has(s.id));
     
@@ -1639,7 +1639,7 @@ export default function StatistichePage() {
           </p>
         </CardHeader>
         <CardContent>
-          <DataManagement />
+          <DataManagement onDataChange={loadStats} />
         </CardContent>
       </Card>
       </motion.div>

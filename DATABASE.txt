@@ -12,6 +12,7 @@ CREATE TABLE public.exercise_blocks (
   CONSTRAINT exercise_blocks_pkey PRIMARY KEY (id),
   CONSTRAINT exercise_blocks_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.training_sessions(id)
 );
+
 CREATE TABLE public.exercise_results (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   exercise_id uuid,
@@ -25,6 +26,7 @@ CREATE TABLE public.exercise_results (
   CONSTRAINT exercise_results_pkey PRIMARY KEY (id),
   CONSTRAINT exercise_results_exercise_id_fkey FOREIGN KEY (exercise_id) REFERENCES public.exercises(id)
 );
+
 CREATE TABLE public.exercises (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   name text NOT NULL,
@@ -43,11 +45,51 @@ CREATE TABLE public.exercises (
   CONSTRAINT exercises_pkey PRIMARY KEY (id),
   CONSTRAINT exercises_block_id_fkey FOREIGN KEY (block_id) REFERENCES public.exercise_blocks(id)
 );
+
 CREATE TABLE public.metrics (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   session_id uuid,
   date date NOT NULL,
   metric_name text NOT NULL,
+  category text CHECK (category = ANY (ARRAY['gara'::text, 'test'::text, 'massimale'::text])),
+  metric_target text,
+  value numeric,
+  unit text,
+  distance_m integer,
+  time_s numeric,
+  recovery_post_s integer,
+  intensity numeric CHECK (intensity >= 0::numeric AND intensity <= 10::numeric),
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT metrics_pkey PRIMARY KEY (id),
+  CONSTRAINT metrics_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.training_sessions(id)
+);
+
+CREATE TABLE public.training_blocks (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  start_date date NOT NULL,
+  end_date date NOT NULL,
+  goal text,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT training_blocks_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.training_sessions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  block_id uuid,
+  date date NOT NULL,
+  type text CHECK (type = ANY (ARRAY['pista'::text, 'palestra'::text, 'test'::text, 'gara'::text, 'scarico'::text, 'recupero'::text, 'altro'::text])),
+  title text,
+  location text,
+  phase text,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT training_sessions_pkey PRIMARY KEY (id),
+  CONSTRAINT training_sessions_block_id_fkey FOREIGN KEY (block_id) REFERENCES public.training_blocks(id)
+);
+
   category text CHECK (category = ANY (ARRAY['gara'::text, 'test'::text, 'massimale'::text])),
   metric_target text,
   value numeric,
