@@ -272,6 +272,34 @@ const disciplineIcons: Record<string, LucideIcon> = {
   mobilità: MoveRight,
 };
 
+// Quick-select per distanze comuni
+const commonDistances = [30, 60, 100, 150, 200, 300, 400];
+
+// Preset per recuperi comuni
+const commonRecoveries = [
+  { value: 60, label: '60s' },
+  { value: 90, label: '90s' },
+  { value: 120, label: '2min' },
+  { value: 180, label: '3min' },
+  { value: 300, label: '5min' },
+];
+
+// Label descrittive per intensità
+const intensityLabels = {
+  range1: { min: 1, max: 3, label: 'Leggero', color: 'text-green-600' },
+  range2: { min: 4, max: 6, label: 'Medio', color: 'text-blue-600' },
+  range3: { min: 7, max: 8, label: 'Alto', color: 'text-orange-600' },
+  range4: { min: 9, max: 10, label: 'Massimo', color: 'text-red-600' },
+};
+
+function getIntensityLabel(value: string | number): { label: string; color: string } {
+  const numValue = typeof value === 'string' ? parseInt(value) || 6 : value;
+  if (numValue >= 1 && numValue <= 3) return { label: intensityLabels.range1.label, color: intensityLabels.range1.color };
+  if (numValue >= 4 && numValue <= 6) return { label: intensityLabels.range2.label, color: intensityLabels.range2.color };
+  if (numValue >= 7 && numValue <= 8) return { label: intensityLabels.range3.label, color: intensityLabels.range3.color };
+  return { label: intensityLabels.range4.label, color: intensityLabels.range4.color };
+}
+
 const defaultExerciseResult: ExerciseResultForm = {
   set_number: '1',
   repetition_number: '1',
@@ -305,7 +333,7 @@ const defaultExerciseBlock: ExerciseBlockForm = {
 
 const defaultSession: SessionFormState = {
   block_id: '',
-  date: '',
+  date: new Date().toISOString().split('T')[0], // Auto-compila con data odierna
   type: '',
   phase: '',
   location: '',
@@ -809,6 +837,31 @@ export default function RegistroPage() {
     }
   }
 
+  // Auto-avanza alla sezione successiva quando quella corrente è completa
+  useEffect(() => {
+    const detailsComplete = Boolean(sessionForm.date && sessionForm.type && sessionForm.location);
+    const exercisesComplete = isMetricSession || (
+      exerciseBlocks.length > 0 &&
+      exerciseBlocks.every(block => 
+        block.exercises.every(ex => ex.name.trim() && ex.discipline_type && ex.sets && ex.repetitions)
+      )
+    );
+
+    if (detailsComplete && expandedSection === 'details' && !isMetricSession) {
+      // Auto-apri sezione esercizi quando dettagli completati
+      setTimeout(() => {
+        setExpandedSection('exercises');
+        handleScrollToSection('exercises');
+      }, 300);
+    } else if (exercisesComplete && expandedSection === 'exercises') {
+      // Auto-apri sezione metriche quando esercizi completati
+      setTimeout(() => {
+        setExpandedSection('metrics');
+        handleScrollToSection('metrics');
+      }, 300);
+    }
+  }, [sessionForm.date, sessionForm.type, sessionForm.location, exerciseBlocks, isMetricSession, expandedSection]);
+
   function clearError(field: string) {
     setErrors(prev => {
       if (!prev[field]) return prev;
@@ -1019,6 +1072,18 @@ export default function RegistroPage() {
         };
       });
     });
+    
+    // Auto-scroll al nuovo esercizio dopo breve delay
+    setTimeout(() => {
+      const exercisesSection = sectionRefs.exercises.current;
+      if (exercisesSection) {
+        const allExercises = exercisesSection.querySelectorAll('.rounded-2xl.border.border-slate-200');
+        const lastExercise = allExercises[allExercises.length - 1];
+        if (lastExercise) {
+          lastExercise.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }, 100);
   }
 
   function removeExercise(blockId: string, exerciseIndex: number) {
@@ -2304,6 +2369,27 @@ export default function RegistroPage() {
                         placeholder="Es. 150"
                         className="h-9"
                       />
+                      {/* Quick-select distanze comuni */}
+                      <div className="flex flex-wrap gap-1">
+                        {commonDistances.map(dist => (
+                          <button
+                            key={dist}
+                            type="button"
+                            onClick={() => {
+                              const event = { target: { name: 'distance_m', value: String(dist) } } as any;
+                              handleExerciseChange(block.id, index, event);
+                            }}
+                            className={cn(
+                              'rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors',
+                              exercise.distance_m === String(dist)
+                                ? 'border-sky-500 bg-sky-50 text-sky-700'
+                                : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50'
+                            )}
+                          >
+                            {dist}m
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="space-y-1.5">
@@ -2341,6 +2427,27 @@ export default function RegistroPage() {
                         placeholder="60"
                         className="h-9"
                       />
+                      {/* Quick-select recuperi comuni */}
+                      <div className="flex flex-wrap gap-1">
+                        {commonRecoveries.map(rec => (
+                          <button
+                            key={rec.value}
+                            type="button"
+                            onClick={() => {
+                              const event = { target: { name: 'rest_between_reps_s', value: String(rec.value) } } as any;
+                              handleExerciseChange(block.id, index, event);
+                            }}
+                            className={cn(
+                              'rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors',
+                              exercise.rest_between_reps_s === String(rec.value)
+                                ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                                : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50'
+                            )}
+                          >
+                            {rec.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="space-y-1.5">
@@ -2354,12 +2461,43 @@ export default function RegistroPage() {
                         placeholder="180"
                         className="h-9"
                       />
+                      {/* Quick-select recuperi comuni */}
+                      <div className="flex flex-wrap gap-1">
+                        {commonRecoveries.map(rec => (
+                          <button
+                            key={rec.value}
+                            type="button"
+                            onClick={() => {
+                              const event = { target: { name: 'rest_between_sets_s', value: String(rec.value) } } as any;
+                              handleExerciseChange(block.id, index, event);
+                            }}
+                            className={cn(
+                              'rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors',
+                              exercise.rest_between_sets_s === String(rec.value)
+                                ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                                : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50'
+                            )}
+                          >
+                            {rec.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
                   {/* Intensità percepita */}
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-slate-700">Intensità percepita</Label>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-medium text-slate-700">Intensità percepita</Label>
+                      {(() => {
+                        const intensityInfo = getIntensityLabel(exercise.intensity);
+                        return (
+                          <span className={cn('text-xs font-semibold', intensityInfo.color)}>
+                            {intensityInfo.label}
+                          </span>
+                        );
+                      })()}
+                    </div>
                       <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
                         <input
                           type="range"
