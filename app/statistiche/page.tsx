@@ -1291,7 +1291,7 @@ export default function StatistichePage() {
       { 
         key: 'insights', 
         label: 'Insights & Consigli', 
-        badge: stats?.smartInsights?.length || stats?.alerts?.length || null 
+        badge: ((stats?.smartInsights?.length || 0) + (stats?.alerts?.length || 0)) || null 
       },
     ],
     [stats]

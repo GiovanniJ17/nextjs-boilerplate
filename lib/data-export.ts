@@ -4,16 +4,22 @@ import { supabase } from "./supabaseClient";
 // Export Excel avanzato con formattazione
 export async function exportToExcel() {
   try {
+    console.log("Starting Excel export...");
+    
     // Fetch tutti i dati
     const { data: sessions, error } = await supabase
       .from("allenamenti")
       .select("*")
       .order("data", { ascending: false });
 
+    console.log("Fetched sessions:", sessions?.length, "Error:", error);
+
     if (error) throw error;
     if (!sessions || sessions.length === 0) {
       throw new Error("Nessun allenamento da esportare");
     }
+
+    console.log("Creating workbook...");
 
     // Crea workbook
     const wb = XLSX.utils.book_new();
@@ -103,11 +109,15 @@ export async function exportToExcel() {
     ws3["!cols"] = [{ wch: 12 }, { wch: 10 }, { wch: 15 }, { wch: 15 }];
     XLSX.utils.book_append_sheet(wb, ws3, "Trend Mensili");
 
+    console.log("Generating Excel file...");
+
     // Genera file e download
     const fileName = `tracker-velocista-export-${new Date().toISOString().split("T")[0]}.xlsx`;
     
     // Converti in binary string
     const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    
+    console.log("Creating blob and downloading...");
     
     // Crea blob e download
     const blob = new Blob([wbout], { type: 'application/octet-stream' });
@@ -119,6 +129,8 @@ export async function exportToExcel() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+
+    console.log("Excel export completed successfully");
 
     return { success: true, fileName };
   } catch (error) {
