@@ -1,12 +1,16 @@
 {
   "name": "nextjs-boilerplate",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "@fontsource/inter": "^5.0.0",
