@@ -14,9 +14,9 @@ export async function exportToExcel() {
     
     // Fetch tutti i dati
     const { data: sessions, error } = await supabase
-      .from("allenamenti")
+      .from("training_sessions")
       .select("*")
-      .order("data", { ascending: false });
+      .order("date", { ascending: false });
 
     console.log("Fetched sessions:", sessions?.length, "Error:", error);
 
@@ -32,17 +32,12 @@ export async function exportToExcel() {
 
     // Sheet 1: Allenamenti completi
     const sessionsFormatted = sessions.map((s) => ({
-      Data: new Date(s.data).toLocaleDateString("it-IT"),
-      Tipo: s.tipo_allenamento,
-      Blocco: s.blocco || "N/A",
-      "Distanza (m)": s.distanza_totale,
-      "Volume (m)": s.volume_totale,
-      Ripetizioni: s.ripetizioni || "N/A",
-      Recupero: s.recupero || "N/A",
-      Intensità: s.intensita,
-      "RPE Tecnico": s.rpe_tecnico,
-      "RPE Fisico": s.rpe_fisico,
-      Note: s.note || "",
+      Data: new Date(s.date).toLocaleDateString("it-IT"),
+      Tipo: s.type || "N/A",
+      Titolo: s.title || "N/A",
+      Fase: s.phase || "N/A",
+      Luogo: s.location || "N/A",
+      Note: s.notes || "",
     }));
     const ws1 = XLSX.utils.json_to_sheet(sessionsFormatted);
     
@@ -50,69 +45,50 @@ export async function exportToExcel() {
     ws1["!cols"] = [
       { wch: 12 }, // Data
       { wch: 15 }, // Tipo
-      { wch: 12 }, // Blocco
-      { wch: 12 }, // Distanza
-      { wch: 12 }, // Volume
-      { wch: 15 }, // Ripetizioni
-      { wch: 12 }, // Recupero
-      { wch: 10 }, // Intensità
-      { wch: 12 }, // RPE Tecnico
-      { wch: 12 }, // RPE Fisico
-      { wch: 30 }, // Note
+      { wch: 30 }, // Titolo
+      { wch: 15 }, // Fase
+      { wch: 15 }, // Luogo
+      { wch: 40 }, // Note
     ];
 
     XLSX.utils.book_append_sheet(wb, ws1, "Allenamenti");
 
     // Sheet 2: Statistiche per tipo
     const statsByType = sessions.reduce((acc: any, s) => {
-      const tipo = s.tipo_allenamento;
+      const tipo = s.type || "N/A";
       if (!acc[tipo]) {
         acc[tipo] = {
           Tipo: tipo,
           Sessioni: 0,
-          "Volume Tot (m)": 0,
-          "Distanza Tot (m)": 0,
-          "Intensità Media": 0,
         };
       }
       acc[tipo].Sessioni += 1;
-      acc[tipo]["Volume Tot (m)"] += s.volume_totale || 0;
-      acc[tipo]["Distanza Tot (m)"] += s.distanza_totale || 0;
-      acc[tipo]["Intensità Media"] += s.intensita || 0;
       return acc;
     }, {});
 
-    Object.values(statsByType).forEach((stat: any) => {
-      stat["Intensità Media"] = Math.round(stat["Intensità Media"] / stat.Sessioni);
-    });
-
     const ws2 = XLSX.utils.json_to_sheet(Object.values(statsByType));
-    ws2["!cols"] = [{ wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 15 }];
+    ws2["!cols"] = [{ wch: 15 }, { wch: 10 }];
     XLSX.utils.book_append_sheet(wb, ws2, "Statistiche per Tipo");
 
     // Sheet 3: Trend mensili
     const monthlyData = sessions.reduce((acc: any, s) => {
-      const date = new Date(s.data);
+      const date = new Date(s.date);
       const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       
       if (!acc[month]) {
         acc[month] = {
           Mese: month,
           Sessioni: 0,
-          "Volume (m)": 0,
-          "Distanza (m)": 0,
         };
       }
       acc[month].Sessioni += 1;
-      acc[month]["Volume (m)"] += s.volume_totale || 0;
-      acc[month]["Distanza (m)"] += s.distanza_totale || 0;
       return acc;
     }, {});
 
     const ws3 = XLSX.utils.json_to_sheet(
       Object.values(monthlyData).sort((a: any, b: any) => b.Mese.localeCompare(a.Mese))
     );
-    ws3["!cols"] = [{ wch: 12 }, { wch: 10 }, { wch: 15 }, { wch: 15 }];
+    ws3["!cols"] = [{ wch: 12 }, { wch: 10 }];
     XLSX.utils.book_append_sheet(wb, ws3, "Trend Mensili");
 
     console.log("Generating Excel file...");
@@ -155,9 +131,9 @@ export async function backupData() {
     }
     
     const { data: sessions, error } = await supabase
-      .from("allenamenti")
+      .from("training_sessions")
       .select("*")
-      .order("data", { ascending: false });
+      .order("date", { ascending: false });
 
     if (error) throw error;
 
