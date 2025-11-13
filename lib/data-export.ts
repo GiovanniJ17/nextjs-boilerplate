@@ -103,9 +103,22 @@ export async function exportToExcel() {
     ws3["!cols"] = [{ wch: 12 }, { wch: 10 }, { wch: 15 }, { wch: 15 }];
     XLSX.utils.book_append_sheet(wb, ws3, "Trend Mensili");
 
-    // Genera file
+    // Genera file e download
     const fileName = `tracker-velocista-export-${new Date().toISOString().split("T")[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+    
+    // Converti in binary string
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    
+    // Crea blob e download
+    const blob = new Blob([wbout], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
     return { success: true, fileName };
   } catch (error) {
