@@ -1615,7 +1615,7 @@ export default function StatistichePage() {
                 </button>
               </div>
 
-              <div className="space-y-5 p-5">
+              <div className="space-y-5 p-5 pb-28 md:pb-5">
           
           {/* PERIODO Section */}
           <div className="space-y-3">
@@ -1765,21 +1765,14 @@ export default function StatistichePage() {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 pt-2">
+          <div className="pt-2">
             <Button
               type="button"
               variant="outline"
               onClick={resetFilters}
-              className="flex-1 gap-2"
+              className="w-full gap-2"
             >
-              <RotateCcw className="h-4 w-4" /> Reset
-            </Button>
-            <Button
-              type="button"
-              onClick={() => setFiltersExpanded(false)}
-              className="flex-1 bg-purple-600 hover:bg-purple-700"
-            >
-              Applica filtri
+              <RotateCcw className="h-4 w-4" /> Reset filtri
             </Button>
           </div>
           
