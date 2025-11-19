@@ -55,6 +55,7 @@ import {
   Settings,
   Info,
   ChevronRight,
+  ChevronDown,
   Star,
   ThumbsUp,
   ThumbsDown,
@@ -298,6 +299,7 @@ export default function StatistichePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'base' | 'graphs' | 'advanced' | 'insights'>('base');
   const [rangePreset, setRangePreset] = useState<string>('');
+  const [filtersExpanded, setFiltersExpanded] = useState(false); // Drawer filtri
   const [debouncedFilters, setDebouncedFilters] = useState({
     fromDate: '',
     toDate: '',
@@ -1545,9 +1547,75 @@ export default function StatistichePage() {
         </AnimatePresence>
       </motion.section>
 
-      <motion.div variants={fadeInUp}>
-      <Card className="border-slate-200 shadow-sm">
-        <CardContent className="p-5 space-y-5">
+      {/* Floating Filter Button - Bottom Right */}
+      <motion.button
+        onClick={() => setFiltersExpanded(!filtersExpanded)}
+        className={cn(
+          "fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all hover:scale-110 active:scale-95",
+          filtersExpanded
+            ? "bg-purple-600 text-white"
+            : "bg-gradient-to-br from-purple-500 to-indigo-600 text-white"
+        )}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        {filtersExpanded ? (
+          <ChevronDown className="h-6 w-6" />
+        ) : (
+          <>
+            <Filter className="h-6 w-6" />
+            {(fromDate || toDate || typeFilter || blockFilter || distanceFilter !== 'all') && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-md">
+                {[fromDate, toDate, typeFilter, blockFilter, distanceFilter !== 'all'].filter(Boolean).length}
+              </span>
+            )}
+          </>
+        )}
+      </motion.button>
+
+      {/* Filter Drawer/Modal */}
+      <AnimatePresence>
+        {filtersExpanded && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setFiltersExpanded(false)}
+            />
+            
+            {/* Drawer */}
+            <motion.div
+              className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white shadow-2xl md:inset-x-auto md:right-4 md:bottom-4 md:w-[500px] md:max-h-[calc(100vh-2rem)] md:rounded-3xl"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            >
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-purple-50 to-indigo-50 px-5 py-4">
+                <div className="flex items-center gap-2.5">
+                  <Filter className="h-5 w-5 text-purple-600" />
+                  <h2 className="text-lg font-bold text-slate-800">Filtri Statistiche</h2>
+                  {(fromDate || toDate || typeFilter || blockFilter || distanceFilter !== 'all') && (
+                    <span className="rounded-full bg-purple-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
+                      {[fromDate, toDate, typeFilter, blockFilter, distanceFilter !== 'all'].filter(Boolean).length} attivi
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setFiltersExpanded(false)}
+                  className="rounded-full p-2 text-slate-500 transition-colors hover:bg-white hover:text-slate-700"
+                >
+                  <ChevronDown className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-5 p-5">
           
           {/* PERIODO Section */}
           <div className="space-y-3">
@@ -1567,10 +1635,9 @@ export default function StatistichePage() {
                     className={cn(
                       'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                       isActive
-                        ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
+                        ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-purple-300 hover:bg-purple-50'
                     )}
-                    aria-pressed={isActive}
                   >
                     {preset.label}
                   </button>
@@ -1578,8 +1645,8 @@ export default function StatistichePage() {
               })}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              <div className="lg:col-span-2">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
                 <Label className="text-xs font-medium text-slate-700 mb-1.5 block">Da</Label>
                 <Input 
                   type="date" 
@@ -1588,7 +1655,7 @@ export default function StatistichePage() {
                   className="h-9"
                 />
               </div>
-              <div className="lg:col-span-2">
+              <div>
                 <Label className="text-xs font-medium text-slate-700 mb-1.5 block">A</Label>
                 <Input 
                   type="date" 
@@ -1596,16 +1663,6 @@ export default function StatistichePage() {
                   onChange={event => handleToDateChange(event.target.value)}
                   className="h-9"
                 />
-              </div>
-              <div className="flex items-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={resetFilters}
-                  className="w-full h-9 text-xs gap-1.5"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" /> Reset
-                </Button>
               </div>
             </div>
           </div>
@@ -1619,103 +1676,118 @@ export default function StatistichePage() {
               <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Filtri</h3>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {/* Tipo sessione */}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-slate-600">Tipo sessione</Label>
-                <div className="flex flex-wrap gap-1.5">
-                  {sessionTypeFilters.map(option => {
-                    const isActive = typeFilter === option.value;
-                    return (
-                      <button
-                        key={option.value || 'all'}
-                        type="button"
-                        onClick={() => setTypeFilter(typeFilter === option.value ? '' : option.value)}
-                        className={cn(
-                          'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                          isActive
-                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
-                        )}
-                        aria-pressed={isActive}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Tipo sessione */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-600">Tipo sessione</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {sessionTypeFilters.map(option => {
+                  const isActive = typeFilter === option.value;
+                  return (
+                    <button
+                      key={option.value || 'all'}
+                      type="button"
+                      onClick={() => setTypeFilter(typeFilter === option.value ? '' : option.value)}
+                      className={cn(
+                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                        isActive
+                          ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-purple-300 hover:bg-purple-50'
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
               </div>
+            </div>
               
-              {/* Blocco */}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-slate-600">Blocco allenamento</Label>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setBlockFilter('')}
-                    className={cn(
-                      'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                      blockFilter
-                        ? 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
-                        : 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
-                    )}
-                    aria-pressed={!blockFilter}
-                  >
-                    Tutti
-                  </button>
-                  {blocks.map(block => {
-                    const isActive = blockFilter === block.id;
-                    return (
-                      <button
-                        key={block.id}
-                        type="button"
-                        onClick={() => setBlockFilter(blockFilter === block.id ? '' : block.id ?? '')}
-                        className={cn(
-                          'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                          isActive
-                            ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
-                        )}
-                        aria-pressed={isActive}
-                      >
-                        {block.name ?? 'Senza nome'}
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Blocco */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-600">Blocco allenamento</Label>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setBlockFilter('')}
+                  className={cn(
+                    'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                    blockFilter
+                      ? 'border-slate-200 bg-white text-slate-600 hover:border-purple-300 hover:bg-purple-50'
+                      : 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                  )}
+                >
+                  Tutti
+                </button>
+                {blocks.map(block => {
+                  const isActive = blockFilter === block.id;
+                  return (
+                    <button
+                      key={block.id}
+                      type="button"
+                      onClick={() => setBlockFilter(blockFilter === block.id ? '' : block.id ?? '')}
+                      className={cn(
+                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                        isActive
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
+                      )}
+                    >
+                      {block.name ?? 'Senza nome'}
+                    </button>
+                  );
+                })}
               </div>
+            </div>
 
-              {/* Distanza */}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-slate-600">Categoria distanza</Label>
-                <div className="flex flex-wrap gap-1.5">
-                  {distanceOptions.map(option => {
-                    const isActive = distanceFilter === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setDistanceFilter(option.value)}
-                        className={cn(
-                          'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                          isActive
-                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/50'
-                        )}
-                        aria-pressed={isActive}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Distanza */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-600">Categoria distanza</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {distanceOptions.map(option => {
+                  const isActive = distanceFilter === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setDistanceFilter(option.value)}
+                      className={cn(
+                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                        isActive
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/50'
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-        </CardContent>
-      </Card>
-      </motion.div>
+          {/* Actions */}
+          <div className="flex gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetFilters}
+              className="flex-1 gap-2"
+            >
+              <RotateCcw className="h-4 w-4" /> Reset
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setFiltersExpanded(false)}
+              className="flex-1 bg-purple-600 hover:bg-purple-700"
+            >
+              Applica filtri
+            </Button>
+          </div>
+          
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* DATA MANAGEMENT SECTION */}
       <motion.div variants={fadeInUp}>
