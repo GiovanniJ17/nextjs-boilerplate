@@ -2035,7 +2035,7 @@ export default function RegistroPage() {
           <Card className="border-slate-200 shadow-sm">
             <CardHeader 
               className="pb-2.5 cursor-pointer md:cursor-default"
-              onClick={() => setExpandedSection(prev => prev === 'details' ? null : 'details')}
+              onClick={() => setExpandedSection(prev => prev === 'details' ? prev : 'details')}
             >
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2.5">
@@ -2347,7 +2347,7 @@ export default function RegistroPage() {
             <Card className="border-slate-200 shadow-sm">
               <CardHeader 
                 className="pb-2.5 cursor-pointer md:cursor-default"
-                onClick={() => setExpandedSection(prev => prev === 'exercises' ? null : 'exercises')}
+                onClick={() => setExpandedSection(prev => prev === 'exercises' ? prev : 'exercises')}
               >
                 <CardTitle className="flex items-center justify-between text-lg text-slate-800">
                   <span className="flex items-center gap-2">
@@ -2386,7 +2386,7 @@ export default function RegistroPage() {
             <Card className="border-slate-200 shadow-sm">
               <CardHeader 
                 className="pb-2.5 cursor-pointer md:cursor-default"
-                onClick={() => setExpandedSection(prev => prev === 'exercises' ? null : 'exercises')}
+                onClick={() => setExpandedSection(prev => prev === 'exercises' ? prev : 'exercises')}
               >
                 <CardTitle className="flex items-center justify-between text-lg text-slate-800">
                   <span className="flex items-center gap-2">
@@ -3201,7 +3201,7 @@ export default function RegistroPage() {
             <Card className="border-slate-200 shadow-sm">
               <CardHeader 
                 className="pb-2.5 cursor-pointer md:cursor-default"
-                onClick={() => setExpandedSection(prev => prev === 'metrics' ? null : 'metrics')}
+                onClick={() => setExpandedSection(prev => prev === 'metrics' ? prev : 'metrics')}
               >
                 <CardTitle className="flex items-center justify-between text-lg text-slate-800">
                   <span className="flex items-center gap-2">
@@ -3240,7 +3240,7 @@ export default function RegistroPage() {
             <Card className="border-slate-200 shadow-sm">
               <CardHeader 
                 className="pb-2.5 cursor-pointer md:cursor-default"
-                onClick={() => setExpandedSection(prev => prev === 'metrics' ? null : 'metrics')}
+                onClick={() => setExpandedSection(prev => prev === 'metrics' ? prev : 'metrics')}
               >
                 <CardTitle className="flex items-center justify-between text-lg text-slate-800">
                   <span className="flex items-center gap-2">
