@@ -259,17 +259,10 @@ export default function StoricoPage() {
   const [sessionToDelete, setSessionToDelete] = useState<{ id: string; label: string } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [filtersExpanded, setFiltersExpanded] = useState(false); // Filtri collassati su mobile
+  const [filtersExpanded, setFiltersExpanded] = useState(false); // Drawer filtri
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [sortBy, setSortBy] = useState<'date' | 'volume' | 'intensity'>('date');
-
-  // Chiudi filtri quando si apre una sessione (mobile UX)
-  useEffect(() => {
-    if (openSession && filtersExpanded) {
-      setFiltersExpanded(false);
-    }
-  }, [openSession, filtersExpanded]);
 
   useEffect(() => {
     void loadBlocks();
@@ -720,44 +713,78 @@ export default function StoricoPage() {
         </motion.div>
       </motion.section>
 
-      {/* Filters - Redesigned with Clear Sections - Sticky */}
-      <motion.div 
-        variants={fadeInUp}
-        className="sticky top-0 z-10 bg-slate-50 pb-2 pt-2"
+      {/* Floating Filter Button - Bottom Right */}
+      <motion.button
+        onClick={() => setFiltersExpanded(!filtersExpanded)}
+        className={cn(
+          "fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all hover:scale-110 active:scale-95",
+          filtersExpanded
+            ? "bg-orange-600 text-white"
+            : "bg-gradient-to-br from-orange-500 to-orange-600 text-white"
+        )}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
       >
-        <Card className="border-slate-200 shadow-lg">
-        <CardContent className="p-3 sm:p-5 space-y-3 sm:space-y-5">
-          
-          {/* Mobile: Pulsante per espandere/collassare filtri */}
-          <button
-            onClick={() => setFiltersExpanded(!filtersExpanded)}
-            className="flex lg:hidden w-full items-center justify-between rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 px-4 py-3 text-left transition-colors hover:from-orange-100 hover:to-amber-100 active:scale-95"
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="text-xl">🔍</span>
-              <span className="text-sm font-semibold text-slate-700">Filtri e Ricerca</span>
-              {(search || typeFilter || blockFilter || fromDate || toDate) && (
-                <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
-                  {[search, typeFilter, blockFilter, fromDate, toDate].filter(Boolean).length}
-                </span>
-              )}
-            </div>
-            <ChevronDown 
-              className={cn(
-                "h-5 w-5 text-slate-400 transition-transform",
-                filtersExpanded && "rotate-180"
-              )} 
-            />
-          </button>
+        {filtersExpanded ? (
+          <ChevronDown className="h-6 w-6" />
+        ) : (
+          <>
+            <Filter className="h-6 w-6" />
+            {(search || typeFilter || blockFilter || fromDate || toDate) && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-md">
+                {[search, typeFilter, blockFilter, fromDate, toDate].filter(Boolean).length}
+              </span>
+            )}
+          </>
+        )}
+      </motion.button>
 
-          {/* Sezioni filtri - sempre visibili su desktop, collassabili su mobile */}
-          <div className={cn(
-            "space-y-4 sm:space-y-5",
-            !filtersExpanded && "hidden lg:block"
-          )}>
+      {/* Filter Drawer/Modal */}
+      <AnimatePresence>
+        {filtersExpanded && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setFiltersExpanded(false)}
+            />
+            
+            {/* Drawer */}
+            <motion.div
+              className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white shadow-2xl md:inset-x-auto md:right-4 md:bottom-4 md:w-[500px] md:max-h-[calc(100vh-2rem)] md:rounded-3xl"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            >
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-orange-50 to-amber-50 px-5 py-4">
+                <div className="flex items-center gap-2.5">
+                  <Filter className="h-5 w-5 text-orange-600" />
+                  <h2 className="text-lg font-bold text-slate-800">Filtri e Ricerca</h2>
+                  {(search || typeFilter || blockFilter || fromDate || toDate) && (
+                    <span className="rounded-full bg-orange-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
+                      {[search, typeFilter, blockFilter, fromDate, toDate].filter(Boolean).length} attivi
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setFiltersExpanded(false)}
+                  className="rounded-full p-2 text-slate-500 transition-colors hover:bg-white hover:text-slate-700"
+                >
+                  <ChevronDown className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-5 p-5">
           
           {/* PERIODO Section */}
-          <div className="space-y-2 sm:space-y-3">
+          <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-slate-500" />
               <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Periodo</h3>
@@ -774,8 +801,8 @@ export default function StoricoPage() {
                     className={cn(
                       'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                       isActive
-                        ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
+                        ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50'
                     )}
                   >
                     {option.label}
@@ -784,8 +811,8 @@ export default function StoricoPage() {
               })}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              <div className="lg:col-span-2">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
                 <Label className="text-xs font-medium text-slate-700 mb-1.5 block">Da</Label>
                 <Input 
                   type="date" 
@@ -794,7 +821,7 @@ export default function StoricoPage() {
                   className="h-9 text-sm"
                 />
               </div>
-              <div className="lg:col-span-2">
+              <div>
                 <Label className="text-xs font-medium text-slate-700 mb-1.5 block">A</Label>
                 <Input 
                   type="date" 
@@ -802,16 +829,6 @@ export default function StoricoPage() {
                   onChange={event => handleToDateChange(event.target.value)}
                   className="h-9 text-sm"
                 />
-              </div>
-              <div className="flex items-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={resetFilters}
-                  className="w-full h-9 text-xs gap-1.5"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" /> Reset
-                </Button>
               </div>
             </div>
           </div>
@@ -825,7 +842,7 @@ export default function StoricoPage() {
               <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Filtri</h3>
             </div>
 
-            {/* Tipo sessione - Full width */}
+            {/* Tipo sessione */}
             <div className="space-y-2">
               <Label className="text-xs font-medium text-slate-600">Tipo sessione</Label>
               <div className="flex flex-wrap gap-1.5">
@@ -839,8 +856,8 @@ export default function StoricoPage() {
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isActive
-                          ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
+                          ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50'
                       )}
                     >
                       {option.label}
@@ -850,7 +867,7 @@ export default function StoricoPage() {
               </div>
             </div>
 
-            {/* Blocco - Always visible */}
+            {/* Blocco */}
             <div className="space-y-2">
               <Label className="text-xs font-medium text-slate-600">Blocco allenamento</Label>
               <div className="flex flex-wrap gap-1.5">
@@ -860,8 +877,8 @@ export default function StoricoPage() {
                   className={cn(
                     'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                     !blockFilter
-                      ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-slate-50'
+                      ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50'
                   )}
                 >
                   Tutti
@@ -897,18 +914,17 @@ export default function StoricoPage() {
               <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Ricerca</h3>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="md:col-span-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    value={search}
-                    onChange={event => setSearch(event.target.value)}
-                    placeholder="Cerca per note, luogo, esercizi..."
-                    className="h-9 pl-9 text-sm"
-                  />
-                </div>
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  value={search}
+                  onChange={event => setSearch(event.target.value)}
+                  placeholder="Cerca per note, luogo, esercizi..."
+                  className="h-9 pl-9 text-sm"
+                />
               </div>
+              
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-xs font-medium text-slate-500 mr-1">Rapide:</span>
                 {quickSearches.map(quick => {
@@ -924,7 +940,6 @@ export default function StoricoPage() {
                           ? 'border-violet-500 bg-violet-50 text-violet-700 shadow-sm'
                           : 'border-slate-200 bg-white text-slate-500 hover:border-violet-200 hover:text-violet-600'
                       )}
-                      aria-pressed={isActive}
                     >
                       {quick.label}
                     </button>
@@ -933,12 +948,31 @@ export default function StoricoPage() {
               </div>
             </div>
           </div>
-          
-          </div> {/* Fine div filtri collassabile */}
 
-        </CardContent>
-      </Card>
-      </motion.div>
+          {/* Actions */}
+          <div className="flex gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetFilters}
+              className="flex-1 gap-2"
+            >
+              <RotateCcw className="h-4 w-4" /> Reset
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setFiltersExpanded(false)}
+              className="flex-1 bg-orange-600 hover:bg-orange-700"
+            >
+              Applica filtri
+            </Button>
+          </div>
+          
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <motion.div variants={fadeInUp}>
       <Card className="border-slate-200 shadow-sm" id="storico-sessions-list">

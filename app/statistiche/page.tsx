@@ -1775,7 +1775,7 @@ export default function StatistichePage() {
           )}
 
           {/* Tabs semplificati - versione mobile con emoji, desktop con testo */}
-          <div className="flex gap-1.5 sm:gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-xs sm:text-sm overflow-x-auto">
+          <div className="flex gap-1.5 sm:gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-xs sm:text-sm overflow-x-auto justify-center">
             <button
               type="button"
               onClick={() => setActiveTab('base')}
