@@ -1448,9 +1448,9 @@ export default function StatistichePage() {
         <StatsSkeleton />
       ) : (
         <>
-      {/* Hero Section - Compatto con Purple Gradient */}
+      {/* Hero Section - Compatto con Orange Gradient (uniformato) */}
       <motion.section 
-        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-purple-500 via-violet-500 to-indigo-500 p-4 md:p-6 text-white shadow-lg"
+        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-orange-500 via-orange-400 to-amber-500 p-4 md:p-6 text-white shadow-lg"
         variants={fadeInUp}
       >
         <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
@@ -1553,8 +1553,8 @@ export default function StatistichePage() {
         className={cn(
           "fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all hover:scale-110 active:scale-95",
           filtersExpanded
-            ? "bg-purple-600 text-white"
-            : "bg-gradient-to-br from-purple-500 to-indigo-600 text-white"
+            ? "bg-orange-600 text-white"
+            : "bg-gradient-to-br from-orange-500 to-orange-600 text-white"
         )}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
@@ -1582,7 +1582,7 @@ export default function StatistichePage() {
           <>
             {/* Backdrop */}
             <motion.div
-              className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -1597,12 +1597,12 @@ export default function StatistichePage() {
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
             >
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-purple-50 to-indigo-50 px-5 py-4">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-orange-50 to-amber-50 px-5 py-4">
                 <div className="flex items-center gap-2.5">
-                  <Filter className="h-5 w-5 text-purple-600" />
+                  <Filter className="h-5 w-5 text-orange-600" />
                   <h2 className="text-lg font-bold text-slate-800">Filtri Statistiche</h2>
                   {(fromDate || toDate || typeFilter || blockFilter || distanceFilter !== 'all') && (
-                    <span className="rounded-full bg-purple-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
+                    <span className="rounded-full bg-orange-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
                       {[fromDate, toDate, typeFilter, blockFilter, distanceFilter !== 'all'].filter(Boolean).length} attivi
                     </span>
                   )}
@@ -1635,8 +1635,8 @@ export default function StatistichePage() {
                     className={cn(
                       'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                       isActive
-                        ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-purple-300 hover:bg-purple-50'
+                        ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50'
                     )}
                   >
                     {preset.label}
@@ -1711,8 +1711,8 @@ export default function StatistichePage() {
                   className={cn(
                     'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                     blockFilter
-                      ? 'border-slate-200 bg-white text-slate-600 hover:border-purple-300 hover:bg-purple-50'
-                      : 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                      ? 'border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50'
+                      : 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
                   )}
                 >
                   Tutti

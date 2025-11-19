@@ -660,7 +660,7 @@ export default function StoricoPage() {
     >
       {/* Hero Section - Compatto su Mobile */}
       <motion.section 
-        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-purple-500 via-violet-500 to-indigo-500 p-4 md:p-6 text-white shadow-lg"
+        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-orange-500 via-orange-400 to-amber-500 p-4 md:p-6 text-white shadow-lg"
         variants={fadeInUp}
       >
         <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
@@ -748,7 +748,7 @@ export default function StoricoPage() {
           <>
             {/* Backdrop */}
             <motion.div
-              className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
