@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { cn } from '@/lib/utils';
 import { useLocalStorage } from '@/lib/useLocalStorage';
-import { QuickFilters } from '@/components/ui/quick-filters';
 import {
   calculateRPEDistribution,
   analyzeRecovery,
@@ -299,7 +298,6 @@ export default function StatistichePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'base' | 'graphs' | 'advanced' | 'insights'>('base');
   const [rangePreset, setRangePreset] = useState<string>('');
-  const [activeQuickFilter, setActiveQuickFilter] = useState<string>('');
   const [debouncedFilters, setDebouncedFilters] = useState({
     fromDate: '',
     toDate: '',
@@ -1552,17 +1550,6 @@ export default function StatistichePage() {
       <Card className="border-slate-200 shadow-sm">
         <CardContent className="p-5 space-y-5">
           
-          {/* Quick Filters */}
-          <QuickFilters
-            onSelectFilter={(from, to) => {
-              setFromDate(from);
-              setToDate(to);
-              setRangePreset(''); // Reset range preset quando si usa quick filter
-            }}
-            activeFilter={activeQuickFilter}
-            setActiveFilter={setActiveQuickFilter}
-          />
-
           {/* PERIODO Section */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
