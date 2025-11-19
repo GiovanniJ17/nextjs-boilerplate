@@ -114,3 +114,39 @@ export const trainingTypeColors: Record<string, string> = {
   recupero: chartColors.slate,
   "test/gara": chartColors.warning,
 };
+
+/**
+ * Formatter comuni per valori nei grafici
+ */
+export const chartFormatters = {
+  // Distanza in metri
+  distance: (value: number) => `${value.toLocaleString('it-IT')} m`,
+
+  // Tempo in secondi
+  time: (value: number) => `${value.toFixed(2)} s`,
+
+  // Percentuale
+  percentage: (value: number) => `${value.toFixed(1)}%`,
+
+  // Numero intero
+  count: (value: number) => value.toLocaleString('it-IT'),
+
+  // RPE (1-10)
+  rpe: (value: number) => `${value.toFixed(1)} / 10`,
+
+  // Peso in kg
+  weight: (value: number) => `${value.toFixed(1)} kg`,
+
+  // Data breve
+  date: (value: string) => {
+    const date = new Date(value);
+    return date.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+  },
+
+  // Mese + anno
+  month: (value: string) => {
+    const [year, month] = value.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return date.toLocaleDateString('it-IT', { month: 'short', year: 'numeric' });
+  },
+};
