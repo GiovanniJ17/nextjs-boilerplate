@@ -1745,8 +1745,8 @@ export default function RegistroPage() {
             <motion.div 
               className="rounded-2xl bg-white/20 backdrop-blur-sm px-4 py-2.5 md:px-5 md:py-3"
               variants={scaleIn}
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.2 }}
             >
               <p className="text-xs text-white/80 mb-0.5">Completamento</p>
               <p className="text-2xl md:text-3xl font-bold">{progressValue}%</p>

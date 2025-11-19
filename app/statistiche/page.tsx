@@ -1466,8 +1466,8 @@ export default function StatistichePage() {
           <motion.div 
             className="rounded-2xl bg-white/20 backdrop-blur-sm px-4 py-2.5 md:px-5 md:py-3"
             variants={scaleIn}
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.2 }}
           >
             <p className="text-xs text-white/80 mb-0.5">Distanza totale</p>
             <p className="text-2xl md:text-3xl font-bold">
@@ -1555,11 +1555,11 @@ export default function StatistichePage() {
             ? "bg-sky-600 text-white"
             : "bg-gradient-to-br from-sky-500 to-sky-600 text-white"
         )}
-        whileHover={{ scale: 1.05 }}
+        whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.95 }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
+        transition={{ duration: 0.2 }}
       >
         {filtersExpanded ? (
           <ChevronDown className="h-6 w-6" />
