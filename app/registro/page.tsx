@@ -309,7 +309,7 @@ const commonRecoveries = [
 const intensityLabels = {
   range1: { min: 1, max: 3, label: 'Leggero', color: 'text-green-600' },
   range2: { min: 4, max: 6, label: 'Medio', color: 'text-blue-600' },
-  range3: { min: 7, max: 8, label: 'Alto', color: 'text-orange-600' },
+  range3: { min: 7, max: 8, label: 'Alto', color: 'text-amber-600' },
   range4: { min: 9, max: 10, label: 'Massimo', color: 'text-red-600' },
 };
 
@@ -1720,10 +1720,9 @@ export default function RegistroPage() {
       animate="visible"
       exit="exit"
     >
-      {/* Hero Section - Compatto su Mobile */}
-      <motion.section 
-        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-orange-500 via-orange-400 to-amber-500 p-4 md:p-6 text-white shadow-lg"
-        variants={fadeInUp}
+      {/* Hero Section - Sky Blue Theme (NO animation per evitare flash) */}
+      <section 
+        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-sky-500 via-sky-400 to-cyan-500 p-4 md:p-6 text-white shadow-lg"
       >
         <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2 md:space-y-3">
@@ -1797,7 +1796,7 @@ export default function RegistroPage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.section>
+      </section>
 
       {/* Mobile Wizard Step Indicator */}
       <MobileStepIndicator
@@ -1829,7 +1828,7 @@ export default function RegistroPage() {
                 onClick={() => handleScrollToSection(step.key)}
                 className={cn(
                   'flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-sm transition-all active:scale-95',
-                  step.status === 'active' && 'border-orange-300 bg-orange-50 text-orange-700 shadow-sm',
+                  step.status === 'active' && 'border-sky-300 bg-sky-50 text-sky-700 shadow-sm',
                   step.status === 'done' && 'border-green-300 bg-green-50 text-green-700 shadow-sm',
                   step.status === 'todo' && 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300'
                 )}
@@ -2046,7 +2045,7 @@ export default function RegistroPage() {
                   {sessionTypes.map(type => {
                     const isSelected = sessionForm.type === type.value;
                     const colorClasses = {
-                      orange: isSelected ? 'border-orange-400 bg-orange-50 text-orange-700' : 'border-slate-200 hover:border-orange-200',
+                      orange: isSelected ? 'border-sky-400 bg-sky-50 text-sky-700' : 'border-slate-200 hover:border-sky-200',
                       blue: isSelected ? 'border-blue-400 bg-blue-50 text-blue-700' : 'border-slate-200 hover:border-blue-200',
                       amber: isSelected ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-slate-200 hover:border-amber-200',
                       purple: isSelected ? 'border-purple-400 bg-purple-50 text-purple-700' : 'border-slate-200 hover:border-purple-200',

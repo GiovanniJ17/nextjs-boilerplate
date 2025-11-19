@@ -111,7 +111,7 @@ export function DataManagement({ onDataChange }: DataManagementProps = {}) {
         className="flex flex-col items-center gap-2 rounded-lg border border-slate-200 bg-white p-4 transition-all hover:border-orange-300 hover:shadow-md disabled:opacity-50"
       >
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
-          <Upload className="h-6 w-6 text-orange-600" />
+          <Upload className="h-6 w-6 text-sky-600" />
         </div>
         <div className="text-center">
           <p className="text-sm font-semibold text-slate-900">Ripristina</p>

@@ -1448,10 +1448,9 @@ export default function StatistichePage() {
         <StatsSkeleton />
       ) : (
         <>
-      {/* Hero Section - Compatto con Orange Gradient (uniformato) */}
-      <motion.section 
-        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-orange-500 via-orange-400 to-amber-500 p-4 md:p-6 text-white shadow-lg"
-        variants={fadeInUp}
+      {/* Hero Section - Sky Blue Theme (NO animation per evitare flash) */}
+      <section 
+        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-sky-500 via-sky-400 to-cyan-500 p-4 md:p-6 text-white shadow-lg"
       >
         <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2 md:space-y-3">
@@ -1545,18 +1544,18 @@ export default function StatistichePage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.section>
+      </section>
 
       {/* Floating Filter Button - Bottom Right */}
       <motion.button
         onClick={() => setFiltersExpanded(!filtersExpanded)}
         className={cn(
-          "fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all hover:scale-110 active:scale-95",
+          "fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all",
           filtersExpanded
-            ? "bg-orange-600 text-white"
-            : "bg-gradient-to-br from-orange-500 to-orange-600 text-white"
+            ? "bg-sky-600 text-white"
+            : "bg-gradient-to-br from-sky-500 to-sky-600 text-white"
         )}
-        whileHover={{ scale: 1.1 }}
+        whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1597,12 +1596,12 @@ export default function StatistichePage() {
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
             >
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-orange-50 to-amber-50 px-5 py-4">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-sky-50 to-cyan-50 px-5 py-4">
                 <div className="flex items-center gap-2.5">
-                  <Filter className="h-5 w-5 text-orange-600" />
+                  <Filter className="h-5 w-5 text-sky-600" />
                   <h2 className="text-lg font-bold text-slate-800">Filtri Statistiche</h2>
                   {(fromDate || toDate || typeFilter || blockFilter || distanceFilter !== 'all') && (
-                    <span className="rounded-full bg-orange-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
+                    <span className="rounded-full bg-sky-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
                       {[fromDate, toDate, typeFilter, blockFilter, distanceFilter !== 'all'].filter(Boolean).length} attivi
                     </span>
                   )}
@@ -1635,8 +1634,8 @@ export default function StatistichePage() {
                     className={cn(
                       'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                       isActive
-                        ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50'
+                        ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50'
                     )}
                   >
                     {preset.label}
@@ -1711,8 +1710,8 @@ export default function StatistichePage() {
                   className={cn(
                     'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                     blockFilter
-                      ? 'border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50'
-                      : 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
+                      ? 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50'
+                      : 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
                   )}
                 >
                   Tutti
@@ -1830,10 +1829,10 @@ export default function StatistichePage() {
           {stats && (stats.smartInsights?.length > 0 || stats.alerts?.length > 0) && (
             <motion.div 
               variants={fadeInUp}
-              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 px-3 py-2 text-xs"
+              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-sky-50 to-cyan-50 border border-sky-200 px-3 py-2 text-xs"
             >
-              <Sparkles className="h-4 w-4 text-amber-600 flex-shrink-0" />
-              <span className="text-amber-900">
+              <Sparkles className="h-4 w-4 text-sky-600 flex-shrink-0" />
+              <span className="text-sky-900">
                 <strong className="font-semibold">{((stats.smartInsights?.length || 0) + (stats.alerts?.length || 0))} nuovi insights</strong> disponibili nella sezione Insights & Consigli
               </span>
             </motion.div>
@@ -2842,7 +2841,7 @@ export default function StatistichePage() {
                                   "h-full transition-all",
                                   item.rpe <= 3 ? "bg-emerald-500" :
                                   item.rpe <= 6 ? "bg-amber-500" :
-                                  item.rpe <= 8 ? "bg-orange-500" : "bg-rose-500"
+                                  item.rpe <= 8 ? "bg-amber-600" : "bg-rose-500"
                                 )}
                                 style={{ width: `${item.percentage}%` }}
                               />

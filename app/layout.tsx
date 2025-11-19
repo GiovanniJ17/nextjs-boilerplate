@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   description: "Registro allenamenti professionale per velocisti. Monitora progressi, analizza statistiche e ottimizza le tue performance.",
   keywords: ["velocità", "atletica", "sprint", "allenamento", "tracker", "performance", "statistiche"],
   authors: [{ name: "Tracker Velocista" }],
-  themeColor: "#f97316", // orange-500
+  themeColor: "#0ea5e9", // sky-500
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

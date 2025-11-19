@@ -104,7 +104,7 @@ export function CharacterCounter({ current, max, className }: CharacterCounterPr
   return (
     <div className={cn(
       'text-xs transition-colors',
-      isAtLimit ? 'text-red-600 font-medium' : isNearLimit ? 'text-orange-600' : 'text-slate-500',
+      isAtLimit ? 'text-red-600 font-medium' : isNearLimit ? 'text-amber-600' : 'text-slate-500',
       className
     )}>
       {current} / {max}

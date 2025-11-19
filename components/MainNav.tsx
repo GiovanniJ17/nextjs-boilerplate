@@ -19,7 +19,7 @@ export function MainNav() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo/Title */}
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-red-500 text-white font-bold text-lg">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-600 text-white font-bold text-lg">
               TV
             </div>
             <h1 className="text-lg font-semibold text-slate-900">Tracker Velocista</h1>
@@ -38,7 +38,7 @@ export function MainNav() {
                       className={cn(
                         "inline-flex items-center justify-center rounded-md px-5 py-2.5 text-sm font-medium transition-all duration-200 min-h-[44px]",
                         active
-                          ? "bg-white text-orange-500 shadow-sm"
+                          ? "bg-white text-sky-600 shadow-sm"
                           : "text-slate-600 hover:bg-white/60 hover:text-slate-900"
                       )}
                     >

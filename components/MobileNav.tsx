@@ -34,8 +34,8 @@ export function MobileNav() {
               className={cn(
                 "flex flex-col items-center justify-center gap-1 px-4 py-2 min-w-[44px] min-h-[44px] transition-colors",
                 active
-                  ? "text-orange-500"
-                  : "text-slate-600 active:text-orange-400"
+                  ? "text-sky-500"
+                  : "text-slate-600 active:text-sky-400"
               )}
             >
               <Icon 

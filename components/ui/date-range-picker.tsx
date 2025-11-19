@@ -109,7 +109,7 @@ export function DateRangePicker({
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'gap-2 justify-between w-full md:w-auto',
-          (startDate || endDate) && 'border-orange-300 bg-orange-50 text-orange-700'
+          (startDate || endDate) && 'border-sky-300 bg-sky-50 text-sky-700'
         )}
       >
         <span className="flex items-center gap-2">
@@ -169,7 +169,7 @@ export function DateRangePicker({
                         onRangeChange(start, end);
                         setIsOpen(false);
                       }}
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 active:scale-95"
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 active:scale-95"
                     >
                       {range.label}
                     </button>
@@ -219,7 +219,7 @@ export function DateRangePicker({
                     type="button"
                     onClick={handleApply}
                     disabled={!localStart || !localEnd}
-                    className="flex-1 h-9 text-xs bg-orange-500 hover:bg-orange-600"
+                    className="flex-1 h-9 text-xs bg-sky-500 hover:bg-sky-600"
                   >
                     Applica
                   </Button>

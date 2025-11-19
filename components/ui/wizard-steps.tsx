@@ -41,7 +41,7 @@ export function MobileStepIndicator({
       {/* Progress Bar */}
       <div className="relative h-1 bg-slate-100">
         <motion.div
-          className="absolute inset-y-0 left-0 bg-gradient-to-r from-orange-500 to-amber-500"
+          className="absolute inset-y-0 left-0 bg-gradient-to-r from-sky-500 to-cyan-500"
           initial={{ width: 0 }}
           animate={{ 
             width: `${((currentIndex + 1) / steps.length) * 100}%` 
@@ -74,7 +74,7 @@ export function MobileStepIndicator({
               <motion.div
                 className={cn(
                   'relative flex items-center justify-center rounded-full transition-all',
-                  isActive && 'h-10 w-10 bg-gradient-to-br from-orange-500 to-amber-500 shadow-lg',
+                  isActive && 'h-10 w-10 bg-gradient-to-br from-sky-500 to-cyan-500 shadow-lg',
                   (isCompleted || isPast) && !isActive && 'h-8 w-8 bg-green-500',
                   isFuture && !isActive && 'h-8 w-8 bg-slate-200'
                 )}
@@ -121,7 +121,7 @@ export function MobileStepIndicator({
               {/* Label */}
               <span className={cn(
                 'text-[10px] font-medium transition-colors text-center max-w-[60px]',
-                isActive ? 'text-orange-600' : 'text-slate-500'
+                isActive ? 'text-sky-600' : 'text-slate-500'
               )}>
                 {step.label}
               </span>
@@ -178,7 +178,7 @@ export function DesktopStepIndicator({
                 {/* Circle */}
                 <div className={cn(
                   'flex items-center justify-center rounded-full transition-all shrink-0',
-                  isActive && 'h-12 w-12 bg-gradient-to-br from-orange-500 to-amber-500 shadow-lg',
+                  isActive && 'h-12 w-12 bg-gradient-to-br from-sky-500 to-cyan-500 shadow-lg',
                   (isCompleted || isPast) && !isActive && 'h-10 w-10 bg-green-500',
                   !isActive && !isCompleted && !isPast && 'h-10 w-10 bg-slate-200'
                 )}>
@@ -198,13 +198,13 @@ export function DesktopStepIndicator({
                 <div className="flex flex-col items-start">
                   <span className={cn(
                     'text-xs text-slate-500 font-medium',
-                    isActive && 'text-orange-600'
+                    isActive && 'text-sky-600'
                   )}>
                     Step {index + 1}
                   </span>
                   <span className={cn(
                     'text-sm font-semibold transition-colors',
-                    isActive ? 'text-orange-600' : 'text-slate-700'
+                    isActive ? 'text-sky-600' : 'text-slate-700'
                   )}>
                     {step.label}
                   </span>
