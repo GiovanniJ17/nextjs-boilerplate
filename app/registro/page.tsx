@@ -72,6 +72,8 @@ import {
   Copy, 
   History,
 } from 'lucide-react';
+import { MobileStepIndicator, DesktopStepIndicator, type WizardStep } from '@/components/ui/wizard-steps';
+import { useFieldValidation, validators } from '@/components/ui/field-validation';
 
 type TrainingBlock = {
   id: string;
@@ -1983,7 +1985,23 @@ export default function RegistroPage() {
         </AnimatePresence>
       </motion.section>
 
-      {/* Step Progress - con emoji */}
+      {/* Mobile Wizard Step Indicator */}
+      <MobileStepIndicator
+        steps={[
+          { id: 'details', label: 'Dettagli', emoji: '📝' },
+          { id: 'exercises', label: isMetricSession ? 'Metriche' : 'Esercizi', emoji: isMetricSession ? '📊' : '💪' },
+        ]}
+        currentStepId={expandedSection || 'details'}
+        completedStepIds={stepProgress
+          .filter(s => s.status === 'done')
+          .map(s => s.key)}
+        onStepClick={(stepId) => {
+          setExpandedSection(stepId as 'details' | 'exercises' | 'metrics');
+          handleScrollToSection(stepId as StepKey);
+        }}
+      />
+
+      {/* Desktop Step Progress - con emoji */}
       <div className="hidden md:block">
         <div className="flex flex-wrap gap-2">
           {stepProgress.map(step => {
