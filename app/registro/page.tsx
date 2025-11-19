@@ -134,36 +134,50 @@ const sessionTypes = [
     value: 'pista',
     label: 'Allenamento in pista',
     hint: 'Ripetute, accelerazioni e lavori tecnici sul rettilineo o curva',
+    emoji: '🏃‍♂️',
+    color: 'orange',
   },
   {
     value: 'test',
     label: 'Test cronometrati',
     hint: 'Valutazioni ufficiali o simulate svolte in pista',
+    emoji: '⏱️',
+    color: 'blue',
   },
   {
     value: 'gara',
     label: 'Gara',
     hint: 'Competizioni ufficiali o simulazioni complete',
+    emoji: '🏆',
+    color: 'amber',
   },
   {
     value: 'palestra',
     label: 'Test massimali',
     hint: 'Test di forza massima: squat, girata, stacco, trazioni',
+    emoji: '🏋️',
+    color: 'purple',
   },
   {
     value: 'scarico',
     label: 'Scarico attivo',
     hint: 'Sessioni leggere di rigenerazione sempre in pista',
+    emoji: '🌊',
+    color: 'cyan',
   },
   {
     value: 'recupero',
     label: 'Recupero',
     hint: 'Lavori di mobilità, jogging blando o tecnica a bassa intensità',
+    emoji: '🧘',
+    color: 'green',
   },
   {
     value: 'altro',
     label: 'Altro',
     hint: 'Qualsiasi sessione particolare legata alla pista',
+    emoji: '📌',
+    color: 'slate',
   },
 ];
 
@@ -1703,48 +1717,44 @@ export default function RegistroPage() {
       animate="visible"
       exit="exit"
     >
-      {/* Hero Section - Gradient Style */}
+      {/* Hero Section - Compatto su Mobile */}
       <motion.section 
-        className="rounded-3xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 p-5 text-white shadow-xl"
+        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-orange-500 via-orange-400 to-amber-500 p-4 md:p-6 text-white shadow-lg"
         variants={fadeInUp}
       >
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-3">
-            <motion.div 
-              className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium"
-              variants={scaleIn}
-            >
-              <Play className="h-4 w-4" strokeWidth={2} /> Registro Allenamento
-            </motion.div>
-            <h1 className="text-3xl font-semibold">Registra la tua sessione</h1>
-            <p className="max-w-xl text-sm text-white/75">
-              Inserisci esercizi, serie, ripetizioni e metriche. Monitora il progresso in tempo reale.
+        <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2 md:space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🏃‍♂️</span>
+              <h1 className="text-xl md:text-2xl font-bold">Nuova Sessione</h1>
+            </div>
+            <p className="text-sm md:text-base text-white/90 hidden md:block">
+              Registra il tuo allenamento e monitora i progressi
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <AutoSaveIndicator 
               lastSaved={lastSaved} 
               isSaving={isSaving}
-              className="hidden md:flex"
+              className="hidden lg:flex"
             />
             
             <motion.div 
-              className="rounded-3xl bg-white/10 px-6 py-5 text-center"
+              className="rounded-2xl bg-white/20 backdrop-blur-sm px-4 py-2.5 md:px-5 md:py-3"
               variants={scaleIn}
               whileHover={{ scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             >
-              <p className="text-xs uppercase tracking-widest text-white/60">Completamento</p>
-              <p className="text-4xl font-semibold">{progressValue}%</p>
-              <p className="text-xs text-white/60">{completedSteps} di {stepProgress.length} step</p>
+              <p className="text-xs text-white/80 mb-0.5">Completamento</p>
+              <p className="text-2xl md:text-3xl font-bold">{progressValue}%</p>
             </motion.div>
           </div>
         </div>
         
-        {/* Stats in hero */}
+        {/* Stats compatti su mobile */}
         <motion.div 
-          className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          className="mt-3 md:mt-5 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3"
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
@@ -1755,18 +1765,16 @@ export default function RegistroPage() {
             return (
               <motion.div 
                 key={stat.label} 
-                className="rounded-2xl bg-white/10 px-4 py-3 text-sm"
+                className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2 md:px-4 md:py-3"
                 variants={staggerItem}
-                whileHover={{ y: -4, backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+                whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.25)' }}
                 transition={{ duration: 0.2 }}
               >
-                <div className="flex items-center justify-between text-white/75">
-                  <span className="text-xs uppercase tracking-widest text-white/60">{stat.label}</span>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
-                    <Icon className="h-4 w-4" strokeWidth={2} />
-                  </span>
+                <div className="flex items-start justify-between mb-1">
+                  <span className="text-xs text-white/70">{stat.label}</span>
+                  <Icon className="h-4 w-4 md:h-5 md:w-5 text-white/80" strokeWidth={2} />
                 </div>
-                <p className="mt-2 text-2xl font-semibold text-white">{formattedValue}</p>
+                <p className="text-lg md:text-xl font-semibold text-white">{formattedValue}</p>
               </motion.div>
             );
           })}
@@ -1775,7 +1783,7 @@ export default function RegistroPage() {
         <AnimatePresence>
           {selectedBlock && (
             <motion.div 
-              className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium"
+              className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1.5 text-sm font-medium"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
@@ -1788,11 +1796,12 @@ export default function RegistroPage() {
         </AnimatePresence>
       </motion.section>
 
-      {/* Step Progress */}
-      <div className="card-compact">
+      {/* Step Progress - con emoji */}
+      <div className="hidden md:block">
         <div className="flex flex-wrap gap-2">
           {stepProgress.map(step => {
             const Icon = step.icon;
+            const emoji = step.key === 'details' ? '📝' : step.key === 'exercises' ? '💪' : '📊';
 
             return (
               <button
@@ -1800,13 +1809,13 @@ export default function RegistroPage() {
                 type="button"
                 onClick={() => handleScrollToSection(step.key)}
                 className={cn(
-                  'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition',
-                  step.status === 'active' && 'border-sky-200 bg-sky-50 text-sky-700',
-                  step.status === 'done' && 'border-green-200 bg-green-50 text-green-700',
-                  step.status === 'todo' && 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                  'flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-sm transition-all active:scale-95',
+                  step.status === 'active' && 'border-orange-300 bg-orange-50 text-orange-700 shadow-sm',
+                  step.status === 'done' && 'border-green-300 bg-green-50 text-green-700 shadow-sm',
+                  step.status === 'todo' && 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300'
                 )}
               >
-                <Icon className="h-4 w-4" />
+                <span className="text-base">{emoji}</span>
                 <span className="font-medium">{step.label}</span>
                 {step.status === 'done' && <CheckCircle2 className="h-4 w-4" />}
               </button>
@@ -1823,9 +1832,12 @@ export default function RegistroPage() {
               className="pb-2.5 cursor-pointer md:cursor-default"
               onClick={() => setExpandedSection(prev => prev === 'details' ? null : 'details')}
             >
-              <CardTitle className="flex items-center justify-between text-lg text-slate-800">
-                <span className="flex items-center gap-2">
-                  <NotebookPen className="h-5 w-5 text-sky-600" strokeWidth={2} /> Dettagli sessione
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-100 text-lg">
+                    📝
+                  </span>
+                  <span className="text-base md:text-lg font-semibold text-slate-800">Dettagli sessione</span>
                 </span>
                 <ChevronDown 
                   className={cn(
@@ -1836,7 +1848,7 @@ export default function RegistroPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className={cn(
-              "p-4 space-y-4",
+              "space-y-4",
               expandedSection !== 'details' && "hidden md:block"
             )}>
             {/* Blocco + Data */}
@@ -2009,37 +2021,43 @@ export default function RegistroPage() {
             <div className="border-t border-slate-100"></div>
 
             {/* Tipo di sessione */}
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-slate-700">Tipo di sessione</Label>
-              <div className="grid gap-2 sm:grid-cols-2">
+            <div className="space-y-2.5">
+              <Label>Tipo di sessione</Label>
+              <div className="grid gap-2.5 sm:grid-cols-2">
                   {sessionTypes.map(type => {
-                    const Icon = sessionTypeIcons[type.value] ?? Activity;
                     const isSelected = sessionForm.type === type.value;
+                    const colorClasses = {
+                      orange: isSelected ? 'border-orange-400 bg-orange-50 text-orange-700' : 'border-slate-200 hover:border-orange-200',
+                      blue: isSelected ? 'border-blue-400 bg-blue-50 text-blue-700' : 'border-slate-200 hover:border-blue-200',
+                      amber: isSelected ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-slate-200 hover:border-amber-200',
+                      purple: isSelected ? 'border-purple-400 bg-purple-50 text-purple-700' : 'border-slate-200 hover:border-purple-200',
+                      cyan: isSelected ? 'border-cyan-400 bg-cyan-50 text-cyan-700' : 'border-slate-200 hover:border-cyan-200',
+                      green: isSelected ? 'border-green-400 bg-green-50 text-green-700' : 'border-slate-200 hover:border-green-200',
+                      slate: isSelected ? 'border-slate-400 bg-slate-50 text-slate-700' : 'border-slate-200 hover:border-slate-300',
+                    };
+                    
                     return (
                       <button
                         key={type.value}
                         type="button"
                         onClick={() => handleQuickTypeSelect(type.value)}
                         className={cn(
-                          'flex h-full flex-col items-start gap-1 rounded-2xl border px-3 py-2 text-left transition',
-                          isSelected
-                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
+                          'flex h-full items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-all active:scale-95',
+                          colorClasses[type.color as keyof typeof colorClasses] || colorClasses.slate,
+                          !isSelected && 'bg-white text-slate-600'
                         )}
                         aria-pressed={isSelected}
                       >
-                        <span className="inline-flex items-center gap-2 text-xs font-semibold">
-                          <span className={cn('flex h-5 w-5 items-center justify-center rounded-xl', isSelected ? 'bg-sky-100 text-sky-600' : 'bg-slate-100 text-slate-500')}>
-                            <Icon className="h-3.5 w-3.5" />
-                          </span>
-                          {type.label}
-                        </span>
-                        <span className="text-[11px] text-slate-500">{type.hint}</span>
+                        <span className="text-2xl md:text-3xl">{type.emoji}</span>
+                        <div className="flex-1">
+                          <span className="block text-sm md:text-base font-semibold">{type.label}</span>
+                          <span className="block text-xs text-slate-500 mt-0.5 hidden sm:block">{type.hint}</span>
+                        </div>
                       </button>
                     );
                   })}
                 </div>
-                {errors.type && <p className="text-xs text-red-500">{errors.type}</p>}
+                {errors.type && <p className="text-sm text-red-500 mt-1">{errors.type}</p>}
               </div>
 
             {/* Fase e Luogo */}

@@ -148,6 +148,19 @@ function formatDistance(exercise: Exercise) {
   return `${total.toLocaleString('it-IT')} m totali`;
 }
 
+function getSessionTypeEmoji(type: string | null): string {
+  const emojiMap: Record<string, string> = {
+    pista: '🏃‍♂️',
+    test: '⏱️',
+    gara: '🏆',
+    palestra: '🏋️',
+    scarico: '🌊',
+    recupero: '🧘',
+    altro: '📌',
+  };
+  return emojiMap[type || ''] || '📝';
+}
+
 function humanDiscipline(discipline: string | null) {
   switch (discipline) {
     case 'forza':
@@ -645,40 +658,36 @@ export default function StoricoPage() {
       animate="visible"
       exit="exit"
     >
-      {/* Hero Section - Gradient Style */}
+      {/* Hero Section - Compatto su Mobile */}
       <motion.section 
-        className="rounded-3xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-500 p-5 text-white shadow-xl"
+        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-purple-500 via-violet-500 to-indigo-500 p-4 md:p-6 text-white shadow-lg"
         variants={fadeInUp}
       >
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-3">
-            <motion.div 
-              className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium"
-              variants={scaleIn}
-            >
-              <History className="h-4 w-4" strokeWidth={2} /> Storico Allenamenti
-            </motion.div>
-            <h1 className="text-3xl font-semibold">Rivedi le tue performance</h1>
-            <p className="max-w-xl text-sm text-white/75">
-              Consulta, analizza ed esporta le tue sessioni precedenti. Monitora i progressi nel tempo.
+        <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2 md:space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">📚</span>
+              <h1 className="text-xl md:text-2xl font-bold">Storico</h1>
+            </div>
+            <p className="text-sm md:text-base text-white/90 hidden md:block">
+              Consulta e analizza le tue sessioni passate
             </p>
           </div>
 
           <motion.div 
-            className="rounded-3xl bg-white/10 px-6 py-5 text-center"
+            className="rounded-2xl bg-white/20 backdrop-blur-sm px-4 py-2.5 md:px-5 md:py-3"
             variants={scaleIn}
             whileHover={{ scale: 1.05 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           >
-            <p className="text-xs uppercase tracking-widest text-white/60">Sessioni totali</p>
-            <p className="text-4xl font-semibold">{sessions.length}</p>
-            <p className="text-xs text-white/60">registrate</p>
+            <p className="text-xs text-white/80 mb-0.5">Totale sessioni</p>
+            <p className="text-2xl md:text-3xl font-bold">{sessions.length}</p>
           </motion.div>
         </div>
         
-        {/* Stats in hero - 4 cards uniform */}
+        {/* Stats compatti */}
         <motion.div 
-          className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          className="mt-3 md:mt-5 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3"
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
@@ -688,18 +697,16 @@ export default function StoricoPage() {
             return (
               <motion.div 
                 key={stat.label} 
-                className="rounded-2xl bg-white/10 px-4 py-3 text-sm"
+                className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2 md:px-4 md:py-3"
                 variants={staggerItem}
-                whileHover={{ y: -4, backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+                whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.25)' }}
                 transition={{ duration: 0.2 }}
               >
-                <div className="flex items-center justify-between text-white/75">
-                  <span className="text-xs uppercase tracking-widest text-white/60">{stat.label}</span>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
-                    <Icon className="h-4 w-4" strokeWidth={2} />
-                  </span>
+                <div className="flex items-start justify-between mb-1">
+                  <span className="text-xs text-white/70">{stat.label}</span>
+                  <Icon className="h-4 w-4 md:h-5 md:w-5 text-white/80" strokeWidth={2} />
                 </div>
-                <p className="mt-2 text-2xl font-semibold text-white">{stat.value}</p>
+                <p className="text-lg md:text-xl font-semibold text-white">{stat.value}</p>
               </motion.div>
             );
           })}
@@ -717,14 +724,14 @@ export default function StoricoPage() {
           {/* Mobile: Pulsante per espandere/collassare filtri */}
           <button
             onClick={() => setFiltersExpanded(!filtersExpanded)}
-            className="flex lg:hidden w-full items-center justify-between rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 px-4 py-3 text-left transition-colors hover:from-sky-100 hover:to-blue-100 active:from-sky-200 active:to-blue-200"
+            className="flex lg:hidden w-full items-center justify-between rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 px-4 py-3 text-left transition-colors hover:from-orange-100 hover:to-amber-100 active:scale-95"
           >
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-sky-600" />
+            <div className="flex items-center gap-2.5">
+              <span className="text-xl">🔍</span>
               <span className="text-sm font-semibold text-slate-700">Filtri e Ricerca</span>
               {(search || typeFilter || blockFilter || fromDate || toDate) && (
-                <span className="rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                  ATTIVI
+                <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                  {[search, typeFilter, blockFilter, fromDate, toDate].filter(Boolean).length}
                 </span>
               )}
             </div>
@@ -1191,24 +1198,26 @@ export default function StoricoPage() {
                               toggleSession(session.id);
                             }
                           }}
-                          className="flex flex-1 cursor-pointer items-start gap-3 rounded-2xl px-3 sm:px-4 py-3 text-left transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 active:bg-slate-100"
+                          className="flex flex-1 cursor-pointer items-start gap-2.5 sm:gap-3 rounded-2xl px-3 sm:px-4 py-3 text-left transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 active:bg-slate-100"
                         >
-                          {/* Icona espandi/comprimi a sinistra su mobile */}
-                          <div className="flex-shrink-0 mt-0.5 rounded-full border border-slate-200 bg-white p-1.5 text-slate-500">
-                            {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          {/* Emoji tipo sessione + icona espandi */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-2xl">{getSessionTypeEmoji(session.type)}</span>
+                            <div className="rounded-full border border-slate-200 bg-white p-1 text-slate-500">
+                              {isOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                            </div>
                           </div>
                           
-                          <div className="flex flex-1 flex-col gap-2.5 sm:gap-3 min-w-0">
+                          <div className="flex flex-1 flex-col gap-2 sm:gap-2.5 min-w-0">
                             {/* Data e tipo - sempre visibili */}
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                              <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700 text-sm">
-                                <Calendar className="h-3.5 w-3.5 flex-shrink-0" /> 
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
+                              <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800 text-sm md:text-base">
                                 {formatDate(session.date)}
                               </span>
                               <span
                                 className={cn(
-                                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium w-fit self-center',
-                                  typeToken ? `${typeToken.bg} ${typeToken.text}` : 'bg-slate-200 text-slate-600'
+                                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium w-fit',
+                                  typeToken ? `${typeToken.bg} ${typeToken.text}` : 'bg-slate-100 text-slate-600'
                                 )}
                               >
                                 <Activity className="h-3 w-3 flex-shrink-0" /> {typeLabel}
