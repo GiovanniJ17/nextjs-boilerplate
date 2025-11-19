@@ -6,8 +6,8 @@
 export function StatsSkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
-      {/* Hero skeleton */}
-      <div className="rounded-3xl bg-gradient-to-br from-violet-300 via-purple-300 to-indigo-300 p-5 h-64">
+      {/* Hero skeleton - Sky Blue theme */}
+      <div className="rounded-3xl bg-gradient-to-br from-sky-300 via-sky-400 to-cyan-300 p-5 h-64">
         <div className="h-6 bg-white/30 rounded w-48 mb-4"></div>
         <div className="h-8 bg-white/30 rounded w-64 mb-2"></div>
         <div className="h-4 bg-white/20 rounded w-96 mb-6"></div>
