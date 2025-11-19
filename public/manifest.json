@@ -4,8 +4,8 @@
   "description": "Registro allenamenti professionale per velocisti",
   "start_url": "/registro",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#0ea5e9",
+  "background_color": "#ffffff",
+  "theme_color": "#f97316",
   "orientation": "portrait-primary",
   "icons": [],
   "categories": ["sports", "health", "productivity"],
@@ -14,19 +14,22 @@
       "name": "Nuovo Allenamento",
       "short_name": "Registro",
       "description": "Registra una nuova sessione",
-      "url": "/registro"
+      "url": "/registro",
+      "icons": []
     },
     {
       "name": "Storico",
       "short_name": "Storico",
       "description": "Visualizza allenamenti passati",
-      "url": "/storico"
+      "url": "/storico",
+      "icons": []
     },
     {
       "name": "Statistiche",
       "short_name": "Stats",
       "description": "Analizza le tue performance",
-      "url": "/statistiche"
+      "url": "/statistiche",
+      "icons": []
     }
   ]
 }

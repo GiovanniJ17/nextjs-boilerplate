@@ -13,11 +13,7 @@ export const metadata: Metadata = {
   description: "Registro allenamenti professionale per velocisti. Monitora progressi, analizza statistiche e ottimizza le tue performance.",
   keywords: ["velocità", "atletica", "sprint", "allenamento", "tracker", "performance", "statistiche"],
   authors: [{ name: "Tracker Velocista" }],
-  creator: "Tracker Velocista",
-  publisher: "Tracker Velocista",
-  themeColor: "#0ea5e9",
-  colorScheme: "light",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
+  themeColor: "#f97316", // orange-500
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -26,19 +22,6 @@ export const metadata: Metadata = {
   },
   formatDetection: {
     telephone: false,
-  },
-  openGraph: {
-    type: "website",
-    locale: "it_IT",
-    url: "https://tracker-velocista.app",
-    title: "Tracker Velocista - Registro Allenamenti",
-    description: "Monitora i tuoi progressi nell'atletica leggera con analisi avanzate e statistiche dettagliate.",
-    siteName: "Tracker Velocista",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Tracker Velocista",
-    description: "Registro allenamenti professionale per velocisti",
   },
   robots: {
     index: true,
