@@ -1761,6 +1761,20 @@ export default function StatistichePage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Badge insights separato - più pulito su mobile */}
+          {stats && (stats.smartInsights?.length > 0 || stats.alerts?.length > 0) && (
+            <motion.div 
+              variants={fadeInUp}
+              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 px-3 py-2 text-xs"
+            >
+              <Sparkles className="h-4 w-4 text-amber-600 flex-shrink-0" />
+              <span className="text-amber-900">
+                <strong className="font-semibold">{((stats.smartInsights?.length || 0) + (stats.alerts?.length || 0))} nuovi insights</strong> disponibili nella sezione Insights & Consigli
+              </span>
+            </motion.div>
+          )}
+
+          {/* Tabs compatti senza badge inline */}
           <div className="flex flex-wrap gap-1.5 sm:gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-xs sm:text-sm">
             {tabs.map(tab => (
               <button
@@ -1773,19 +1787,7 @@ export default function StatistichePage() {
                     : 'text-slate-600 hover:bg-white'
                 }`}
               >
-                <span className="flex items-center justify-center gap-1.5">
-                  {tab.label}
-                  {tab.badge && tab.badge > 0 && (
-                    <span className={cn(
-                      'inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold',
-                      activeTab === tab.key
-                        ? 'bg-white text-sky-600'
-                        : 'bg-amber-500 text-white'
-                    )}>
-                      {tab.badge}
-                    </span>
-                  )}
-                </span>
+                {tab.label}
               </button>
             ))}
           </div>

@@ -746,7 +746,10 @@ export default function StoricoPage() {
           {/* Sezioni filtri - sempre visibili su desktop, collassabili su mobile */}
           <div className={cn(
             "space-y-4 sm:space-y-5",
-            !filtersExpanded && "hidden lg:block"
+            !filtersExpanded && "hidden lg:block",
+            // Su mobile: max-height con scroll per non bloccare la pagina
+            "lg:max-h-none",
+            filtersExpanded && "max-h-[60vh] overflow-y-auto overscroll-contain"
           )}>
           
           {/* PERIODO Section */}
