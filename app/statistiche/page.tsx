@@ -3073,14 +3073,14 @@ export default function StatistichePage() {
                               "border-emerald-500 bg-emerald-50"
                             )}
                           >
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  {insight.severity === 'high' && <AlertTriangle className="h-4 w-4 text-rose-600" />}
-                                  {insight.severity === 'medium' && <Info className="h-4 w-4 text-amber-600" />}
-                                  {insight.severity === 'low' && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                            <div className="flex flex-col gap-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  {insight.severity === 'high' && <AlertTriangle className="h-4 w-4 text-rose-600 flex-shrink-0" />}
+                                  {insight.severity === 'medium' && <Info className="h-4 w-4 text-amber-600 flex-shrink-0" />}
+                                  {insight.severity === 'low' && <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />}
                                   <h4 className={cn(
-                                    "font-semibold",
+                                    "font-semibold text-sm",
                                     insight.severity === 'high' ? "text-rose-900" :
                                     insight.severity === 'medium' ? "text-amber-900" :
                                     "text-emerald-900"
@@ -3088,34 +3088,40 @@ export default function StatistichePage() {
                                     {insight.title}
                                   </h4>
                                 </div>
-                                <p className={cn(
-                                  "text-sm mb-2",
-                                  insight.severity === 'high' ? "text-rose-700" :
-                                  insight.severity === 'medium' ? "text-amber-700" :
-                                  "text-emerald-700"
+                                <span className={cn(
+                                  "rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-wide flex-shrink-0",
+                                  insight.severity === 'high' ? "bg-rose-200 text-rose-800" :
+                                  insight.severity === 'medium' ? "bg-amber-200 text-amber-800" :
+                                  "bg-emerald-200 text-emerald-800"
                                 )}>
-                                  {insight.description}
-                                </p>
-                                <div className={cn(
-                                  "rounded-lg p-2 text-sm",
-                                  insight.severity === 'high' ? "bg-rose-100" :
-                                  insight.severity === 'medium' ? "bg-amber-100" :
-                                  "bg-emerald-100"
-                                )}>
-                                  <p className="flex items-center gap-2">
-                                    <ChevronRight className="h-3 w-3" />
-                                    <strong>Raccomandazione:</strong> {insight.recommendation}
-                                  </p>
-                                </div>
+                                  {insight.category}
+                                </span>
                               </div>
-                              <span className={cn(
-                                "rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-wide",
-                                insight.severity === 'high' ? "bg-rose-200 text-rose-800" :
-                                insight.severity === 'medium' ? "bg-amber-200 text-amber-800" :
-                                "bg-emerald-200 text-emerald-800"
+                              
+                              <p className={cn(
+                                "text-sm",
+                                insight.severity === 'high' ? "text-rose-700" :
+                                insight.severity === 'medium' ? "text-amber-700" :
+                                "text-emerald-700"
                               )}>
-                                {insight.category}
-                              </span>
+                                {insight.description}
+                              </p>
+                              
+                              <div className={cn(
+                                "rounded-lg p-3 text-sm",
+                                insight.severity === 'high' ? "bg-rose-100" :
+                                insight.severity === 'medium' ? "bg-amber-100" :
+                                "bg-emerald-100"
+                              )}>
+                                <p className="leading-relaxed">
+                                  <span className="font-semibold block mb-1">Raccomandazione:</span>
+                                  <span className={cn(
+                                    insight.severity === 'high' ? "text-rose-800" :
+                                    insight.severity === 'medium' ? "text-amber-800" :
+                                    "text-emerald-800"
+                                  )}>{insight.recommendation}</span>
+                                </p>
+                              </div>
                             </div>
                           </div>
                         ))}
