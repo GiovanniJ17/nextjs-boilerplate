@@ -1774,22 +1774,56 @@ export default function StatistichePage() {
             </motion.div>
           )}
 
-          {/* Tabs compatti senza badge inline */}
-          <div className="flex flex-wrap gap-1.5 sm:gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-xs sm:text-sm">
-            {tabs.map(tab => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key as typeof activeTab)}
-                className={`rounded-full px-3 sm:px-4 py-1.5 transition ${
-                  activeTab === tab.key
-                    ? 'bg-sky-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          {/* Tabs semplificati - versione mobile con emoji, desktop con testo */}
+          <div className="flex gap-1.5 sm:gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-xs sm:text-sm overflow-x-auto">
+            <button
+              type="button"
+              onClick={() => setActiveTab('base')}
+              className={`rounded-full px-3 sm:px-4 py-1.5 transition whitespace-nowrap flex-shrink-0 ${
+                activeTab === 'base'
+                  ? 'bg-sky-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-white'
+              }`}
+            >
+              <span className="sm:hidden">📊</span>
+              <span className="hidden sm:inline">Panoramica</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('graphs')}
+              className={`rounded-full px-3 sm:px-4 py-1.5 transition whitespace-nowrap flex-shrink-0 ${
+                activeTab === 'graphs'
+                  ? 'bg-sky-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-white'
+              }`}
+            >
+              <span className="sm:hidden">📈</span>
+              <span className="hidden sm:inline">Grafici</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('advanced')}
+              className={`rounded-full px-3 sm:px-4 py-1.5 transition whitespace-nowrap flex-shrink-0 ${
+                activeTab === 'advanced'
+                  ? 'bg-sky-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-white'
+              }`}
+            >
+              <span className="sm:hidden">🔬</span>
+              <span className="hidden sm:inline">Analisi</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('insights')}
+              className={`rounded-full px-3 sm:px-4 py-1.5 transition whitespace-nowrap flex-shrink-0 ${
+                activeTab === 'insights'
+                  ? 'bg-sky-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-white'
+              }`}
+            >
+              <span className="sm:hidden">✨</span>
+              <span className="hidden sm:inline">Insights</span>
+            </button>
           </div>
 
           {loading ? (

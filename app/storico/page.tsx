@@ -264,6 +264,13 @@ export default function StoricoPage() {
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [sortBy, setSortBy] = useState<'date' | 'volume' | 'intensity'>('date');
 
+  // Chiudi filtri quando si apre una sessione (mobile UX)
+  useEffect(() => {
+    if (openSession && filtersExpanded) {
+      setFiltersExpanded(false);
+    }
+  }, [openSession, filtersExpanded]);
+
   useEffect(() => {
     void loadBlocks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -746,10 +753,7 @@ export default function StoricoPage() {
           {/* Sezioni filtri - sempre visibili su desktop, collassabili su mobile */}
           <div className={cn(
             "space-y-4 sm:space-y-5",
-            !filtersExpanded && "hidden lg:block",
-            // Su mobile: max-height con scroll per non bloccare la pagina
-            "lg:max-h-none",
-            filtersExpanded && "max-h-[60vh] overflow-y-auto overscroll-contain"
+            !filtersExpanded && "hidden lg:block"
           )}>
           
           {/* PERIODO Section */}
