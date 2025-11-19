@@ -201,8 +201,8 @@ const sessionTypeTokens: Record<string, { bg: string; text: string }> = {
   test: { bg: 'bg-amber-100', text: 'text-amber-600' },
   gara: { bg: 'bg-rose-100', text: 'text-rose-600' },
   palestra: { bg: 'bg-emerald-100', text: 'text-emerald-600' },
-  scarico: { bg: 'bg-purple-100', text: 'text-purple-600' },
-  recupero: { bg: 'bg-indigo-100', text: 'text-indigo-600' },
+  scarico: { bg: 'bg-cyan-100', text: 'text-cyan-600' },
+  recupero: { bg: 'bg-teal-100', text: 'text-teal-600' },
   altro: { bg: 'bg-slate-200', text: 'text-slate-600' },
 };
 
@@ -227,7 +227,7 @@ const metricCategoryLabels: Record<string, string> = {
 const metricCategoryTokens: Record<string, { bg: string; text: string }> = {
   prestazione: { bg: 'bg-sky-100', text: 'text-sky-600' },
   fisico: { bg: 'bg-emerald-100', text: 'text-emerald-600' },
-  recupero: { bg: 'bg-purple-100', text: 'text-purple-600' },
+  recupero: { bg: 'bg-cyan-100', text: 'text-cyan-600' },
   test: { bg: 'bg-amber-100', text: 'text-amber-600' },
   massimale: { bg: 'bg-green-100', text: 'text-green-600' },
   altro: { bg: 'bg-slate-200', text: 'text-slate-600' },
@@ -936,8 +936,8 @@ export default function StoricoPage() {
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isActive
-                          ? 'border-violet-500 bg-violet-50 text-violet-700 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-500 hover:border-violet-200 hover:text-violet-600'
+                          ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-500 hover:border-sky-200 hover:text-sky-600'
                       )}
                     >
                       {quick.label}
@@ -1034,8 +1034,8 @@ export default function StoricoPage() {
                         className={cn(
                           'rounded-full border px-2.5 py-1 text-xs font-medium transition',
                           isActive
-                            ? 'border-violet-500 bg-violet-50 text-violet-700 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-500 hover:border-violet-200 hover:text-violet-600'
+                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-500 hover:border-sky-200 hover:text-sky-600'
                         )}
                       >
                         {option.label}
@@ -1045,7 +1045,7 @@ export default function StoricoPage() {
                   <button
                     type="button"
                     onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-                    className="rounded-full border border-slate-200 bg-white px-2 py-1 text-slate-500 hover:border-violet-200 hover:text-violet-600 transition"
+                    className="rounded-full border border-slate-200 bg-white px-2 py-1 text-slate-500 hover:border-sky-200 hover:text-sky-600 transition"
                     title={sortOrder === 'desc' ? 'Discendente' : 'Ascendente'}
                   >
                     {sortOrder === 'desc' ? '↓' : '↑'}

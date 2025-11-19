@@ -2048,7 +2048,7 @@ export default function RegistroPage() {
                       orange: isSelected ? 'border-sky-400 bg-sky-50 text-sky-700' : 'border-slate-200 hover:border-sky-200',
                       blue: isSelected ? 'border-blue-400 bg-blue-50 text-blue-700' : 'border-slate-200 hover:border-blue-200',
                       amber: isSelected ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-slate-200 hover:border-amber-200',
-                      purple: isSelected ? 'border-purple-400 bg-purple-50 text-purple-700' : 'border-slate-200 hover:border-purple-200',
+                      purple: isSelected ? 'border-cyan-400 bg-cyan-50 text-cyan-700' : 'border-slate-200 hover:border-cyan-200',
                       cyan: isSelected ? 'border-cyan-400 bg-cyan-50 text-cyan-700' : 'border-slate-200 hover:border-cyan-200',
                       green: isSelected ? 'border-green-400 bg-green-50 text-green-700' : 'border-slate-200 hover:border-green-200',
                       slate: isSelected ? 'border-slate-400 bg-slate-50 text-slate-700' : 'border-slate-200 hover:border-slate-300',
