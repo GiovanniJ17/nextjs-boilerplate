@@ -82,11 +82,11 @@ body {
 /* Dark theme variables applied when parent has .dark */
 .dark :root,
 .dark {
-  --bg: 15 23 42; /* slate-900 */
-  --card: 30 41 59; /* slate-800 */
-  --text: 241 245 249; /* slate-100 */
-  --muted: 148 163 184; /* slate-400 */
-  --border: 51 65 85; /* slate-700 */
+  --bg: 3 7 18; /* darker background */
+  --card: 15 23 42; /* darker card slate-900 */
+  --text: 248 250 252; /* slate-50 - brighter text */
+  --muted: 203 213 225; /* slate-300 - better contrast */
+  --border: 71 85 105; /* slate-600 - darker border */
   --primary: 249 115 22;
   --primary-dark: 234 88 12;
   --secondary: 34 197 94;
@@ -135,7 +135,8 @@ html.dark {
 }
 
 .card-header {
-  @apply mb-3 flex items-center justify-between border-b border-slate-100 pb-2.5;
+  @apply mb-3 flex items-center justify-between pb-2.5;
+  border-bottom: 1px solid rgb(var(--border));
 }
 
 /* Forms */
@@ -187,7 +188,8 @@ textarea:disabled {
 
 /* Labels */
 label {
-  @apply text-sm font-medium text-slate-700 mb-1.5 block;
+  @apply text-sm font-medium mb-1.5 block;
+  color: rgb(var(--text));
 }
 
 .form-grid-2 {
@@ -195,7 +197,8 @@ label {
 }
 
 .form-label {
-  @apply mb-1 block text-xs font-medium text-slate-700;
+  @apply mb-1 block text-xs font-medium;
+  color: rgb(var(--text));
 }
 
 /* Buttons - using existing shadcn/ui styles */
