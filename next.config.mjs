@@ -4,7 +4,6 @@ const nextConfig = {
   distDir: "out",
   
   // Performance optimizations
-  swcMinify: true,
   reactStrictMode: true,
   
   // Compiler optimizations
