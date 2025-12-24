@@ -765,7 +765,7 @@ export default function StoricoPage() {
               <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-700 bg-[rgba(255,255,255,0.02)] px-5 py-4">
                 <div className="flex items-center gap-2.5">
                   <Filter className="h-5 w-5 text-sky-600" />
-                  <h2 className="text-lg font-bold text-default">Filtri e Ricerca</h2>
+                  <h2 className="text-lg font-bold text-foreground">Filtri e Ricerca</h2>
                   {(search || typeFilter || blockFilter || fromDate || toDate) && (
                     <span className="rounded-full bg-sky-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
                       {[search, typeFilter, blockFilter, fromDate, toDate].filter(Boolean).length} attivi
@@ -774,7 +774,7 @@ export default function StoricoPage() {
                 </div>
                 <button
                   onClick={() => setFiltersExpanded(false)}
-                  className="rounded-full p-2 text-muted transition-colors hover:bg-[rgba(255,255,255,0.03)] hover:text-default"
+                  className="rounded-full p-2 text-muted transition-colors hover:bg-[rgba(255,255,255,0.03)] hover:text-foreground"
                 >
                   <ChevronDown className="h-5 w-5" />
                 </button>
@@ -801,7 +801,7 @@ export default function StoricoPage() {
                       'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                       isActive
                         ? 'border-sky-500 bg-[rgba(255,255,255,0.03)] text-sky-300 shadow-sm'
-                        : 'border-default bg-[rgba(255,255,255,0.02)] text-muted hover:border-slate-600 hover:bg-[rgba(255,255,255,0.03)]'
+                        : 'border-border bg-[rgba(255,255,255,0.02)] text-muted hover:border-slate-600 hover:bg-[rgba(255,255,255,0.03)]'
                     )}
                   >
                     {option.label}
@@ -832,13 +832,13 @@ export default function StoricoPage() {
             </div>
           </div>
 
-          <div className="border-t border-default"></div>
+          <div className="border-t border-border"></div>
 
           {/* FILTRI Section */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-muted" />
-              <h3 className="text-sm font-semibold text-default uppercase tracking-wide">Filtri</h3>
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Filtri</h3>
             </div>
 
             {/* Tipo sessione */}
@@ -855,8 +855,8 @@ export default function StoricoPage() {
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isActive
-                          ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
-                          : 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
+                          ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-foreground shadow-sm'
+                          : 'border-border bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
                       )}
                     >
                       {option.label}
@@ -876,8 +876,8 @@ export default function StoricoPage() {
                   className={cn(
                     'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                     !blockFilter
-                      ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
-                      : 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
+                      ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-foreground shadow-sm'
+                      : 'border-border bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
                   )}
                 >
                   Tutti
@@ -892,8 +892,8 @@ export default function StoricoPage() {
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isSelected
-                          ? 'border-emerald-400/60 bg-[rgba(16,185,129,0.12)] text-default shadow-sm'
-                          : 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
+                          ? 'border-emerald-400/60 bg-[rgba(16,185,129,0.12)] text-foreground shadow-sm'
+                          : 'border-border bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
                       )}
                     >
                       {block.name ?? 'Senza nome'}
@@ -904,13 +904,13 @@ export default function StoricoPage() {
             </div>
           </div>
 
-          <div className="border-t border-default"></div>
+          <div className="border-t border-border"></div>
 
           {/* RICERCA Section */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Search className="h-4 w-4 text-muted" />
-              <h3 className="text-sm font-semibold text-default uppercase tracking-wide">Ricerca</h3>
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Ricerca</h3>
             </div>
 
             <div className="space-y-3">
@@ -936,8 +936,8 @@ export default function StoricoPage() {
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isActive
-                          ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
-                          : 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
+                          ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-foreground shadow-sm'
+                          : 'border-border bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
                       )}
                     >
                       {quick.label}
@@ -970,7 +970,7 @@ export default function StoricoPage() {
       <Card className="shadow-sm" id="storico-sessions-list">
         <CardHeader className="space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg text-default">
+            <CardTitle className="flex items-center gap-2 text-lg text-foreground">
               <FolderKanban className="h-5 w-5 text-sky-600" strokeWidth={2} /> Storico sessioni
             </CardTitle>
             <div className="flex items-center gap-2 text-xs">
@@ -988,8 +988,8 @@ export default function StoricoPage() {
                     className={cn(
                       'rounded-full border px-3 py-1 font-medium transition',
                       isActive
-                        ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
-                        : 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
+                        ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-foreground shadow-sm'
+                        : 'border-border bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
                     )}
                     aria-pressed={isActive}
                   >
@@ -1001,16 +1001,16 @@ export default function StoricoPage() {
           </div>
           
           {/* Riga risultati, ordinamento e items per pagina */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-default pt-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-border pt-3">
             {/* Counter risultati */}
             <div className="text-sm text-muted">
               {sortedSessions.length === sessions.length ? (
                 <span>
-                  Mostrando <strong className="text-default">{sortedSessions.length}</strong> {sortedSessions.length === 1 ? 'sessione' : 'sessioni'}
+                  Mostrando <strong className="text-foreground">{sortedSessions.length}</strong> {sortedSessions.length === 1 ? 'sessione' : 'sessioni'}
                 </span>
               ) : (
                 <span>
-                  Mostrando <strong className="text-accent">{sortedSessions.length}</strong> di <strong className="text-default">{sessions.length}</strong> sessioni
+                  Mostrando <strong className="text-accent">{sortedSessions.length}</strong> di <strong className="text-foreground">{sessions.length}</strong> sessioni
                 </span>
               )}
             </div>
@@ -1034,8 +1034,8 @@ export default function StoricoPage() {
                         className={cn(
                           'rounded-full border px-2.5 py-1 text-xs font-medium transition',
                           isActive
-                            ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
-                            : 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
+                            ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-foreground shadow-sm'
+                            : 'border-border bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
                         )}
                       >
                         {option.label}
@@ -1045,7 +1045,7 @@ export default function StoricoPage() {
                   <button
                     type="button"
                     onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-                    className="rounded-full border border-default bg-[rgba(255,255,255,0.03)] px-2 py-1 text-muted hover:border-[rgba(255,255,255,0.14)] hover:text-default transition"
+                    className="rounded-full border border-border bg-[rgba(255,255,255,0.03)] px-2 py-1 text-muted hover:border-[rgba(255,255,255,0.14)] hover:text-foreground transition"
                     title={sortOrder === 'desc' ? 'Discendente' : 'Ascendente'}
                   >
                     {sortOrder === 'desc' ? '↓' : '↑'}
@@ -1062,7 +1062,7 @@ export default function StoricoPage() {
                     setItemsPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="rounded-full border border-default bg-[rgba(255,255,255,0.03)] px-3 py-1 text-xs font-medium text-default hover:border-[rgba(255,255,255,0.14)] focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                  className="rounded-full border border-border bg-[rgba(255,255,255,0.03)] px-3 py-1 text-xs font-medium text-foreground hover:border-[rgba(255,255,255,0.14)] focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -1077,14 +1077,14 @@ export default function StoricoPage() {
           {loading ? (
             <SessionsSkeleton />
           ) : sortedSessions.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-default bg-[rgba(255,255,255,0.03)] py-12 px-6 text-center text-muted">
+            <div className="rounded-2xl border border-dashed border-border bg-[rgba(255,255,255,0.03)] py-12 px-6 text-center text-muted">
               <div className="mx-auto max-w-md space-y-3">
                 <div className="flex justify-center">
                   <div className="rounded-full bg-[rgba(255,255,255,0.06)] p-3">
                     <Search className="h-6 w-6 text-muted" />
                   </div>
                 </div>
-                <h3 className="text-base font-semibold text-default">
+                <h3 className="text-base font-semibold text-foreground">
                   {debouncedSearch ? 'Nessun risultato per la ricerca' : 'Nessuna sessione trovata'}
                 </h3>
                 <p className="text-sm text-muted">

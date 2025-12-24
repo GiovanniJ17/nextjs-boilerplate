@@ -2,325 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ========================================
-   DESIGN SYSTEM - Training Tracker
-   ======================================== */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-/* Base Styles */
-html,
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
-  min-height: 100%;
-  /* Mobile-first typography */
-  font-size: 16px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: rgb(var(--bg));
-  color: rgb(var(--text));
-}
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-@media (max-width: 640px) {
-  html {
-    /* Prevent zoom on input focus iOS */
-    font-size: 16px !important;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
   }
 }
 
-:root {
-  /* COLORS - central palette as RGB triplets (use via rgb(var(--xxx))) */
-  --bg: 248 250 252; /* slate-50 */
-  --card: 255 255 255; /* white */
-  --text: 15 23 42; /* slate-900 */
-  --muted: 100 116 139; /* slate-500 */
-  --border: 226 232 240; /* slate-200 */
-  --primary: 249 115 22; /* orange-500 */
-  --primary-dark: 234 88 12; /* orange-600 */
-  --secondary: 34 197 94; /* green-500 */
-  --accent: 59 130 246; /* blue-500 */
-  --success: 34 197 94; /* green-500 */
-  --warning: 251 146 60; /* orange-400 */
-  --danger: 239 68 68; /* red-500 */
-
-  /* Spacing - Mobile-first (touch-friendly) */
-  --spacing-xs: 0.5rem;    /* 8px */
-  --spacing-sm: 0.75rem;   /* 12px */
-  --spacing-md: 1rem;      /* 16px */
-  --spacing-lg: 1.5rem;    /* 24px */
-  --spacing-xl: 2rem;      /* 32px */
-
-  /* Touch targets */
-  --touch-target-min: 44px; /* Apple HIG minimum */
-  --touch-target-comfortable: 48px; /* Material Design */
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-
-  /* Typography - Mobile-first leggibile */
-  --text-xs: 0.75rem;      /* 12px - Only for labels */
-  --text-sm: 0.875rem;     /* 14px - Secondary text */
-  --text-base: 1rem;       /* 16px - Body text DEFAULT */
-  --text-lg: 1.125rem;     /* 18px - Emphasized */
-  --text-xl: 1.25rem;      /* 20px - Small headings */
-  --text-2xl: 1.5rem;      /* 24px - Page titles */
-  --text-3xl: 1.875rem;    /* 30px - Hero titles */
-
-  /* Icon sizes */
-  --icon-sm: 1.25rem;      /* 20px */
-  --icon-md: 1.5rem;       /* 24px */
-  --icon-lg: 2rem;         /* 32px */
-
-  /* Safe area insets */
-  --safe-area-top: env(safe-area-inset-top, 0);
-  --safe-area-bottom: env(safe-area-inset-bottom, 0);
-  --safe-area-left: env(safe-area-inset-left, 0);
-  --safe-area-right: env(safe-area-inset-right, 0);
-}
-
-/* Dark theme variables applied when parent has .dark */
-.dark :root,
-.dark {
-  --bg: 3 7 18; /* darker background */
-  --card: 15 23 42; /* darker card slate-900 */
-  --text: 248 250 252; /* slate-50 - brighter text */
-  --muted: 203 213 225; /* slate-300 - better contrast */
-  --border: 71 85 105; /* slate-600 - darker border */
-  --primary: 249 115 22;
-  --primary-dark: 234 88 12;
-  --secondary: 34 197 94;
-  --accent: 59 130 246;
-}
-
-html.dark {
-  color-scheme: dark;
-}
-
-.surface-animated {
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-/* ========================================
-   COMPONENTS
-   ======================================== */
-
-/* Page Layout */
-.page-container {
-  @apply mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8;
-}
-
-.page-header {
-  @apply mb-5;
-}
-
-.page-title {
-  @apply text-xl font-bold;
-  color: rgb(var(--text));
-}
-
-/* Cards - Spacing ottimizzato */
-.card {
-  @apply rounded-lg p-4 shadow-sm;
-  background-color: rgb(var(--card));
-  color: rgb(var(--text));
-  border: 1px solid rgb(var(--border));
-}
-
-.card-compact {
-  @apply rounded-lg p-3 shadow-sm;
-  background-color: rgb(var(--card));
-  color: rgb(var(--text));
-  border: 1px solid rgb(var(--border));
-}
-
-.card-header {
-  @apply mb-3 flex items-center justify-between pb-2.5;
-  border-bottom: 1px solid rgb(var(--border));
-}
-
-/* Forms */
-input,
-select,
-textarea {
-  @apply w-full rounded-lg border border-default bg-card px-4 py-3 text-base
-         text-default outline-none
-         transition-colors duration-150
-         focus:border-orange-500 focus:ring-2 focus:ring-orange-500/15;
-  min-height: 44px; /* Touch target minimum */
-}
-
-input::placeholder,
-select::placeholder,
-textarea::placeholder {
-  color: var(--muted);
-}
-
-input[type="date"],
-input[type="time"] {
-  /* Better mobile date/time pickers */
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 0.75rem;
-}
-
-input:disabled,
-select:disabled,
-textarea:disabled {
-  @apply cursor-not-allowed;
-  background-color: rgb(var(--card));
-  color: rgb(var(--muted));
-}
-
-/* Utility color helpers using CSS variables for easier migration */
-.bg-card { background-color: rgb(var(--card)); }
-.text-default { color: rgb(var(--text)); }
-.text-muted { color: rgb(var(--muted)); }
-.border-default { border-color: rgb(var(--border)); }
-.bg-accent { background-color: rgb(var(--accent)); }
-.text-accent { color: rgb(var(--accent)); }
-
-/* Dark overrides using utility classes are set in components via dark: variants. */
-
-.form-grid {
-  @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3;
-}
-
-/* Labels */
-label {
-  @apply text-sm font-medium mb-1.5 block;
-  color: rgb(var(--text));
-}
-
-.form-grid-2 {
-  @apply grid grid-cols-1 gap-3 sm:grid-cols-2;
-}
-
-.form-label {
-  @apply mb-1 block text-xs font-medium;
-  color: rgb(var(--text));
-}
-
-/* Buttons - using existing shadcn/ui styles */
-
-/* Stats & Metrics - Consistenza */
-.stat-card {
-  @apply rounded-lg border border-default p-3.5;
-  background-color: rgb(var(--card));
-}
-
-.stat-value {
-  @apply text-xl font-bold;
-  color: rgb(var(--text));
-}
-
-.stat-label {
-  @apply text-xs font-medium text-slate-600;
-}
-
-/* Badges - Dimensioni uniformi */
-.badge {
-  @apply inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium;
-}
-
-.badge-primary {
-  @apply bg-sky-100 text-sky-700;
-}
-
-.badge-success {
-  @apply bg-green-100 text-green-700;
-}
-
-.badge-warning {
-  @apply bg-orange-100 text-orange-700;
-}
-
-.badge-neutral {
-  @apply bg-slate-100 text-slate-700;
-}
-
-/* Section Headers - Consistenza */
-.section-header {
-  @apply mb-3 flex items-center gap-2 text-sm font-semibold;
-  color: rgb(var(--text));
-}
-
-.section-divider {
-  @apply my-3 border-t border-slate-200;
-}
-
-/* ========================================
-   UTILITIES
-   ======================================== */
-
-/* Animations - Ottimizzate per performance */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
+@layer base {
+  * {
+    @apply border-border;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  body {
+    @apply bg-background text-foreground;
   }
 }
 
-@keyframes slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
-
-@keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-.animate-fade-in {
-  animation: fade-in 0.2s ease-out;
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 4px;
 }
-
-.animate-slide-in {
-  animation: slide-in 0.25s ease-out;
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
 }
-
-.animate-scale-in {
-  animation: scale-in 0.15s ease-out;
-}
-
-/* Transition utilities - Consistenti */
-.transition-base {
-  transition: all 0.15s ease-in-out;
-}
-
-.transition-colors {
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-}
-
-.transition-transform {
-  transition: transform 0.15s ease-in-out;
-}
-
-/* Focus visible for accessibility */
-.focus-ring {
-  @apply outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2;
-}
-
-/* Temporary dark overrides for legacy utility usages */
-.bg-white { background-color: rgb(var(--card)) !important; }
-.text-slate-900 { color: rgb(var(--text)) !important; }
-.text-slate-700 { color: rgb(var(--text)) !important; }
-.text-slate-600 { color: rgb(var(--muted)) !important; }
-.border-slate-200 { border-color: rgb(var(--border)) !important; }
-.bg-slate-50 { background-color: rgba(255,255,255,0.04) !important; }

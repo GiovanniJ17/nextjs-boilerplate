@@ -1,5 +1,8 @@
 import { LucideIcon } from "lucide-react";
-import { ReactNode } from "react";
+import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
+
+type StatCardVariant = "default" | "yellow" | "orange" | "green" | "purple" | "blue";
 
 interface StatCardProps {
   label: string;
@@ -11,30 +14,52 @@ interface StatCardProps {
   };
   suffix?: string;
   className?: string;
+  variant?: StatCardVariant;
 }
 
-export function StatCard({ label, value, icon: Icon, trend, suffix, className = "" }: StatCardProps) {
+const variantStyles: Record<StatCardVariant, string> = {
+  default: "bg-card text-card-foreground",
+  yellow: "bg-brand-yellow text-brand-dark",
+  orange: "bg-brand-orange text-brand-dark",
+  green: "bg-brand-green text-brand-dark",
+  purple: "bg-brand-purple text-white",
+  blue: "bg-brand-blue text-white",
+};
+
+export function StatCard({ label, value, icon: Icon, trend, suffix, className = "", variant = "default" }: StatCardProps) {
+  const isColorful = variant !== "default";
+  
   return (
-    <div className={`stat-card ${className} bg-card border-default text-default`}>
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <p className="stat-label text-muted">{label}</p>
-          <p className="stat-value mt-0.5">
-            {value}
-            {suffix && <span className="text-sm text-muted ml-1">{suffix}</span>}
-          </p>
-          {trend && (
-            <p className={`mt-0.5 text-xs font-medium ${trend.isPositive ? 'text-green-400' : 'text-red-400'}`}>
-              {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
-            </p>
+    <Card className={cn("overflow-hidden border-none shadow-sm", variantStyles[variant], className)}>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <p className={cn("text-sm font-medium", isColorful ? "opacity-90" : "text-muted-foreground")}>{label}</p>
+            <div className="flex items-baseline gap-1 mt-2">
+              <span className="text-2xl font-bold tracking-tight">
+                {value}
+              </span>
+              {suffix && <span className={cn("text-sm font-medium", isColorful ? "opacity-80" : "text-muted-foreground")}>{suffix}</span>}
+            </div>
+            {trend && (
+              <p className={cn("mt-1 text-xs font-medium flex items-center gap-1", 
+                isColorful ? "opacity-90" : (trend.isPositive ? 'text-green-500' : 'text-red-500')
+              )}>
+                {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
+              </p>
+            )}
+          </div>
+          {Icon && (
+            <div className={cn(
+              "flex h-12 w-12 items-center justify-center rounded-2xl",
+              isColorful ? "bg-black/10" : "bg-secondary text-muted-foreground"
+            )}>
+              <Icon className="h-6 w-6" strokeWidth={2} />
+            </div>
           )}
         </div>
-        {Icon && (
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[rgba(255,255,255,0.03)] text-muted">
-            <Icon className="h-5 w-5" strokeWidth={2} />
-          </div>
-        )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
+

@@ -15,20 +15,20 @@ export function MainNav() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b dark:border-slate-700/60 bg-transparent backdrop-blur-sm shadow-sm hidden md:block">
+    <header className="sticky top-0 z-50 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 hidden md:block">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo/Title */}
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-sky-500 text-white font-bold text-lg">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg">
               TV
             </div>
-            <h1 className="text-lg font-semibold text-[rgb(var(--text))]">Tracker Velocista</h1>
+            <h1 className="text-lg font-semibold text-foreground">Tracker Velocista</h1>
           </div>
 
           {/* Navigation */}
           <nav className="flex items-center">
-            <ul className="flex items-center gap-1 rounded-lg bg-[rgba(255,255,255,0.02)] p-1 backdrop-blur-sm">
+            <ul className="flex items-center gap-1 rounded-full bg-secondary/50 p-1 backdrop-blur-sm">
                 <li className="mr-3">
                   <ThemeToggle />
                 </li>
@@ -40,10 +40,10 @@ export function MainNav() {
                     <Link
                       href={tab.href}
                       className={cn(
-                        "inline-flex items-center justify-center rounded-md px-5 py-2.5 text-sm font-medium transition-all duration-200 min-h-[44px]",
+                        "inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-200 min-h-[44px]",
                         active
-                          ? "bg-[rgba(255,255,255,0.06)] text-default shadow-sm"
-                          : "text-muted hover:bg-[rgba(255,255,255,0.05)] hover:text-default"
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
                       )}
                     >
                       {tab.label}
@@ -58,3 +58,4 @@ export function MainNav() {
     </header>
   );
 }
+

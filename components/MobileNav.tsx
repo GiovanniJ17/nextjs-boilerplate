@@ -15,7 +15,7 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t dark:border-slate-700 bg-[rgba(255,255,255,0.02)] backdrop-blur-sm shadow-lg md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/80 backdrop-blur-lg md:hidden">
       <div 
         className="flex justify-around items-center"
         style={{
@@ -34,8 +34,8 @@ export function MobileNav() {
               className={cn(
                 "flex flex-col items-center justify-center gap-1 px-4 py-2 min-w-[44px] min-h-[44px] transition-colors",
                 active
-                  ? "text-sky-300"
-                  : "text-slate-400 active:text-sky-300"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Icon 
@@ -48,6 +48,18 @@ export function MobileNav() {
               <span 
                 className={cn(
                   "text-xs font-medium",
+                  active ? "font-semibold" : "font-normal"
+                )}
+              >
+                {tab.label}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
                   active && "font-semibold"
                 )}
               >

@@ -1722,7 +1722,7 @@ export default function RegistroPage() {
     >
       {/* Hero Section - Sky Blue Theme (NO animation per evitare flash) */}
       <section 
-        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-sky-700 to-cyan-700 p-4 md:p-6 text-white shadow-lg"
+        className="rounded-3xl bg-brand-blue p-6 text-white shadow-sm"
       >
         <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2 md:space-y-3">
@@ -1828,9 +1828,9 @@ export default function RegistroPage() {
                 onClick={() => handleScrollToSection(step.key)}
                 className={cn(
                   'flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-sm transition-all active:scale-95',
-                  step.status === 'active' && 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm',
-                  step.status === 'done' && 'border-emerald-400/60 bg-[rgba(16,185,129,0.12)] text-default shadow-sm',
-                  step.status === 'todo' && 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.12)]'
+                  step.status === 'active' && 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-foreground shadow-sm',
+                  step.status === 'done' && 'border-emerald-400/60 bg-[rgba(16,185,129,0.12)] text-foreground shadow-sm',
+                  step.status === 'todo' && 'border-border bg-[rgba(255,255,255,0.03)] text-muted hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.12)]'
                 )}
               >
                 <span className="text-base">{emoji}</span>
@@ -1855,7 +1855,7 @@ export default function RegistroPage() {
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-100 text-lg">
                     📝
                   </span>
-                  <span className="text-base md:text-lg font-semibold text-default">Dettagli sessione</span>
+                  <span className="text-base md:text-lg font-semibold text-foreground">Dettagli sessione</span>
                 </span>
                 <ChevronDown 
                   className={cn(
@@ -1880,8 +1880,8 @@ export default function RegistroPage() {
                     className={cn(
                       'inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold transition',
                       sessionForm.block_id
-                        ? 'border-default text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.04)]'
-                        : 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
+                        ? 'border-border text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.04)]'
+                        : 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-foreground shadow-sm'
                     )}
                     aria-pressed={!sessionForm.block_id}
                   >
@@ -1900,8 +1900,8 @@ export default function RegistroPage() {
                         className={cn(
                           'relative flex items-center gap-3 rounded-2xl border px-3 py-2 pr-10 text-left transition',
                           isSelected
-                            ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
-                            : 'border-default bg-[rgba(255,255,255,0.03)] text-default hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
+                            ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-foreground shadow-sm'
+                            : 'border-border bg-[rgba(255,255,255,0.03)] text-foreground hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
                         )}
                       >
                         <button
@@ -1974,8 +1974,8 @@ export default function RegistroPage() {
             </div>
 
             {showBlockForm && (
-              <div className="rounded-xl border border-default bg-[rgba(255,255,255,0.04)] p-3.5">
-                <div className="flex items-center gap-2 text-sm font-semibold text-default mb-3">
+              <div className="rounded-xl border border-border bg-[rgba(255,255,255,0.04)] p-3.5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
                   <Target className="h-4 w-4" /> Nuovo blocco di allenamento
                 </div>
                 <div className="grid gap-3 md:grid-cols-3">
@@ -2036,7 +2036,7 @@ export default function RegistroPage() {
               </div>
             )}
 
-            <div className="border-t border-default/70"></div>
+            <div className="border-t border-border/70"></div>
 
             {/* Tipo di sessione */}
             <div className="space-y-2.5">
@@ -2045,13 +2045,13 @@ export default function RegistroPage() {
                   {sessionTypes.map(type => {
                     const isSelected = sessionForm.type === type.value;
                     const colorClasses = {
-                      orange: isSelected ? 'border-sky-400/80 bg-[rgba(56,189,248,0.14)] text-default' : 'border-default bg-card/60 text-muted hover:border-sky-400/60',
-                      blue: isSelected ? 'border-blue-400/80 bg-[rgba(59,130,246,0.14)] text-default' : 'border-default bg-card/60 text-muted hover:border-blue-400/60',
-                      amber: isSelected ? 'border-amber-400/80 bg-[rgba(251,191,36,0.14)] text-default' : 'border-default bg-card/60 text-muted hover:border-amber-400/60',
-                      purple: isSelected ? 'border-cyan-400/80 bg-[rgba(34,211,238,0.14)] text-default' : 'border-default bg-card/60 text-muted hover:border-cyan-400/60',
-                      cyan: isSelected ? 'border-cyan-400/80 bg-[rgba(34,211,238,0.14)] text-default' : 'border-default bg-card/60 text-muted hover:border-cyan-400/60',
-                      green: isSelected ? 'border-green-400/80 bg-[rgba(34,197,94,0.14)] text-default' : 'border-default bg-card/60 text-muted hover:border-green-400/60',
-                      slate: isSelected ? 'border-slate-400/80 bg-[rgba(148,163,184,0.14)] text-default' : 'border-default bg-card/60 text-muted hover:border-slate-400/60',
+                      orange: isSelected ? 'border-sky-400/80 bg-[rgba(56,189,248,0.14)] text-foreground' : 'border-border bg-card/60 text-muted hover:border-sky-400/60',
+                      blue: isSelected ? 'border-blue-400/80 bg-[rgba(59,130,246,0.14)] text-foreground' : 'border-border bg-card/60 text-muted hover:border-blue-400/60',
+                      amber: isSelected ? 'border-amber-400/80 bg-[rgba(251,191,36,0.14)] text-foreground' : 'border-border bg-card/60 text-muted hover:border-amber-400/60',
+                      purple: isSelected ? 'border-cyan-400/80 bg-[rgba(34,211,238,0.14)] text-foreground' : 'border-border bg-card/60 text-muted hover:border-cyan-400/60',
+                      cyan: isSelected ? 'border-cyan-400/80 bg-[rgba(34,211,238,0.14)] text-foreground' : 'border-border bg-card/60 text-muted hover:border-cyan-400/60',
+                      green: isSelected ? 'border-green-400/80 bg-[rgba(34,197,94,0.14)] text-foreground' : 'border-border bg-card/60 text-muted hover:border-green-400/60',
+                      slate: isSelected ? 'border-slate-400/80 bg-[rgba(148,163,184,0.14)] text-foreground' : 'border-border bg-card/60 text-muted hover:border-slate-400/60',
                     };
                     
                     return (
