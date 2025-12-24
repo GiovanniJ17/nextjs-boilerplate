@@ -1879,20 +1879,19 @@ export default function RegistroPage() {
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="location">Luogo</Label>
                     <div className="flex gap-2">
-                      {locationOptions.map(opt => (
-                        <Button
-                          key={opt.value}
-                          variant={
-                            (!usingCustomLocation && sessionForm.location === opt.label) || (usingCustomLocation && opt.value === 'custom')
-                              ? 'default'
-                              : 'outline'
-                          }
-                          onClick={() => handleLocationSelect(opt.value)}
-                        >
-                          {locationIcons[opt.value] && <locationIcons[opt.value] className="mr-2 h-4 w-4" />}
-                          {opt.label}
-                        </Button>
-                      ))}
+                      {locationOptions.map(opt => {
+                        const Icon = locationIcons[opt.value];
+                        return (
+                          <Button
+                            key={opt.value}
+                            variant={sessionForm.location === opt.value ? 'default' : 'outline'}
+                            onClick={() => handleLocationSelect(opt.value)}
+                          >
+                            {Icon && <Icon className="mr-2 h-4 w-4" />}
+                            {opt.label}
+                          </Button>
+                        );
+                      })}
                     </div>
                     {usingCustomLocation && (
                       <Input
