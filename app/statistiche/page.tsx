@@ -2122,7 +2122,7 @@ export default function StatistichePage() {
                                 fontSize: '13px',
                                 padding: '12px',
                               }}
-                              formatter={(value: any, name: string, props: any) => [
+                              formatter={(value: any, name: any, props: any) => [
                                 `${value} sessioni (${((props.percent || 0) * 100).toFixed(1)}%)`,
                                 props.payload.range
                               ]}
