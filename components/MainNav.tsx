@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import ThemeToggle from "@/components/ui/theme-toggle";
 
 const tabs = [
   { href: "/registro", label: "Aggiungi" },
@@ -29,9 +28,6 @@ export function MainNav() {
           {/* Navigation */}
           <nav className="flex items-center">
             <ul className="flex items-center gap-1 rounded-full bg-secondary/50 p-1 backdrop-blur-sm">
-                <li className="mr-3">
-                  <ThemeToggle />
-                </li>
               {tabs.map(tab => {
                 const active = pathname === tab.href;
 
@@ -58,4 +54,5 @@ export function MainNav() {
     </header>
   );
 }
+
 

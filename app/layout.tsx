@@ -36,8 +36,6 @@ export const metadata: Metadata = {
   },
 };
 
-const setInitialTheme = `(function(){try{var t=localStorage.getItem('theme');var prefers=window.matchMedia('(prefers-color-scheme: dark)').matches; if(t==='dark' || (!t && prefers)){document.documentElement.classList.add('dark'); document.querySelector('meta[name="color-scheme"]')?.setAttribute('content','dark');} else {document.documentElement.classList.remove('dark'); document.querySelector('meta[name="color-scheme"]')?.setAttribute('content','light');}}catch(e){}})();`;
-
 export default function RootLayout({
   children,
 }: {
@@ -49,7 +47,7 @@ export default function RootLayout({
         <meta name="color-scheme" content="dark" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
       </head>
-      <body className="min-h-screen font-sans antialiased bg-[rgb(var(--bg))] text-[rgb(var(--text))]">
+      <body className="min-h-screen font-sans antialiased bg-background text-foreground">
         <MainNav />
         <main className="page-shell mx-auto max-w-5xl px-4 py-6 pb-24 md:py-8 md:pb-8">
           {children}
