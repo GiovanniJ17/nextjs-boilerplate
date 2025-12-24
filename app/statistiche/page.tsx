@@ -2051,7 +2051,7 @@ export default function StatistichePage() {
                               padding: '12px',
                               color: '#e2e8f0',
                             }}
-                            formatter={(value: any, name: string) => {
+                            formatter={(value: any, name: any) => {
                               if (name === 'volume') return [`${(Number(value) / 1000).toFixed(1)} km`, 'Volume'];
                               if (name === 'sessions') return [value, 'Giorni'];
                               return [value, name];
