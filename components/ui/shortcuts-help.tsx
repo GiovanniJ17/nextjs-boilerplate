@@ -60,12 +60,12 @@ export function ShortcutsHelp({ shortcuts }: ShortcutsHelp) {
                 {shortcuts.map((shortcut, index) => (
                   <div
                     key={index}
-                    <div className="flex items-center justify-between rounded-lg border border-default bg-[rgba(255,255,255,0.02)] p-3 transition-colors hover:bg-[rgba(255,255,255,0.03)]">
-                      <span className="text-sm text-muted">{shortcut.description}</span>
-                      <kbd className="inline-flex items-center gap-1 rounded-md border border-default/70 bg-[rgba(255,255,255,0.03)] px-2 py-1 text-xs font-mono font-semibold text-muted shadow-sm">
-                        {formatShortcut(shortcut)}
-                      </kbd>
-                    </div>
+                    className="flex items-center justify-between rounded-lg border border-default bg-[rgba(255,255,255,0.02)] p-3 transition-colors hover:bg-[rgba(255,255,255,0.03)]"
+                  >
+                    <span className="text-sm text-muted">{shortcut.description}</span>
+                    <kbd className="inline-flex items-center gap-1 rounded-md border border-default/70 bg-[rgba(255,255,255,0.03)] px-2 py-1 text-xs font-mono font-semibold text-muted shadow-sm">
+                      {formatShortcut(shortcut)}
+                    </kbd>
                   </div>
                 ))}
               </div>

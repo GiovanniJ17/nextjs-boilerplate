@@ -143,10 +143,16 @@ input,
 select,
 textarea {
   @apply w-full rounded-lg border border-default bg-card px-4 py-3 text-base
-         text-default placeholder:text-muted outline-none
+         text-default outline-none
          transition-colors duration-150
          focus:border-orange-500 focus:ring-2 focus:ring-orange-500/15;
   min-height: 44px; /* Touch target minimum */
+}
+
+input::placeholder,
+select::placeholder,
+textarea::placeholder {
+  color: var(--muted);
 }
 
 input[type="date"],
