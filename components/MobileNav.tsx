@@ -60,7 +60,3 @@ export function MobileNav() {
     </nav>
   );
 }
-      </div>
-    </nav>
-  );
-}
