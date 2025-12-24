@@ -44,13 +44,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="it">
+    <html lang="it" className="dark">
       <head>
-        <meta name="color-scheme" content="light" />
+        <meta name="color-scheme" content="dark" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
-        <script dangerouslySetInnerHTML={{ __html: setInitialTheme }} />
       </head>
-      <body className="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen font-sans antialiased">
+      <body className="min-h-screen font-sans antialiased bg-[rgb(var(--bg))] text-[rgb(var(--text))]">
         <MainNav />
         <main className="page-shell mx-auto max-w-5xl px-4 py-6 pb-24 md:py-8 md:pb-8">
           {children}

@@ -15,7 +15,7 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/95 dark:bg-slate-900/95 dark:border-slate-700/60 backdrop-blur-sm shadow-lg md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t dark:border-slate-700 bg-[rgba(255,255,255,0.02)] backdrop-blur-sm shadow-lg md:hidden">
       <div 
         className="flex justify-around items-center"
         style={{
@@ -34,8 +34,8 @@ export function MobileNav() {
               className={cn(
                 "flex flex-col items-center justify-center gap-1 px-4 py-2 min-w-[44px] min-h-[44px] transition-colors",
                 active
-                  ? "text-sky-500 dark:text-sky-400"
-                  : "text-slate-600 active:text-sky-400 dark:text-slate-300 active:dark:text-sky-300"
+                  ? "text-sky-300"
+                  : "text-slate-400 active:text-sky-300"
               )}
             >
               <Icon 

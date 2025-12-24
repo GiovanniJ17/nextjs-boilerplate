@@ -7,13 +7,13 @@ export function StatsSkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
       {/* Hero skeleton - Sky Blue theme */}
-      <div className="rounded-3xl bg-gradient-to-br from-sky-300 via-sky-400 to-cyan-300 p-5 h-64">
-        <div className="h-6 bg-white/30 rounded w-48 mb-4"></div>
-        <div className="h-8 bg-white/30 rounded w-64 mb-2"></div>
-        <div className="h-4 bg-white/20 rounded w-96 mb-6"></div>
+      <div className="rounded-3xl bg-[linear-gradient(135deg,rgba(15,41,67,0.6),rgba(22,40,60,0.6))] p-5 h-64">
+        <div className="h-6 bg-white/10 rounded w-48 mb-4"></div>
+        <div className="h-8 bg-white/10 rounded w-64 mb-2"></div>
+        <div className="h-4 bg-white/6 rounded w-96 mb-6"></div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="rounded-2xl bg-white/20 h-24"></div>
+            <div key={i} className="rounded-2xl bg-white/6 h-24"></div>
           ))}
         </div>
       </div>

@@ -35,27 +35,28 @@ export const theme = {
   
   // Gradienti standard
   gradients: {
-    hero: 'bg-gradient-to-br from-sky-500 via-sky-400 to-cyan-500',
-    heroLight: 'bg-gradient-to-r from-sky-50 to-cyan-50',
-    button: 'bg-gradient-to-br from-sky-500 to-sky-600',
+    // Dark-friendly gradients (muted, lower saturation)
+    hero: 'bg-gradient-to-br from-sky-700 to-cyan-700',
+    heroLight: 'bg-gradient-to-r from-slate-800 to-slate-700',
+    button: 'bg-gradient-to-br from-sky-600 to-sky-700',
   },
   
   // Stati
   states: {
     active: {
-      border: 'border-sky-500',
-      bg: 'bg-sky-50',
-      text: 'text-sky-700',
+      border: 'border-sky-600',
+      bg: 'bg-slate-800',
+      text: 'text-sky-300',
     },
     hover: {
-      border: 'border-sky-300',
-      bg: 'bg-sky-50',
-      text: 'text-sky-600',
+      border: 'border-slate-600',
+      bg: 'bg-slate-800',
+      text: 'text-sky-300',
     },
     inactive: {
-      border: 'border-slate-200',
-      bg: 'bg-white',
-      text: 'text-slate-600',
+      border: 'border-slate-700',
+      bg: 'bg-slate-800',
+      text: 'text-slate-400',
     },
   },
 } as const;

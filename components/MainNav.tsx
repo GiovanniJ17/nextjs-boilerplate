@@ -15,20 +15,20 @@ export function MainNav() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/95 dark:bg-slate-900/90 dark:border-slate-700/60 backdrop-blur-sm shadow-sm hidden md:block">
+    <header className="sticky top-0 z-50 border-b dark:border-slate-700/60 bg-transparent backdrop-blur-sm shadow-sm hidden md:block">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo/Title */}
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-600 text-white font-bold text-lg">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-sky-500 text-white font-bold text-lg">
               TV
             </div>
-              <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Tracker Velocista</h1>
+            <h1 className="text-lg font-semibold text-[rgb(var(--text))]">Tracker Velocista</h1>
           </div>
 
           {/* Navigation */}
           <nav className="flex items-center">
-            <ul className="flex items-center gap-1 rounded-lg bg-slate-100/80 p-1">
+            <ul className="flex items-center gap-1 rounded-lg bg-[rgba(255,255,255,0.02)] p-1 backdrop-blur-sm">
                 <li className="mr-3">
                   <ThemeToggle />
                 </li>

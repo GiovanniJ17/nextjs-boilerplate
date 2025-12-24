@@ -1450,7 +1450,7 @@ export default function StatistichePage() {
         <>
       {/* Hero Section - Sky Blue Theme (NO animation per evitare flash) */}
       <section 
-        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-sky-500 via-sky-400 to-cyan-500 p-4 md:p-6 text-white shadow-lg"
+        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-sky-700 to-cyan-700 p-4 md:p-6 text-white shadow-lg"
       >
         <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2 md:space-y-3">
@@ -1553,7 +1553,7 @@ export default function StatistichePage() {
           "fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all",
           filtersExpanded
             ? "bg-sky-600 text-white"
-            : "bg-gradient-to-br from-sky-500 to-sky-600 text-white"
+            : "bg-gradient-to-br from-sky-600 to-sky-700 text-white"
         )}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.95 }}
@@ -1596,7 +1596,7 @@ export default function StatistichePage() {
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
             >
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-sky-50 to-cyan-50 px-5 py-4">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-700 bg-[rgba(255,255,255,0.02)] px-5 py-4">
                 <div className="flex items-center gap-2.5">
                   <Filter className="h-5 w-5 text-sky-600" />
                   <h2 className="text-lg font-bold text-slate-800">Filtri Statistiche</h2>
@@ -1829,7 +1829,7 @@ export default function StatistichePage() {
           {stats && (stats.smartInsights?.length > 0 || stats.alerts?.length > 0) && (
             <motion.div 
               variants={fadeInUp}
-              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-sky-50 to-cyan-50 border border-sky-200 px-3 py-2 text-xs"
+              className="flex items-center gap-2 rounded-lg bg-[rgba(255,255,255,0.02)] border border-slate-700 px-3 py-2 text-xs"
             >
               <Sparkles className="h-4 w-4 text-sky-600 flex-shrink-0" />
               <span className="text-sky-900">
@@ -2781,7 +2781,7 @@ export default function StatistichePage() {
                   {/* NUOVE SEZIONI - ANALISI AVANZATE */}
                   
                   {/* Export Toolbar */}
-                  <div className="rounded-2xl border-2 border-sky-200 bg-gradient-to-br from-sky-50 to-blue-50 p-5 shadow-sm">
+                  <div className="rounded-2xl border-2 border-slate-700 bg-[rgba(255,255,255,0.02)] p-5 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                       <div>
                         <h3 className="flex items-center gap-2 text-lg font-semibold text-sky-900">

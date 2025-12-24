@@ -14,23 +14,23 @@ const variantStyles: Record<Variant, { icon: typeof CheckCircle2; wrapper: strin
   success: {
     icon: CheckCircle2,
     wrapper:
-      "border-emerald-200/80 bg-emerald-50/80 text-emerald-800 shadow-[0_10px_40px_-24px_rgba(16,185,129,0.6)]",
-    iconWrapper: "bg-emerald-100 text-emerald-600",
-    accent: "from-emerald-500/20 via-emerald-400/10 to-emerald-500/20",
+      "border-slate-700 bg-[rgba(255,255,255,0.02)] text-emerald-300 shadow-[0_10px_40px_-24px_rgba(16,185,129,0.12)]",
+    iconWrapper: "bg-emerald-900/20 text-emerald-300",
+    accent: "from-emerald-600/15 via-emerald-500/08 to-emerald-600/15",
   },
   error: {
     icon: XCircle,
     wrapper:
-      "border-rose-200/80 bg-rose-50/80 text-rose-800 shadow-[0_10px_40px_-24px_rgba(244,63,94,0.6)]",
-    iconWrapper: "bg-rose-100 text-rose-600",
-    accent: "from-rose-500/20 via-rose-400/10 to-rose-500/20",
+      "border-slate-700 bg-[rgba(255,255,255,0.02)] text-rose-300 shadow-[0_10px_40px_-24px_rgba(244,63,94,0.12)]",
+    iconWrapper: "bg-rose-900/20 text-rose-300",
+    accent: "from-rose-600/15 via-rose-500/08 to-rose-600/15",
   },
   info: {
     icon: Info,
     wrapper:
-      "border-sky-200/80 bg-sky-50/80 text-sky-800 shadow-[0_10px_40px_-24px_rgba(14,165,233,0.6)]",
-    iconWrapper: "bg-sky-100 text-sky-600",
-    accent: "from-sky-500/20 via-sky-400/10 to-sky-500/20",
+      "border-slate-700 bg-[rgba(255,255,255,0.02)] text-sky-300 shadow-[0_10px_40px_-24px_rgba(14,165,233,0.12)]",
+    iconWrapper: "bg-sky-900/20 text-sky-300",
+    accent: "from-sky-600/15 via-sky-500/08 to-sky-600/15",
   },
 };
 

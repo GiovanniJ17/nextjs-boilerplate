@@ -1722,7 +1722,7 @@ export default function RegistroPage() {
     >
       {/* Hero Section - Sky Blue Theme (NO animation per evitare flash) */}
       <section 
-        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-sky-500 via-sky-400 to-cyan-500 p-4 md:p-6 text-white shadow-lg"
+        className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-sky-700 to-cyan-700 p-4 md:p-6 text-white shadow-lg"
       >
         <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2 md:space-y-3">
@@ -2799,7 +2799,7 @@ export default function RegistroPage() {
                               </div>
 
                               {/* Compilazione rapida */}
-                              <div className="mt-3 rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 p-3">
+                              <div className="mt-3 rounded-xl bg-gradient-to-r from-slate-800 to-slate-700 border border-slate-700 p-3">
                                 <div className="flex items-center gap-2 mb-2">
                                   <Sparkles className="h-4 w-4 text-sky-600" />
                                   <span className="text-sm font-semibold text-slate-700">Compilazione Rapida</span>

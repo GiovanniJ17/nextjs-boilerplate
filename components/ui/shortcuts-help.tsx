@@ -36,7 +36,7 @@ export function ShortcutsHelp({ shortcuts }: ShortcutsHelp) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="relative max-h-[80vh] w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-sky-50 to-blue-50 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-slate-700 bg-[rgba(255,255,255,0.02)] px-6 py-4">
               <div className="flex items-center gap-3">
                 <div className="rounded-lg bg-white p-2 shadow-sm">
                   <Keyboard className="h-5 w-5 text-sky-600" />
