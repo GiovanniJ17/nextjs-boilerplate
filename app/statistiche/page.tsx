@@ -2256,7 +2256,7 @@ export default function StatistichePage() {
                               fontSize: '13px',
                               padding: '12px',
                             }}
-                            formatter={(value: any, name: string) => {
+                            formatter={(value: any, name: any) => {
                               if (name === 'count') return [value, 'Sessioni'];
                               if (name === 'percentage') return [`${value.toFixed(1)}%`, 'Percentuale'];
                               return [value, name];
