@@ -1169,7 +1169,7 @@ export default function RegistroPage() {
       if (!exerciseToUpdate) return updatedBlocks;
 
       if (field === 'intensity') {
-        const parsedValue = parseDecimalInput(value);
+        const parsedValue = parseDecimalInput(String(value));
         const clamped = Math.max(1, Math.min(10, parsedValue ?? 0));
         exerciseToUpdate.intensity = String(clamped);
       } else {
