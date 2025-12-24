@@ -2332,7 +2332,7 @@ export default function StatistichePage() {
                               padding: '12px',
                             }}
                             labelFormatter={(value) => new Date(value).toLocaleDateString('it-IT')}
-                            formatter={(value: any, name: string) => {
+                            formatter={(value: any, name: any) => {
                               if (name === 'A:C Ratio') {
                                 const ratio = Number(value);
                                 let status = 'Moderato';
