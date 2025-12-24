@@ -1179,7 +1179,7 @@ export default function RegistroPage() {
       return updatedBlocks;
     });
 
-    clearError(`exercise-${blockId}-${exerciseIndex}-name`);
+    clearError(`exercise-${sessionForm.exercise_blocks[blockIndex].id}-${exerciseIndex}-name`);
   }
 
   function handleDisciplineSelect(blockId: string, exerciseIndex: number, value: string) {
