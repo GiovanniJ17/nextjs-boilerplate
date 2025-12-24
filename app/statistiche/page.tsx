@@ -2495,7 +2495,7 @@ export default function StatistichePage() {
                               padding: '12px',
                               color: '#e2e8f0',
                             }}
-                            formatter={(value: any, name: string) => {
+                            formatter={(value: any, name: any) => {
                               if (name === 'Distanza') return [`${(Number(value) / 1000).toFixed(1)} km`, 'Distanza'];
                               if (name === 'Sessioni') return [value, 'Sessioni'];
                               if (name === 'Velocità Media') return [`${(Number(value) * 3.6).toFixed(1)} km/h`, 'Velocità Media'];
