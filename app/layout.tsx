@@ -36,18 +36,21 @@ export const metadata: Metadata = {
   },
 };
 
+const setInitialTheme = `(function(){try{var t=localStorage.getItem('theme');var prefers=window.matchMedia('(prefers-color-scheme: dark)').matches; if(t==='dark' || (!t && prefers)){document.documentElement.classList.add('dark'); document.querySelector('meta[name="color-scheme"]')?.setAttribute('content','dark');} else {document.documentElement.classList.remove('dark'); document.querySelector('meta[name="color-scheme"]')?.setAttribute('content','light');}}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="it" className="light" style={{ colorScheme: 'light' }}>
+    <html lang="it">
       <head>
         <meta name="color-scheme" content="light" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+        <script dangerouslySetInnerHTML={{ __html: setInitialTheme }} />
       </head>
-      <body className="bg-slate-50 text-slate-900 min-h-screen font-sans antialiased">
+      <body className="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen font-sans antialiased">
         <MainNav />
         <main className="page-shell mx-auto max-w-5xl px-4 py-6 pb-24 md:py-8 md:pb-8">
           {children}

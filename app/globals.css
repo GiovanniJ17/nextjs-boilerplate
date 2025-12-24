@@ -9,12 +9,15 @@
 /* Base Styles */
 html,
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   min-height: 100%;
   /* Mobile-first typography */
   font-size: 16px;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: rgb(var(--bg));
+  color: rgb(var(--text));
 }
 
 @media (max-width: 640px) {
@@ -25,7 +28,12 @@ body {
 }
 
 :root {
-  /* Colors - Aggiornato con palette più calda */
+  /* COLORS - central palette as RGB triplets (use via rgb(var(--xxx))) */
+  --bg: 248 250 252; /* slate-50 */
+  --card: 255 255 255; /* white */
+  --text: 15 23 42; /* slate-900 */
+  --muted: 100 116 139; /* slate-500 */
+  --border: 226 232 240; /* slate-200 */
   --primary: 249 115 22; /* orange-500 */
   --primary-dark: 234 88 12; /* orange-600 */
   --secondary: 34 197 94; /* green-500 */
@@ -33,23 +41,23 @@ body {
   --success: 34 197 94; /* green-500 */
   --warning: 251 146 60; /* orange-400 */
   --danger: 239 68 68; /* red-500 */
-  
+
   /* Spacing - Mobile-first (touch-friendly) */
   --spacing-xs: 0.5rem;    /* 8px */
   --spacing-sm: 0.75rem;   /* 12px */
   --spacing-md: 1rem;      /* 16px */
   --spacing-lg: 1.5rem;    /* 24px */
   --spacing-xl: 2rem;      /* 32px */
-  
+
   /* Touch targets */
   --touch-target-min: 44px; /* Apple HIG minimum */
   --touch-target-comfortable: 48px; /* Material Design */
-  
+
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  
+
   /* Typography - Mobile-first leggibile */
   --text-xs: 0.75rem;      /* 12px - Only for labels */
   --text-sm: 0.875rem;     /* 14px - Secondary text */
@@ -58,17 +66,39 @@ body {
   --text-xl: 1.25rem;      /* 20px - Small headings */
   --text-2xl: 1.5rem;      /* 24px - Page titles */
   --text-3xl: 1.875rem;    /* 30px - Hero titles */
-  
+
   /* Icon sizes */
   --icon-sm: 1.25rem;      /* 20px */
   --icon-md: 1.5rem;       /* 24px */
   --icon-lg: 2rem;         /* 32px */
-  
+
   /* Safe area insets */
   --safe-area-top: env(safe-area-inset-top, 0);
   --safe-area-bottom: env(safe-area-inset-bottom, 0);
   --safe-area-left: env(safe-area-inset-left, 0);
   --safe-area-right: env(safe-area-inset-right, 0);
+}
+
+/* Dark theme variables applied when parent has .dark */
+.dark :root,
+.dark {
+  --bg: 15 23 42; /* slate-900 */
+  --card: 30 41 59; /* slate-800 */
+  --text: 241 245 249; /* slate-100 */
+  --muted: 148 163 184; /* slate-400 */
+  --border: 51 65 85; /* slate-700 */
+  --primary: 249 115 22;
+  --primary-dark: 234 88 12;
+  --secondary: 34 197 94;
+  --accent: 59 130 246;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+.surface-animated {
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 /* ========================================
@@ -90,11 +120,17 @@ body {
 
 /* Cards - Spacing ottimizzato */
 .card {
-  @apply rounded-lg border border-slate-200 bg-white p-4 shadow-sm;
+  @apply rounded-lg p-4 shadow-sm;
+  background-color: rgb(var(--card));
+  color: rgb(var(--text));
+  border: 1px solid rgb(var(--border));
 }
 
 .card-compact {
-  @apply rounded-lg border border-slate-200 bg-white p-3 shadow-sm;
+  @apply rounded-lg p-3 shadow-sm;
+  background-color: rgb(var(--card));
+  color: rgb(var(--text));
+  border: 1px solid rgb(var(--border));
 }
 
 .card-header {
@@ -123,8 +159,20 @@ input[type="time"] {
 input:disabled,
 select:disabled,
 textarea:disabled {
-  @apply cursor-not-allowed bg-slate-50 text-slate-500;
+  @apply cursor-not-allowed;
+  background-color: rgb(var(--card));
+  color: rgb(var(--muted));
 }
+
+/* Utility color helpers using CSS variables for easier migration */
+.bg-card { background-color: rgb(var(--card)); }
+.text-default { color: rgb(var(--text)); }
+.text-muted { color: rgb(var(--muted)); }
+.border-default { border-color: rgb(var(--border)); }
+.bg-accent { background-color: rgb(var(--accent)); }
+.text-accent { color: rgb(var(--accent)); }
+
+/* Dark overrides using utility classes are set in components via dark: variants. */
 
 .form-grid {
   @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3;
