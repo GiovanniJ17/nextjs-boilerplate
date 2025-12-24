@@ -71,11 +71,11 @@ export function ShortcutsHelp({ shortcuts }: ShortcutsHelp) {
               </div>
             </div>
 
-              <div className="border-t border-default/70 bg-[rgba(255,255,255,0.02)] px-6 py-3">
-                <p className="text-xs text-muted">
-                  Premi <kbd className="rounded bg-[rgba(255,255,255,0.03)] px-1.5 py-0.5 text-xs font-mono font-semibold text-muted shadow-sm">Esc</kbd> per chiudere
-                </p>
-              </div>
+            {/* Footer */}
+            <div className="border-t border-default/70 bg-[rgba(255,255,255,0.02)] px-6 py-3">
+              <p className="text-xs text-muted">
+                Premi <kbd className="rounded bg-[rgba(255,255,255,0.03)] px-1.5 py-0.5 text-xs font-mono font-semibold text-muted shadow-sm">Esc</kbd> per chiudere
+              </p>
             </div>
           </div>
         </div>
