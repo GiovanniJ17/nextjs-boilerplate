@@ -1157,68 +1157,44 @@ export default function RegistroPage() {
     });
   }
 
-  function handleExerciseChange(
-    blockIndex: number,
-    exerciseIndex: number,
-    field: keyof ExerciseForm,
-    value: string | number
-  ) {
-    setExerciseBlocks(prev => {
-      const updatedBlocks = [...prev];
-      const exerciseToUpdate = updatedBlocks[blockIndex].exercises[exerciseIndex];
-      if (!exerciseToUpdate) return updatedBlocks;
+    const handleExerciseChange = (
+      blockIndex: number,
+      exerciseIndex: number,
+      field: keyof Exercise,
+      value: string | number,
+      blockId: string
+    ) => {
+      const updatedBlocks = [...sessionForm.exercise_blocks];
+      const exerciseToUpdate = { ...updatedBlocks[blockIndex].exercises[exerciseIndex] };
 
       if (field === 'intensity') {
         const parsedValue = parseDecimalInput(String(value));
         const clamped = Math.max(1, Math.min(10, parsedValue ?? 0));
         exerciseToUpdate.intensity = String(clamped);
       } else {
-        (exerciseToUpdate as Record<string, string | ExerciseResultForm[] | undefined>)[field] = String(value);
+        (exerciseToUpdate as Record<string, any>)[field] = value;
       }
 
-      return updatedBlocks;
-    });
+      updatedBlocks[blockIndex].exercises[exerciseIndex] = exerciseToUpdate;
+      setSessionForm(prev => ({ ...prev, exercise_blocks: updatedBlocks }));
 
-    clearError(`exercise-${sessionForm.exercise_blocks[blockIndex].id}-${exerciseIndex}-name`);
-  }
+      if (field === 'name' && value) {
+        clearError(`exercise-${blockId}-${exerciseIndex}-name`);
+      }
+    };
 
-  function handleDisciplineSelect(blockId: string, exerciseIndex: number, value: string) {
-    setExerciseBlocks(prev => {
-      return prev.map(block => {
-        if (block.id !== blockId) return block;
-        
-        const exercises = [...block.exercises];
-        exercises[exerciseIndex] = { ...exercises[exerciseIndex], discipline_type: value };
-        return { ...block, exercises };
+    const handleDisciplineSelect = (blockIndex: number, exerciseIndex: number, value: string) => {
+      setExerciseBlocks(prev => {
+        return prev.map(block => {
+          if (block.id !== blockId) return block;
+          
+          const exercises = [...block.exercises];
+          exercises[exerciseIndex] = { ...exercises[exerciseIndex], discipline_type: value };
+          return { ...block, exercises };
+        });
       });
-    });
-    clearError(`exercise-${blockId}-${exerciseIndex}-discipline`);
-  }
-
-  function handleResultChange(
-    blockId: string,
-    exerciseIndex: number,
-    resultIndex: number,
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) {
-    const { name, value } = e.target;
-    setExerciseBlocks(prev => {
-      return prev.map(block => {
-        if (block.id !== blockId) return block;
-        
-        const exercises = [...block.exercises];
-        const exercise = { ...exercises[exerciseIndex] };
-        const results = [...exercise.results];
-        const target = { ...results[resultIndex] } as Record<string, string>;
-        target[name] = value;
-        results[resultIndex] = target as ExerciseResultForm;
-        exercise.results = results;
-        exercises[exerciseIndex] = exercise;
-        
-        return { ...block, exercises };
-      });
-    });
-  }
+      clearError(`exercise-${blockId}-${exerciseIndex}-discipline`);
+    };
 
   function addExercise(blockId: string) {
     setExerciseBlocks(prev => {
@@ -2070,7 +2046,7 @@ export default function RegistroPage() {
                                 <Input
                                   id={`ex-name-${block.id}-${exerciseIndex}`}
                                   value={exercise.name}
-                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'name', e.target.value)}
+                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'name', e.target.value, block.id)}
                                   placeholder="Es. Ripetute 150m"
                                   className={cn(errors[`exercise-${block.id}-${exerciseIndex}-name`] && 'border-destructive')}
                                 />
@@ -2096,7 +2072,7 @@ export default function RegistroPage() {
                                   id={`ex-distance-${block.id}-${exerciseIndex}`}
                                   type="number"
                                   value={exercise.distance_m}
-                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'distance_m', e.target.value)}
+                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'distance_m', e.target.value, block.id)}
                                 />
                               </div>
                               <div className="space-y-2">
@@ -2105,7 +2081,7 @@ export default function RegistroPage() {
                                   id={`ex-sets-${block.id}-${exerciseIndex}`}
                                   type="number"
                                   value={exercise.sets}
-                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'sets', e.target.value)}
+                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'sets', e.target.value, block.id)}
                                   className={cn(errors[`exercise-${block.id}-${exerciseIndex}-sets`] && 'border-destructive')}
                                 />
                               </div>
@@ -2115,8 +2091,8 @@ export default function RegistroPage() {
                                   id={`ex-reps-${block.id}-${exerciseIndex}`}
                                   type="number"
                                   value={exercise.repetitions}
-                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'repetitions', e.target.value)}
-                                  className={cn(errors[`exercise-${block.id}-${exerciseIndex}-repetitions`] && 'border-destructive')}
+                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'repetitions', e.target.value, block.id)}
+                                  className={cn(errors[`exercise-${block.id}-${exerciseIndex}-repetizioni`] && 'border-destructive')}
                                 />
                               </div>
                               <div className="space-y-2">
@@ -2125,7 +2101,7 @@ export default function RegistroPage() {
                                   id={`ex-rest-reps-${block.id}-${exerciseIndex}`}
                                   type="number"
                                   value={exercise.rest_between_reps_s}
-                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'rest_between_reps_s', e.target.value)}
+                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'rest_between_reps_s', e.target.value, block.id)}
                                 />
                               </div>
                               <div className="md:col-span-4">
@@ -2134,7 +2110,7 @@ export default function RegistroPage() {
                                   type="range" 
                                   min="1" max="10" 
                                   value={exercise.intensity}
-                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'intensity', e.target.value)}
+                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'intensity', e.target.value, block.id)}
                                   className="w-full"
                                 />
                                 <div className="text-center text-sm text-muted-foreground mt-1">
