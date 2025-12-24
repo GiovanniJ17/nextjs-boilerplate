@@ -1020,86 +1020,163 @@ export default function RegistroPage() {
     }
   }
 
-  function handleCreateBlockShortcut() {
-    setShowBlockForm(true);
-    handleScrollToSection('details');
+  function validateBlockForm() {
+    const newErrors: Record<string, string> = {};
+
+    if (!blockForm.name) {
+      newErrors.name = 'Inserisci un nome per il blocco';
+    }
+    if (!blockForm.start_date) {
+      newErrors.start_date = 'Inserisci la data di inizio';
+    }
+    if (!blockForm.end_date) {
+      newErrors.end_date = 'Inserisci la data di fine';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   }
 
-  function handleSessionChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) {
-    const { name, value } = e.target;
-    setSessionForm(prev => ({ ...prev, [name]: value }));
-    clearError(name);
-  }
+  async function handleCreateBlock() {
+    if (!validateBlockForm()) {
+      return;
+    }
 
-  // Block management functions
-  function addBlock() {
-    setExerciseBlocks(prev => {
-      const newBlockNumber = prev.length + 1;
-      return [
-        ...prev,
+    setLoadingBlocks(true);
+    const { data, error } = await supabase
+      .from('training_blocks')
+      .insert([
         {
-          ...defaultExerciseBlock,
-          id: crypto.randomUUID(),
-          block_number: newBlockNumber,
-          name: `Blocco ${newBlockNumber}`,
-          exercises: [{ ...defaultExercise }],
+          name: blockForm.name,
+          start_date: blockForm.start_date,
+          end_date: blockForm.end_date,
+          goal: blockForm.goal || null,
+          notes: blockForm.notes || null,
         },
-      ];
-    });
-  }
+      ])
+      .select()
+      .single();
 
-  function removeBlock(blockId: string) {
-    setExerciseBlocks(prev => {
-      const filtered = prev.filter(b => b.id !== blockId);
-      // Rinumera i blocchi rimanenti
-      return filtered.map((block, idx) => ({
-        ...block,
-        block_number: idx + 1,
-        name: block.name.startsWith('Blocco ') ? `Blocco ${idx + 1}` : block.name,
-      }));
-    });
-  }
+    setLoadingBlocks(false);
 
-  function handleBlockChange(
-    blockId: string,
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) {
-    const { name, value } = e.target;
-    setExerciseBlocks(prev => {
-      return prev.map(block => {
-        if (block.id !== blockId) return block;
-        return { ...block, [name]: value };
+    if (error) {
+      notifyError('Errore durante la creazione del blocco', {
+        description: 'Controlla la connessione e riprova.',
       });
+      return;
+    }
+
+    notifySuccess('Blocco creato', {
+      description: 'Ora puoi collegarlo alla sessione in corso.',
+    });
+    setBlockForm({ name: '', start_date: '', end_date: '', goal: '', notes: '' });
+    setShowBlockForm(false);
+    await fetchBlocks();
+    if (data?.id) {
+      setSessionForm(prev => ({ ...prev, block_id: data.id }));
+    }
+  }
+
+  function handleAddExerciseBlock() {
+    const newBlock: ExerciseBlockForm = {
+      ...defaultExerciseBlock,
+      id: crypto.randomUUID(),
+      block_number: exerciseBlocks.length + 1,
+      name: `Blocco ${exerciseBlocks.length + 1}`,
+      exercises: [{ ...defaultExercise }],
+    };
+    setExerciseBlocks(prev => [...prev, newBlock]);
+  }
+
+  function handleDuplicateExerciseBlock(blockIndex: number) {
+    const blockToDuplicate = exerciseBlocks[blockIndex];
+    if (!blockToDuplicate) return;
+
+    const duplicatedBlock = {
+      ...blockToDuplicate,
+      id: crypto.randomUUID(),
+      block_number: exerciseBlocks.length + 1,
+      name: `${blockToDuplicate.name} (Copia)`,
+    };
+    setExerciseBlocks(prev => [...prev, duplicatedBlock]);
+  }
+
+  function handleRemoveExerciseBlock(blockIndex: number) {
+    setExerciseBlocks(prev => {
+      const updatedBlocks = [...prev];
+      updatedBlocks.splice(blockIndex, 1);
+      // Rinomina i blocchi rimanenti
+      updatedBlocks.forEach((block, idx) => {
+        block.block_number = idx + 1;
+        block.name = `Blocco ${idx + 1}`;
+      });
+      return updatedBlocks;
     });
   }
 
-  // Exercise management functions (now work within blocks)
+  function handleExerciseBlockChange(
+    blockIndex: number,
+    field: keyof ExerciseBlockForm,
+    value: string
+  ) {
+    setExerciseBlocks(prev => {
+      const updatedBlocks = [...prev];
+      updatedBlocks[blockIndex] = {
+        ...updatedBlocks[blockIndex],
+        [field]: value,
+      };
+      return updatedBlocks;
+    });
+  }
+
+  function handleAddExercise(blockIndex: number) {
+    setExerciseBlocks(prev => {
+      const updatedBlocks = [...prev];
+      updatedBlocks[blockIndex].exercises.push({ ...defaultExercise });
+      return updatedBlocks;
+    });
+  }
+
+  function handleDuplicateExercise(blockIndex: number, exerciseIndex: number) {
+    setExerciseBlocks(prev => {
+      const updatedBlocks = [...prev];
+      const exerciseToDuplicate = updatedBlocks[blockIndex].exercises[exerciseIndex];
+      if (!exerciseToDuplicate) return updatedBlocks;
+
+      const duplicatedExercise = { ...exerciseToDuplicate };
+      updatedBlocks[blockIndex].exercises.push(duplicatedExercise);
+      return updatedBlocks;
+    });
+  }
+
+  function handleRemoveExercise(blockIndex: number, exerciseIndex: number) {
+    setExerciseBlocks(prev => {
+      const updatedBlocks = [...prev];
+      updatedBlocks[blockIndex].exercises.splice(exerciseIndex, 1);
+      return updatedBlocks;
+    });
+  }
+
   function handleExerciseChange(
-    blockId: string,
+    blockIndex: number,
     exerciseIndex: number,
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    field: keyof ExerciseForm,
+    value: string | number
   ) {
-    const { name, value } = e.target;
     setExerciseBlocks(prev => {
-      return prev.map(block => {
-        if (block.id !== blockId) return block;
-        
-        const exercises = [...block.exercises];
-        const exercise = { ...exercises[exerciseIndex] };
-        
-        if (name === 'intensity') {
-          const parsedValue = parseDecimalInput(value);
-          const clamped = Math.max(1, Math.min(10, parsedValue ?? 0));
-          exercise.intensity = String(clamped);
-        } else {
-          (exercise as Record<string, string | ExerciseResultForm[]>)[name] = value;
-        }
-        
-        exercises[exerciseIndex] = exercise;
-        return { ...block, exercises };
-      });
+      const updatedBlocks = [...prev];
+      const exerciseToUpdate = updatedBlocks[blockIndex].exercises[exerciseIndex];
+      if (!exerciseToUpdate) return updatedBlocks;
+
+      if (field === 'intensity') {
+        const parsedValue = parseDecimalInput(value);
+        const clamped = Math.max(1, Math.min(10, parsedValue ?? 0));
+        exerciseToUpdate.intensity = String(clamped);
+      } else {
+        (exerciseToUpdate as Record<string, string | ExerciseResultForm[]>)[field] = value;
+      }
+
+      return updatedBlocks;
     });
 
     clearError(`exercise-${blockId}-${exerciseIndex}-name`);
@@ -1409,46 +1486,6 @@ export default function RegistroPage() {
     return Object.keys(validation).length === 0;
   }
 
-  async function handleCreateBlock() {
-    if (!blockForm.name || !blockForm.start_date || !blockForm.end_date) {
-      notifyError('Compila nome e date del blocco', {
-        description: 'Inserisci tutte le informazioni richieste per creare il periodo.',
-      });
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from('training_blocks')
-      .insert([
-        {
-          name: blockForm.name,
-          start_date: blockForm.start_date,
-          end_date: blockForm.end_date,
-          goal: blockForm.goal || null,
-          notes: blockForm.notes || null,
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) {
-      notifyError('Errore durante la creazione del blocco', {
-        description: 'Controlla la connessione e riprova.',
-      });
-      return;
-    }
-
-    notifySuccess('Blocco creato', {
-      description: 'Ora puoi collegarlo alla sessione in corso.',
-    });
-    setBlockForm({ name: '', start_date: '', end_date: '', goal: '', notes: '' });
-    setShowBlockForm(false);
-    await fetchBlocks();
-    if (data?.id) {
-      setSessionForm(prev => ({ ...prev, block_id: data.id }));
-    }
-  }
-
   async function handleSubmit() {
     if (!validateForms()) {
       const missingFields: string[] = [];
@@ -1713,1779 +1750,416 @@ export default function RegistroPage() {
   const selectedBlock = trainingBlocks.find(block => block.id === sessionForm.block_id);
 
   return (
-    <motion.div 
-      className="space-y-4"
-      variants={pageTransition}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-    >
-      {/* Hero Section - Sky Blue Theme (NO animation per evitare flash) */}
-      <section 
-        className="rounded-3xl bg-brand-blue p-6 text-white shadow-sm"
-      >
-        <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2 md:space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🏃‍♂️</span>
-              <h1 className="text-xl md:text-2xl font-bold">Nuova Sessione</h1>
-            </div>
-            <p className="text-sm md:text-base text-white/90 hidden md:block">
-              Registra il tuo allenamento e monitora i progressi
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <AutoSaveIndicator 
-              lastSaved={lastSaved} 
-              isSaving={isSaving}
-              className="hidden lg:flex"
-            />
-            
-            <motion.div 
-              className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-sm px-4 py-2.5 md:px-5 md:py-3"
-              variants={scaleIn}
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.2 }}
-            >
-              <p className="text-xs text-white/80 mb-0.5">Completamento</p>
-              <p className="text-2xl md:text-3xl font-bold">{progressValue}%</p>
-            </motion.div>
-          </div>
-        </div>
-        
-        {/* Stats compatti su mobile */}
-        <motion.div 
-          className="mt-3 md:mt-5 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-        >
-          {summaryStats.slice(0, 4).map(stat => {
-            const Icon = stat.icon;
-            const formattedValue = typeof stat.value === 'number' ? numberFormatter.format(stat.value) : stat.value;
-            return (
-              <motion.div 
-                key={stat.label} 
-                className="rounded-xl border border-white/10 bg-white/10 backdrop-blur-sm px-3 py-2 md:px-4 md:py-3"
-                variants={staggerItem}
-                whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="flex items-start justify-between mb-1">
-                  <span className="text-xs text-white/70">{stat.label}</span>
-                  <Icon className="h-4 w-4 md:h-5 md:w-5 text-white/80" strokeWidth={2} />
-                </div>
-                <p className="text-lg md:text-xl font-semibold text-white">{formattedValue}</p>
-              </motion.div>
-            );
-          })}
-        </motion.div>
-        
-        <AnimatePresence>
-          {selectedBlock && (
-            <motion.div 
-              className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 backdrop-blur-sm px-3 py-1.5 text-sm font-medium"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Package className="h-4 w-4" strokeWidth={2} />
-              {selectedBlock.name}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </section>
-
-      {/* Mobile Wizard Step Indicator */}
-      <MobileStepIndicator
-        steps={[
-          { id: 'details', label: 'Dettagli', emoji: '📝' },
-          { id: 'exercises', label: isMetricSession ? 'Metriche' : 'Esercizi', emoji: isMetricSession ? '📊' : '💪' },
-        ]}
-        currentStepId={expandedSection || 'details'}
-        completedStepIds={stepProgress
-          .filter(s => s.status === 'done')
-          .map(s => s.key)}
-        onStepClick={(stepId) => {
-          setExpandedSection(stepId as 'details' | 'exercises' | 'metrics');
-          handleScrollToSection(stepId as StepKey);
-        }}
-      />
-
-      {/* Desktop Step Progress - con emoji */}
-      <div className="hidden md:block">
-        <div className="flex flex-wrap gap-2">
-          {stepProgress.map(step => {
-            const Icon = step.icon;
-            const emoji = step.key === 'details' ? '📝' : step.key === 'exercises' ? '💪' : '📊';
-
-            return (
-              <button
-                key={step.key}
-                type="button"
-                onClick={() => handleScrollToSection(step.key)}
-                className={cn(
-                  'flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-sm transition-all active:scale-95',
-                  step.status === 'active' && 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-foreground shadow-sm',
-                  step.status === 'done' && 'border-emerald-400/60 bg-[rgba(16,185,129,0.12)] text-foreground shadow-sm',
-                  step.status === 'todo' && 'border-border bg-[rgba(255,255,255,0.03)] text-muted hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.12)]'
-                )}
-              >
-                <span className="text-base">{emoji}</span>
-                <span className="font-medium">{step.label}</span>
-                {step.status === 'done' && <CheckCircle2 className="h-4 w-4" />}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="grid gap-4">
-        {/* Dettagli sessione */}
-        <div ref={sectionRefs.details} className="scroll-mt-24">
-          <Card className="shadow-sm">
-            <CardHeader 
-              className="pb-2.5 cursor-pointer md:cursor-default"
-              onClick={() => setExpandedSection(prev => prev === 'details' ? prev : 'details')}
-            >
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-100 text-lg">
-                    📝
-                  </span>
-                  <span className="text-base md:text-lg font-semibold text-foreground">Dettagli sessione</span>
-                </span>
-                <ChevronDown 
-                  className={cn(
-                    "h-5 w-5 text-slate-400 transition-transform md:hidden",
-                    expandedSection === 'details' && "rotate-180"
-                  )} 
-                />
-              </CardTitle>
-            </CardHeader>
-            <CardContent className={cn(
-              "space-y-4",
-              expandedSection !== 'details' && "hidden md:block"
-            )}>
-            {/* Blocco + Data */}
-            <div className="grid gap-4 lg:grid-cols-12">
-              <div className="lg:col-span-8 space-y-1.5">
-                <Label className="text-xs font-medium text-muted">Blocco di allenamento</Label>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleBlockSelect(null)}
-                    className={cn(
-                      'inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold transition',
-                      sessionForm.block_id
-                        ? 'border-border text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.04)]'
-                        : 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-foreground shadow-sm'
-                    )}
-                    aria-pressed={!sessionForm.block_id}
-                  >
-                    Nessun blocco
-                  </button>
-                  {trainingBlocks.length === 0 && (
-                    <span className="inline-flex items-center rounded-2xl bg-[rgba(255,255,255,0.05)] px-3 py-2 text-[11px] text-muted">
-                      Nessun blocco salvato
-                    </span>
-                  )}
-                  {trainingBlocks.map(block => {
-                    const isSelected = sessionForm.block_id === block.id;
-                    return (
-                      <div
-                        key={block.id}
-                        className={cn(
-                          'relative flex items-center gap-3 rounded-2xl border px-3 py-2 pr-10 text-left transition',
-                          isSelected
-                            ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-foreground shadow-sm'
-                            : 'border-border bg-[rgba(255,255,255,0.03)] text-foreground hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
-                        )}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => handleBlockSelect(block.id)}
-                          className="flex flex-col text-left"
-                          aria-pressed={isSelected}
-                        >
-                          <span className="text-xs font-semibold">{block.name}</span>
-                          <span className="text-[11px] text-muted">
-                            {formatDateHuman(block.start_date)} → {formatDateHuman(block.end_date)}
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          className="absolute right-1 top-1 inline-flex items-center gap-1 rounded-full border border-transparent bg-[rgba(255,255,255,0.06)] px-2 py-1 text-[10px] font-semibold text-muted transition-colors hover:border-red-300 hover:text-red-300"
-                          onClick={() => requestDeleteBlock(block.id)}
-                          disabled={blockActionLoading === block.id}
-                          aria-label={`Elimina ${block.name}`}
-                          title="Rimuovi definitivamente il blocco"
-                        >
-                          {blockActionLoading === block.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-3 w-3" />
-                          )}
-                          <span>Elimina</span>
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex flex-wrap gap-2 pt-1.5">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowBlockForm(prev => !prev)}
-                    className="gap-2 rounded-full h-8 text-xs px-3"
-                  >
-                    <PenSquare className="h-3.5 w-3.5" />
-                    {showBlockForm ? 'Nascondi editor' : 'Nuovo blocco'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => void fetchBlocks()}
-                    className="gap-2 bg-transparent text-xs text-muted hover:bg-[rgba(255,255,255,0.05)] h-8 px-3"
-                  >
-                    {loadingBlocks ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <RefreshCcw className="h-3.5 w-3.5" />
-                    )}
-                    Aggiorna
-                  </Button>
-                </div>
-              </div>
-
-              <div className="lg:col-span-4 space-y-1.5">
-                <Label className="text-xs font-medium text-muted">Data</Label>
-                <Input
-                  type="date"
-                  name="date"
-                  value={sessionForm.date}
-                  onChange={handleSessionChange}
-                  className={cn('rounded-xl bg-[rgba(255,255,255,0.05)] h-9', errors.date && 'border-red-500')}
-                />
-                {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
-              </div>
-            </div>
-
-            {showBlockForm && (
-              <div className="rounded-xl border border-border bg-[rgba(255,255,255,0.04)] p-3.5">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
-                  <Target className="h-4 w-4" /> Nuovo blocco di allenamento
-                </div>
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted">Nome</Label>
-                    <Input
-                      value={blockForm.name}
-                      onChange={event => setBlockForm(prev => ({ ...prev, name: event.target.value }))}
-                      placeholder="Macro ciclo, preparazione indoor..."
-                      className="h-9"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted">Inizio</Label>
-                    <Input
-                      type="date"
-                      value={blockForm.start_date}
-                      onChange={event => setBlockForm(prev => ({ ...prev, start_date: event.target.value }))}
-                      className="h-9"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted">Fine</Label>
-                    <Input
-                      type="date"
-                      value={blockForm.end_date}
-                      onChange={event => setBlockForm(prev => ({ ...prev, end_date: event.target.value }))}
-                      className="h-9"
-                    />
-                  </div>
-                </div>
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted">Obiettivo</Label>
-                    <Input
-                      value={blockForm.goal}
-                      onChange={event => setBlockForm(prev => ({ ...prev, goal: event.target.value }))}
-                      placeholder="Es. Migliorare accelerazione"
-                      className="h-9"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted">Note</Label>
-                    <Textarea
-                      value={blockForm.notes}
-                      onChange={event => setBlockForm(prev => ({ ...prev, notes: event.target.value }))}
-                      placeholder="Appunti generali, gare obiettivo..."
-                      className="min-h-[72px]"
-                    />
-                  </div>
-                </div>
-                <div className="mt-3 flex justify-end">
-                  <Button type="button" onClick={handleCreateBlock} disabled={loadingBlocks} className="gap-2 h-9">
-                    {loadingBlocks && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Salva blocco
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            <div className="border-t border-border/70"></div>
-
-            {/* Tipo di sessione */}
-            <div className="space-y-2.5">
-              <Label>Tipo di sessione</Label>
-              <div className="grid gap-2.5 sm:grid-cols-2">
-                  {sessionTypes.map(type => {
-                    const isSelected = sessionForm.type === type.value;
-                    const colorClasses = {
-                      orange: isSelected ? 'border-sky-400/80 bg-[rgba(56,189,248,0.14)] text-foreground' : 'border-border bg-card/60 text-muted hover:border-sky-400/60',
-                      blue: isSelected ? 'border-blue-400/80 bg-[rgba(59,130,246,0.14)] text-foreground' : 'border-border bg-card/60 text-muted hover:border-blue-400/60',
-                      amber: isSelected ? 'border-amber-400/80 bg-[rgba(251,191,36,0.14)] text-foreground' : 'border-border bg-card/60 text-muted hover:border-amber-400/60',
-                      purple: isSelected ? 'border-cyan-400/80 bg-[rgba(34,211,238,0.14)] text-foreground' : 'border-border bg-card/60 text-muted hover:border-cyan-400/60',
-                      cyan: isSelected ? 'border-cyan-400/80 bg-[rgba(34,211,238,0.14)] text-foreground' : 'border-border bg-card/60 text-muted hover:border-cyan-400/60',
-                      green: isSelected ? 'border-green-400/80 bg-[rgba(34,197,94,0.14)] text-foreground' : 'border-border bg-card/60 text-muted hover:border-green-400/60',
-                      slate: isSelected ? 'border-slate-400/80 bg-[rgba(148,163,184,0.14)] text-foreground' : 'border-border bg-card/60 text-muted hover:border-slate-400/60',
-                    };
-                    
-                    return (
-                      <button
-                        key={type.value}
-                        type="button"
-                        onClick={() => handleQuickTypeSelect(type.value)}
-                        className={cn(
-                          'flex h-full items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-all active:scale-95',
-                          colorClasses[type.color as keyof typeof colorClasses] || colorClasses.slate,
-                          !isSelected && 'bg-card text-muted'
-                        )}
-                        aria-pressed={isSelected}
-                      >
-                        <span className="text-2xl md:text-3xl">{type.emoji}</span>
-                        <div className="flex-1">
-                          <span className="block text-sm md:text-base font-semibold">{type.label}</span>
-                          <span className="block text-xs text-slate-500 mt-0.5 hidden sm:block">{type.hint}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-                {errors.type && <p className="text-sm text-red-500 mt-1">{errors.type}</p>}
-              </div>
-
-            {/* Fase e Luogo */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-slate-700">Fase / Periodo</Label>
-                <Input
-                  name="phase"
-                  value={sessionForm.phase}
-                  onChange={handleSessionChange}
-                  placeholder="Es. Accumulo, Intensificazione, Taper"
-                  className="h-9"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-slate-700">Luogo</Label>
-                <div className="flex flex-wrap gap-2">
-                  {locationOptions.map(option => {
-                    const isSelected =
-                      option.value === 'custom'
-                        ? usingCustomLocation
-                        : sessionForm.location === option.label;
-                    const Icon = locationIcons[option.value] ?? MapPin;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => handleLocationSelect(option.value)}
-                        className={cn(
-                          'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition',
-                          isSelected
-                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-500 hover:border-sky-200 hover:text-sky-600'
-                        )}
-                        aria-pressed={isSelected}
-                        title={option.value === 'custom' ? 'Personalizza luogo' : option.label}
-                      >
-                        <Icon className="h-3.5 w-3.5" /> {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                {usingCustomLocation && (
-                  <div className="space-y-1">
-                    <Input
-                      value={customLocation}
-                      onChange={event => handleCustomLocationChange(event.target.value)}
-                      placeholder="Specificare luogo..."
-                      className={cn('mt-1', errors.location && 'border-red-500')}
-                    />
-                    <p className="text-[11px] text-slate-500">Personalizza il luogo quando non rientra tra le proposte rapide.</p>
-                  </div>
-                )}
-                {!usingCustomLocation && sessionForm.location && (
-                  <p className="text-[11px] text-slate-500">Selezionato: {sessionForm.location}</p>
-                )}
-                {errors.location && <p className="text-xs text-red-500">{errors.location}</p>}
-              </div>
-            </div>
-
-            <div className="border-t border-slate-100"></div>
-
-            {/* Note sessione */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-slate-700">Note sessione</Label>
-              <Textarea
-                name="notes"
-                value={sessionForm.notes}
-                onChange={handleSessionChange}
-                placeholder="Inserisci sensazioni, clima, focus tecnico..."
-                className="mt-1"
-              />
-            </div>
-          </CardContent>
-          </Card>
-        </div>
-
-        {/* Ripetute */}
-        <div ref={sectionRefs.exercises} className="scroll-mt-24">
-          {isMetricSession ? (
-            <Card className="border-slate-200 shadow-sm">
-              <CardHeader 
-                className="pb-2.5 cursor-pointer md:cursor-default"
-                onClick={() => setExpandedSection(prev => prev === 'exercises' ? prev : 'exercises')}
-              >
-                <CardTitle className="flex items-center justify-between text-lg text-slate-800">
-                  <span className="flex items-center gap-2">
-                    <Target className="h-5 w-5 text-sky-600" strokeWidth={2} /> Ripetute
-                  </span>
-                  <ChevronDown 
-                    className={cn(
-                      "h-5 w-5 text-slate-400 transition-transform md:hidden",
-                      expandedSection === 'exercises' && "rotate-180"
-                    )} 
-                  />
-                </CardTitle>
-              </CardHeader>
-              <CardContent className={cn(
-                "flex flex-col items-center gap-3 pb-4 text-center",
-                expandedSection !== 'exercises' && "hidden md:flex"
-              )}>
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
-                  <Target className="h-5 w-5" strokeWidth={2} />
-                </div>
-                <p className="text-lg text-slate-800 font-semibold">
-                  Ripetute disabilitate per questo tipo di sessione
-                </p>
-                <p className="text-sm text-slate-600">
-                  Le sessioni di tipo <span className="font-semibold text-slate-700">test</span>,{' '}
-                  <span className="font-semibold text-slate-700">gara</span> o{' '}
-                  <span className="font-semibold text-slate-700">palestra</span> utilizzano la sezione{' '}
-                  <span className="font-semibold text-sky-600">«Metriche &amp; Test»</span>.
-                </p>
-                <p className="text-xs text-slate-500">
-                  Seleziona un tipo di allenamento standard (pista, scarico, recupero) per registrare ripetute ed esercizi.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border-slate-200 shadow-sm">
-              <CardHeader 
-                className="pb-2.5 cursor-pointer md:cursor-default"
-                onClick={() => setExpandedSection(prev => prev === 'exercises' ? prev : 'exercises')}
-              >
-                <CardTitle className="flex items-center justify-between text-lg text-slate-800">
-                  <span className="flex items-center gap-2">
-                    <Package className="h-5 w-5 text-sky-600" strokeWidth={2} /> Ripetute
-                  </span>
-                  <ChevronDown 
-                    className={cn(
-                      "h-5 w-5 text-slate-400 transition-transform md:hidden",
-                      expandedSection === 'exercises' && "rotate-180"
-                    )} 
-                  />
-                </CardTitle>
-              </CardHeader>
-              <CardContent className={cn(
-                "space-y-4 p-4",
-                expandedSection !== 'exercises' && "hidden md:block"
-              )}>
-              {disciplineDistribution.length > 0 && (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3.5">
-                  <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-slate-700">
-                    <span className="inline-flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-sky-600" /> Focus ripetute
-                    </span>
-                    <span className="text-xs font-medium text-slate-500">
-                      Le ripetute aggiunte guidano i suggerimenti dei risultati e delle metriche
-                    </span>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {disciplineDistribution.map(item => {
-                      const Icon = disciplineIcons[item.key] ?? Activity;
-                      return (
-                        <span
-                          key={item.key}
-                          className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-medium text-slate-600 shadow-sm"
-                        >
-                          <Icon className="h-3.5 w-3.5 text-sky-500" /> {item.label} · {item.value}
-                          <span className="text-slate-400">({item.percentage}%)</span>
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {exerciseBlocks.map((block) => (
-                <div key={block.id} className="space-y-4">
-                  {/* Block Header */}
-                  <div className="rounded-2xl border-2 border-sky-200 bg-sky-50/50 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Package className="h-5 w-5 text-sky-600" strokeWidth={2} />
-                        <Input
-                          value={block.name}
-                          onChange={(e) => handleBlockChange(block.id, e)}
-                          name="name"
-                          placeholder="Nome blocco"
-                          className="h-8 w-48 border-sky-200 bg-white text-sm font-semibold"
-                        />
-                      </div>
-                      {exerciseBlocks.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeBlock(block.id)}
-                          className="h-8 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div>
-                        <Label className="text-xs text-slate-600">Recupero dopo blocco (sec)</Label>
-                        <Input
-                          type="number"
-                          value={block.rest_after_block_s}
-                          onChange={(e) => handleBlockChange(block.id, e)}
-                          name="rest_after_block_s"
-                          placeholder="Es: 180"
-                          className="h-9"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs text-slate-600">Note blocco</Label>
-                        <Input
-                          value={block.notes}
-                          onChange={(e) => handleBlockChange(block.id, e)}
-                          name="notes"
-                          placeholder="Es: Velocità massimale"
-                          className="h-9"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Exercises in this block */}
-                  {block.exercises.map((exercise, index) => {
-                const DisciplineIcon = disciplineIcons[exercise.discipline_type] ?? Flag;
-                const intensityNumber = parseDecimalInput(exercise.intensity);
-                const effortType = mapIntensityToEffort(intensityNumber);
-                const sliderValue =
-                  typeof intensityNumber === 'number' && Number.isFinite(intensityNumber)
-                    ? Math.round(intensityNumber)
-                    : 0;
-                const seriesGroups = groupResultsBySeries(exercise.results);
-                const seriesCount = seriesGroups.length;
-                const totalRepetitions = seriesGroups.reduce(
-                  (acc, group) => acc + group.entries.length,
-                  0
-                );
-                const timeValues = exercise.results
-                  .map(result => parseDecimalInput(result.time_s))
-                  .filter((value): value is number => isFiniteNumber(value) && value > 0);
-                const recoveryValues = exercise.results
-                  .map(result => parseDecimalInput(result.weight_kg))
-                  .filter((value): value is number => isFiniteNumber(value) && value >= 0);
-                const rpeValues = exercise.results
-                  .map(result => parseDecimalInput(result.rpe))
-                  .filter((value): value is number => isFiniteNumber(value) && value > 0);
-                const distanceValue = parseIntegerInput(exercise.distance_m);
-                const bestTime = timeValues.length > 0 ? Math.min(...timeValues) : null;
-                const slowestTime = timeValues.length > 0 ? Math.max(...timeValues) : null;
-                const averageRpe =
-                  rpeValues.length > 0
-                    ? Math.round((rpeValues.reduce((acc, curr) => acc + curr, 0) / rpeValues.length) * 10) / 10
-                    : null;
-                const averageTime =
-                  timeValues.length > 0
-                    ? Math.round((timeValues.reduce((acc, value) => acc + value, 0) / timeValues.length) * 100) / 100
-                    : null;
-                const averageRecovery =
-                  recoveryValues.length > 0
-                    ? Math.round((recoveryValues.reduce((acc, value) => acc + value, 0) / recoveryValues.length) * 10) /
-                      10
-                    : null;
-                const easiestRpe = rpeValues.length > 0 ? Math.min(...rpeValues) : null;
-                const highlightCards = (
-                  [
-                    {
-                      key: 'series',
-                      label: 'Serie registrate',
-                      value: seriesCount,
-                      description:
-                        seriesCount > 1
-                          ? 'Struttura delle serie completa'
-                          : 'Aggiungi le serie pianificate per iniziare',
-                    },
-                    totalRepetitions > 0 && {
-                      key: 'repetitions',
-                      label: 'Ripetizioni registrate',
-                      value: totalRepetitions,
-                      description:
-                        totalRepetitions > 1
-                          ? 'Analizza i tempi e i recuperi per ogni ripetizione'
-                          : 'Compila i dati della prima ripetizione',
-                    },
-                    distanceValue != null && {
-                      key: 'distance',
-                      label: 'Distanza obiettivo',
-                      value: `${distanceValue} m`,
-                      description: 'Valore inserito nella scheda ripetute',
-                    },
-                    bestTime != null && {
-                      key: 'best-time',
-                      label: 'Miglior tempo',
-                      value: `${bestTime.toFixed(2)}s`,
-                      description:
-                        averageTime != null
-                          ? `Media sessione ${averageTime.toFixed(2)}s`
-                          : 'Aggiungi tempi per calcolare la media',
-                    },
-                    slowestTime != null && slowestTime !== bestTime && {
-                      key: 'slowest-time',
-                      label: 'Tempo più alto',
-                      value: `${slowestTime.toFixed(2)}s`,
-                      description: 'Aiuta a valutare la dispersione delle prove',
-                    },
-                    averageRpe != null && {
-                      key: 'avg-rpe',
-                      label: 'RPE medio',
-                      value: `RPE ${averageRpe.toFixed(1)}`,
-                      description: 'Percezione complessiva della sessione',
-                    },
-                    averageRecovery != null && {
-                      key: 'avg-recovery',
-                      label: 'Recupero medio',
-                      value: `${averageRecovery.toFixed(1)}s`,
-                      description: 'Confronta il recupero rispetto al piano',
-                    },
-                    easiestRpe != null && {
-                      key: 'min-rpe',
-                      label: 'RPE minimo',
-                      value: `RPE ${easiestRpe.toFixed(1)}`,
-                      description: 'Tieni traccia della percezione più bassa',
-                    },
-                  ].filter(Boolean) as {
-                    key: string;
-                    label: string;
-                    value: string | number;
-                    description: string;
-                  }[]
-                ).slice(0, 4);
-
-              return (
-                <div key={index} className="rounded-2xl border border-slate-200 bg-white/70 p-3.5 shadow-sm">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-center gap-3 text-sm font-semibold text-slate-700">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
-                        <DisciplineIcon className="h-5 w-5" strokeWidth={2} />
-                      </div>
-                      <div>
-                <p className="text-base">Blocco ripetute #{index + 1}</p>
-                        <p className="text-xs text-slate-500">{exercise.name || 'Dettagli ripetuta'}</p>
-                      </div>
-                    </div>
-                    {block.exercises.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeExercise(block.id, index)}
-                        className="inline-flex items-center gap-1 rounded-full border border-red-200 px-3 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50"
-                      >
-                        <Trash2 className="h-3 w-3" /> Rimuovi
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="mt-3 grid gap-3 lg:grid-cols-12">
-                    <div className="lg:col-span-5 space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-700">Nome ripetuta</Label>
-                      <Input
-                        name="name"
-                        value={exercise.name}
-                        onChange={event => handleExerciseChange(block.id, index, event)}
-                        placeholder="Es. 4×60m blocchi, 3×150m progressivi"
-                        className={cn('h-9', errors[`exercise-${block.id}-${index}-name`] && 'border-red-500')}
-                      />
-                    </div>
-
-                    <div className="lg:col-span-7 space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-700">Focus tecnico</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {disciplineTypes.map(type => {
-                          const Icon = disciplineIcons[type.value] ?? Activity;
-                          const isActive = exercise.discipline_type === type.value;
-                          return (
-                            <button
-                              key={type.value}
-                              type="button"
-                              onClick={() => handleDisciplineSelect(block.id, index, type.value)}
-                              className={cn(
-                                'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition',
-                                isActive
-                                  ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                                  : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
-                              )}
-                              aria-pressed={isActive}
-                            >
-                              <Icon className="h-3.5 w-3.5" />
-                              {type.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {errors[`exercise-${index}-discipline`] && (
-                        <p className="text-[11px] text-red-500">{errors[`exercise-${index}-discipline`]}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Distanza, Serie, Ripetizioni, Recupero tra rep, Recupero serie */}
-                  <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-700">Distanza (m)</Label>
-                      <Input
-                        name="distance_m"
-                        type="number"
-                        min={0}
-                        value={exercise.distance_m}
-                        onChange={event => handleExerciseChange(block.id, index, event)}
-                        placeholder="Es. 150"
-                        className="h-9"
-                      />
-                      {/* Quick-select distanze comuni */}
-                      <div className="flex flex-wrap gap-1">
-                        {commonDistances.map(dist => (
-                          <button
-                            key={dist}
-                            type="button"
-                            onClick={() => {
-                              const event = { target: { name: 'distance_m', value: String(dist) } } as any;
-                              handleExerciseChange(block.id, index, event);
-                            }}
-                            className={cn(
-                              'rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors',
-                              exercise.distance_m === String(dist)
-                                ? 'border-sky-500 bg-sky-50 text-sky-700'
-                                : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50'
-                            )}
-                          >
-                            {dist}m
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-700">Serie</Label>
-                      <Input
-                        name="sets"
-                        type="number"
-                        min={0}
-                        value={exercise.sets}
-                        onChange={event => handleExerciseChange(block.id, index, event)}
-                        className={cn('h-9', errors[`exercise-${block.id}-${index}-sets`] && 'border-red-500')}
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-700">Ripetizioni</Label>
-                      <Input
-                        name="repetitions"
-                        type="number"
-                        min={0}
-                        value={exercise.repetitions}
-                        onChange={event => handleExerciseChange(block.id, index, event)}
-                        className={cn('h-9', errors[`exercise-${block.id}-${index}-repetitions`] && 'border-red-500')}
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-700">Recupero rep. (s)</Label>
-                      <Input
-                        name="rest_between_reps_s"
-                        type="number"
-                        min={0}
-                        value={exercise.rest_between_reps_s}
-                        onChange={event => handleExerciseChange(block.id, index, event)}
-                        placeholder="60"
-                        className="h-9"
-                      />
-                      {/* Quick-select recuperi comuni */}
-                      <div className="flex flex-wrap gap-1">
-                        {commonRecoveries.map(rec => (
-                          <button
-                            key={rec.value}
-                            type="button"
-                            onClick={() => {
-                              const event = { target: { name: 'rest_between_reps_s', value: String(rec.value) } } as any;
-                              handleExerciseChange(block.id, index, event);
-                            }}
-                            className={cn(
-                              'rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors',
-                              exercise.rest_between_reps_s === String(rec.value)
-                                ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                                : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50'
-                            )}
-                          >
-                            {rec.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-700">Recupero serie (s)</Label>
-                      <Input
-                        name="rest_between_sets_s"
-                        type="number"
-                        min={0}
-                        value={exercise.rest_between_sets_s}
-                        onChange={event => handleExerciseChange(block.id, index, event)}
-                        placeholder="180"
-                        className="h-9"
-                      />
-                      {/* Quick-select recuperi comuni */}
-                      <div className="flex flex-wrap gap-1">
-                        {commonRecoveries.map(rec => (
-                          <button
-                            key={rec.value}
-                            type="button"
-                            onClick={() => {
-                              const event = { target: { name: 'rest_between_sets_s', value: String(rec.value) } } as any;
-                              handleExerciseChange(block.id, index, event);
-                            }}
-                            className={cn(
-                              'rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors',
-                              exercise.rest_between_sets_s === String(rec.value)
-                                ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                                : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50'
-                            )}
-                          >
-                            {rec.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Intensità percepita */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-medium text-slate-700">Intensità percepita</Label>
-                      {(() => {
-                        const intensityInfo = getIntensityLabel(exercise.intensity);
-                        return (
-                          <span className={cn('text-xs font-semibold', intensityInfo.color)}>
-                            {intensityInfo.label}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-                        <input
-                          type="range"
-                          min={1}
-                          max={10}
-                          step={1}
-                          name="intensity"
-                          value={exercise.intensity}
-                          onChange={event => handleExerciseChange(block.id, index, event)}
-                          className="range-input w-full"
-                          style={buildRangeBackground(exercise.intensity)}
-                        />
-                        <div className="mt-2 grid grid-cols-10 gap-0.5 text-[9px]">
-                          {Array.from({ length: 10 }).map((_, tickIndex) => {
-                            const tickValue = tickIndex + 1;
-                            const isActive = sliderValue >= tickValue;
-                            return (
-                              <div key={tickValue} className="flex flex-col items-center gap-0.5">
-                                <span
-                                  className={cn(
-                                    'block h-1.5 w-0.5 rounded-full transition-colors',
-                                    isActive ? 'bg-sky-500' : 'bg-slate-300'
-                                  )}
-                                />
-                                <span
-                                  className={cn(
-                                    'font-medium',
-                                    isActive ? 'text-slate-600' : 'text-slate-400'
-                                  )}
-                                >
-                                  {tickValue}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <div className="mt-1.5 grid grid-cols-4 text-[9px] font-semibold uppercase tracking-wide text-slate-400">
-                          <span className="text-left">Basso</span>
-                          <span className="text-center">Medio</span>
-                          <span className="text-center">Alto</span>
-                          <span className="text-right">Massimo</span>
-                        </div>
-                        <div className="mt-1.5 flex items-center justify-between text-xs">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-sky-700 font-medium">
-                            <Flame className="h-3 w-3" /> {exercise.intensity || '—'}/10
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-slate-500 text-[10px]">
-                            <Clock className="h-3 w-3" /> Effort: {effortType ?? '—'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                  {/* Note esercizio */}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-slate-700">Note esercizio</Label>
-                    <Textarea
-                      name="notes"
-                      value={exercise.notes}
-                      onChange={event => handleExerciseChange(block.id, index, event)}
-                      placeholder="Dettagli su esecuzione, appunti tecnici, feedback..."
-                      className="min-h-[72px]"
-                    />
-                  </div>
-
-                    <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-3.5">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                          <Timer className="h-4 w-4 text-slate-500" /> Registro serie e ripetute
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => addSeries(block.id, index)}
-                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
-                          >
-                            <ListPlus className="h-3 w-3" /> Aggiungi serie
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => duplicateLastSeries(block.id, index)}
-                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100"
-                            disabled={seriesGroups.length === 0}
-                          >
-                            <PlusCircle className="h-3 w-3" /> Duplica ultima serie
-                          </button>
-                        </div>
-                      </div>
-
-                      <p className="mt-4 text-xs text-slate-500">
-                        Organizza le ripetute per serie e registra tempi, recuperi e sensazioni percepite durante ogni prova.
-                      </p>
-
-                      {highlightCards.length > 0 && (
-                        <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-                          {highlightCards.map(card => (
-                            <div key={card.key} className="rounded-2xl bg-white px-3 py-2 text-[11px] text-slate-500">
-                              <p className="text-xs font-semibold text-slate-600">{card.label}</p>
-                              <p className="text-lg font-semibold text-slate-800">{card.value}</p>
-                              <p className="text-[10px] text-slate-400">{card.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {seriesGroups.length === 0 ? (
-                        <div className="mt-4 rounded-2xl border border-slate-200 bg-white/80 p-4 text-xs text-slate-600">
-                          <p className="text-sm font-semibold text-slate-700">Nessuna serie registrata</p>
-                          <p className="mt-1 text-slate-500">
-                            Definisci serie e ripetizioni nel piano e aggiungi la prima serie per iniziare a raccogliere i tempi.
-                          </p>
-                          <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500">
-                            {exercise.sets && exercise.repetitions && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600">
-                                <ListPlus className="h-3 w-3 text-slate-500" /> Piano: {exercise.sets} serie × {exercise.repetitions} rip.
-                              </span>
-                            )}
-                            {distanceValue != null && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600">
-                                <Ruler className="h-3 w-3 text-slate-500" /> {distanceValue} m
-                              </span>
-                            )}
-                            {exercise.rest_between_reps_s && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600">
-                                <RefreshCcw className="h-3 w-3 text-slate-500" /> Recupero tra ripetizioni: {exercise.rest_between_reps_s}s
-                              </span>
-                            )}
-                            {exercise.rest_between_sets_s && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600">
-                                <Clock className="h-3 w-3 text-slate-500" /> Recupero tra serie: {exercise.rest_between_sets_s}s
-                              </span>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => addSeries(block.id, index)}
-                            className="mt-4 inline-flex items-center gap-2 rounded-full bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-sky-700"
-                          >
-                            <PlusCircle className="h-3 w-3" /> Aggiungi la prima serie
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="mt-4 space-y-4">
-                          {seriesGroups.map(group => (
-                            <div key={group.seriesNumber} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                              <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div>
-                                  <p className="text-sm font-semibold text-slate-700">Serie #{group.seriesNumber}</p>
-                                  <p className="text-xs text-slate-500">Ripetizioni registrate: {group.entries.length}</p>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => addRepetition(block.id, index, group.seriesNumber)}
-                                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
-                                  >
-                                    <ListPlus className="h-3 w-3" /> Aggiungi ripetizione
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeSeries(block.id, index, group.seriesNumber)}
-                                    className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-medium text-rose-500 transition-colors hover:bg-rose-50"
-                                  >
-                                    <Trash2 className="h-3 w-3" /> Rimuovi serie
-                                  </button>
-                                </div>
-                              </div>
-
-                              <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500">
-                                {distanceValue != null && (
-                                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
-                                    <Ruler className="h-3 w-3 text-slate-500" /> {distanceValue} m
-                                  </span>
-                                )}
-                                {exercise.rest_between_reps_s && (
-                                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 font-medium text-blue-700">
-                                    <RefreshCcw className="h-3 w-3 text-blue-600" /> Recupero: {exercise.rest_between_reps_s}s tra rip.
-                                  </span>
-                                )}
-                                {exercise.rest_between_sets_s && (
-                                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
-                                    <Clock className="h-3 w-3 text-slate-500" /> Pausa tra serie: {exercise.rest_between_sets_s}s
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Compilazione rapida */}
-                              <div className="mt-3 rounded-xl bg-gradient-to-r from-slate-800 to-slate-700 border border-slate-700 p-3">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Sparkles className="h-4 w-4 text-sky-600" />
-                                  <span className="text-sm font-semibold text-slate-700">Compilazione Rapida</span>
-                                </div>
-                                <p className="text-xs text-slate-600 mb-3">
-                                  Applica lo stesso valore a tutte le {group.entries.length} ripetizioni (puoi compilare uno o entrambi i campi)
-                                </p>
-                                <div className="flex flex-wrap items-end gap-2">
-                                  <div className="flex-1 min-w-[120px]">
-                                    <Label className="text-xs text-slate-600 mb-1 block">Tempo (secondi)</Label>
-                                    <Input
-                                      type="number"
-                                      step="0.01"
-                                      min={0}
-                                      placeholder="es. 15.50"
-                                      id={`quick-time-${block.id}-${index}-${group.seriesNumber}`}
-                                      className="h-9"
-                                    />
-                                  </div>
-                                  <div className="flex-1 min-w-[100px]">
-                                    <Label className="text-xs text-slate-600 mb-1 block">RPE (opzionale)</Label>
-                                    <Input
-                                      type="number"
-                                      step="0.1"
-                                      min={0}
-                                      max={10}
-                                      placeholder="es. 7.5"
-                                      id={`quick-rpe-${block.id}-${index}-${group.seriesNumber}`}
-                                      className="h-9"
-                                    />
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    onClick={() => {
-                                      const timeInput = document.getElementById(`quick-time-${block.id}-${index}-${group.seriesNumber}`) as HTMLInputElement;
-                                      const rpeInput = document.getElementById(`quick-rpe-${block.id}-${index}-${group.seriesNumber}`) as HTMLInputElement;
-                                      const timeValue = timeInput?.value;
-                                      const rpeValue = rpeInput?.value;
-                                      
-                                      if (!timeValue && !rpeValue) {
-                                        notifyError('Compila almeno un campo', {
-                                          description: 'Inserisci il tempo e/o RPE da applicare alle ripetizioni.'
-                                        });
-                                        return;
-                                      }
-
-                                      // Applica i valori a tutte le ripetizioni della serie
-                                      group.entries.forEach(entry => {
-                                        if (timeValue) {
-                                          const event = { target: { name: 'time_s', value: timeValue } };
-                                          handleResultChange(block.id, index, entry.resultIndex, event as any);
-                                        }
-                                        
-                                        if (rpeValue) {
-                                          const rpeEvent = { target: { name: 'rpe', value: rpeValue } };
-                                          handleResultChange(block.id, index, entry.resultIndex, rpeEvent as any);
-                                        }
-                                      });
-
-                                      // Reset inputs
-                                      if (timeInput) timeInput.value = '';
-                                      if (rpeInput) rpeInput.value = '';
-                                      
-                                      const appliedFields = [];
-                                      if (timeValue) appliedFields.push('Tempo');
-                                      if (rpeValue) appliedFields.push('RPE');
-                                      
-                                      notifySuccess('Compilazione completata', {
-                                        description: `${appliedFields.join(' e ')} applicato a ${group.entries.length} ripetizioni.`
-                                      });
-                                    }}
-                                    className="h-9 bg-sky-600 hover:bg-sky-700"
-                                  >
-                                    <Play className="h-3 w-3 mr-1" />
-                                    Applica
-                                  </Button>
-                                </div>
-                              </div>
-
-                              <div className="mt-4 overflow-x-auto">
-                                <table className="min-w-full divide-y divide-slate-200 text-sm">
-                                  <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                    <tr>
-                                      <th className="px-3 py-2 text-left">Ripetizione</th>
-                                      <th className="px-3 py-2 text-left">Tempo (s)</th>
-                                      <th className="px-3 py-2 text-left">RPE</th>
-                                      <th className="px-3 py-2 text-left">Note</th>
-                                      <th className="px-3 py-2 text-right">Azioni</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-slate-200">
-                                    {group.entries.map(entry => {
-                                      const numericTime = parseDecimalInput(entry.result.time_s);
-                                      const numericRpe = parseDecimalInput(entry.result.rpe);
-                                      const isBestTime =
-                                        numericTime != null &&
-                                        bestTime != null &&
-                                        Math.abs(numericTime - bestTime) < 0.001;
-                                      const isEasiestRpe =
-                                        numericRpe != null &&
-                                        easiestRpe != null &&
-                                        Math.abs(numericRpe - easiestRpe) < 0.001;
-
-                                      return (
-                                        <tr
-                                          key={`${group.seriesNumber}-${entry.repetitionNumber}-${entry.resultIndex}`}
-                                          className="bg-white"
-                                        >
-                                          <td className="px-3 py-3 align-top text-sm font-medium text-slate-600">
-                                            Rip. #{entry.repetitionNumber}
-                                          </td>
-                                          <td className="px-3 py-3 align-top">
-                                            <div className="space-y-1">
-                                              <Input
-                                                name="time_s"
-                                                type="number"
-                                                step="0.01"
-                                                min={0}
-                                                value={entry.result.time_s}
-                                                onChange={event => handleResultChange(block.id, index, entry.resultIndex, event)}
-                                              />
-                                              {isBestTime && (
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
-                                                  <Trophy className="h-3 w-3" /> PB di giornata
-                                                </span>
-                                              )}
-                                            </div>
-                                          </td>
-                                          <td className="px-3 py-3 align-top">
-                                            <div className="space-y-1">
-                                              <Input
-                                                name="rpe"
-                                                type="number"
-                                                step="0.1"
-                                                min={0}
-                                                max={10}
-                                                value={entry.result.rpe}
-                                                onChange={event => handleResultChange(block.id, index, entry.resultIndex, event)}
-                                              />
-                                              {isEasiestRpe && (
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-700">
-                                                  <Gauge className="h-3 w-3" /> RPE più basso
-                                                </span>
-                                              )}
-                                            </div>
-                                          </td>
-                                          <td className="px-3 py-3 align-top">
-                                            <Textarea
-                                              name="notes"
-                                              value={entry.result.notes}
-                                              onChange={event => handleResultChange(block.id, index, entry.resultIndex, event)}
-                                              placeholder="Condizioni, feedback, adattamenti..."
-                                              rows={2}
-                                            />
-                                          </td>
-                                          <td className="px-3 py-3 align-top text-right">
-                                            <button
-                                              type="button"
-                                              onClick={() => removeResult(block.id, index, entry.resultIndex)}
-                                              className="inline-flex items-center gap-1 text-xs font-medium text-rose-500 hover:text-rose-600"
-                                            >
-                                              <Trash2 className="h-3 w-3" /> Rimuovi
-                                            </button>
-                                          </td>
-                                        </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                </div>
-              );
-            })}
-
-                  {/* Add Exercise to Block Button */}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => addExercise(block.id)}
-                    className="group flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-slate-300 py-3 text-sm text-slate-600 hover:border-sky-300 hover:bg-sky-50"
-                  >
-                    <PlusCircle className="h-4 w-4 transition-colors group-hover:text-sky-600" />
-                    Aggiungi esercizio al blocco
-                  </Button>
-                </div>
-              ))}
-
-              {/* Add New Block Button */}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addBlock}
-                className="group flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-sky-300 bg-sky-50/50 py-4 text-sky-700 hover:border-sky-400 hover:bg-sky-100"
-              >
-                <Package className="h-5 w-5 transition-colors group-hover:text-sky-600" strokeWidth={2} />
-                Aggiungi nuovo blocco di ripetute
-              </Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Metriche */}
-        <div ref={sectionRefs.metrics} className="scroll-mt-24">
-          {!isMetricSession ? (
-            <Card className="border-slate-200 shadow-sm">
-              <CardHeader 
-                className="pb-2.5 cursor-pointer md:cursor-default"
-                onClick={() => setExpandedSection(prev => prev === 'metrics' ? prev : 'metrics')}
-              >
-                <CardTitle className="flex items-center justify-between text-lg text-slate-800">
-                  <span className="flex items-center gap-2">
-                    <Target className="h-5 w-5 text-slate-600" strokeWidth={2} /> Metriche e test
-                  </span>
-                  <ChevronDown 
-                    className={cn(
-                      "h-5 w-5 text-slate-400 transition-transform md:hidden",
-                      expandedSection === 'metrics' && "rotate-180"
-                    )} 
-                  />
-                </CardTitle>
-              </CardHeader>
-              <CardContent className={cn(
-                "flex flex-col items-center gap-3 pb-4 text-center",
-                expandedSection !== 'metrics' && "hidden md:flex"
-              )}>
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
-                  <Target className="h-5 w-5" strokeWidth={2} />
-                </div>
-                <p className="text-lg text-slate-800 font-semibold">
-                  Sezione riservata a test, gare e massimali
-                </p>
-                <p className="text-sm text-slate-600">
-                  Per registrare metriche, test o massimali cambia il tipo di sessione in:{' '}
-                  <span className="font-semibold text-amber-600">Test</span>,{' '}
-                  <span className="font-semibold text-rose-600">Gara</span> o{' '}
-                  <span className="font-semibold text-emerald-600">Palestra</span>.
-                </p>
-                <p className="text-xs text-slate-500">
-                  Gli allenamenti standard utilizzano la sezione «Ripetute» per registrare esercizi e serie.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border-slate-200 shadow-sm">
-              <CardHeader 
-                className="pb-2.5 cursor-pointer md:cursor-default"
-                onClick={() => setExpandedSection(prev => prev === 'metrics' ? prev : 'metrics')}
-              >
-                <CardTitle className="flex items-center justify-between text-lg text-slate-800">
-                  <span className="flex items-center gap-2">
-                    <Target className="h-5 w-5 text-sky-600" strokeWidth={2} /> Metriche e test
-                  </span>
-                  <ChevronDown 
-                    className={cn(
-                      "h-5 w-5 text-slate-400 transition-transform md:hidden",
-                      expandedSection === 'metrics' && "rotate-180"
-                    )} 
-                  />
-                </CardTitle>
-              </CardHeader>
-              <CardContent className={cn(
-                "space-y-4 p-4",
-                expandedSection !== 'metrics' && "hidden md:block"
-              )}>
-                {metrics.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-5 text-center text-sm text-slate-500">
-                  <p>
-                    {isMetricSession
-                      ? 'Aggiungi le prove della gara o del test: distanza, tempo e recupero.'
-                      : 'Collega metriche come tempi test, valori massimali o dati di recupero alla sessione.'}
-                  </p>
-                  <Button
-                    type="button"
-                    onClick={addMetric}
-                    variant="outline"
-                    className="mt-3 gap-2 rounded-full border-slate-300"
-                  >
-                    <PlusCircle className="h-4 w-4" />
-                    {isMetricSession ? 'Aggiungi prova' : 'Aggiungi metrica'}
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {!isMetricSession && metricSuggestions.length > 0 && (
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3.5">
-                      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                          <Sparkles className="h-4 w-4 text-sky-600" /> Suggerimenti rapidi
-                        </div>
-                        <p className="text-xs text-slate-500">
-                          Usa i preset per legare subito le metriche al tipo di allenamento o disciplina.
-                        </p>
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {metricSuggestions.map(suggestion => (
-                          <button
-                            key={`${suggestion.metric_name}-${suggestion.category}`}
-                            type="button"
-                            onClick={() => handleAddMetricFromSuggestion(suggestion)}
-                            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600 transition-colors hover:border-sky-200 hover:text-sky-600"
-                            title={suggestion.hint}
-                          >
-                            <PlusCircle className="h-3 w-3" />
-                            <span>{suggestion.metric_name}</span>
-                            <span className="text-slate-400">
-                              · {metricCategories.find(cat => cat.value === suggestion.category)?.label ?? suggestion.category}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {metrics.map((metric, index) => {
-                    const intensityNumber = parseDecimalInput(metric.intensity) ?? 0;
-                    return (
-                      <div key={index} className="rounded-2xl border border-slate-200 bg-white/70 p-3.5 shadow-sm">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                            <Activity className="h-4 w-4 text-slate-500" />
-                            {isMetricSession ? `Prova #${index + 1}` : `Metrica #${index + 1}`}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeMetric(index)}
-                            className="inline-flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="h-3 w-3" /> Rimuovi
-                          </button>
-                        </div>
-
-                        {isMetricSession ? (
-                          <div className="mt-3 space-y-3">
-                            <div className="grid gap-3 sm:grid-cols-2">
-                              <div className="space-y-1.5">
-                                <Label className="text-xs font-medium text-slate-700">Data della sessione</Label>
-                                <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
-                                  <Calendar className="h-4 w-4 text-slate-400" />
-                                  <span>
-                                    {sessionForm.date
-                                      ? formatDateHuman(sessionForm.date)
-                                      : 'Imposta la data nella sezione Dettagli sessione'}
-                                  </span>
-                                </div>
-                                {!sessionForm.date && (
-                                  <p className="text-[11px] text-rose-500">
-                                    La data verrà salvata automaticamente quando compili i dettagli della sessione.
-                                  </p>
-                                )}
-                              </div>
-                              <div className="space-y-1.5">
-                                <Label className="text-xs font-medium text-slate-700">
-                                  {sessionForm.type === 'palestra' ? 'Esercizio' : 'Prova / Distanza'}
-                                </Label>
-                                {sessionForm.type === 'palestra' ? (
-                                  <select
-                                    name="metric_name"
-                                    value={metric.metric_name}
-                                    onChange={event => updateMetric(index, event)}
-                                    className="flex h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white transition-colors placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                  >
-                                    {massimaliExercises.map(exercise => (
-                                      <option key={exercise} value={exercise}>
-                                        {exercise}
-                                      </option>
-                                    ))}
-                                  </select>
-                                ) : (
-                                  <Input
-                                    name="metric_name"
-                                    value={metric.metric_name}
-                                    onChange={event => updateMetric(index, event)}
-                                    placeholder="Es. Test 150m massimo sforzo"
-                                    className="h-9"
-                                  />
-                                )}
-                              </div>
-                            </div>
-
-                            {sessionForm.type === 'palestra' ? (
-                              // Per massimali: solo Valore e RPE (no distanza/tempo/recupero)
-                              <div className="grid gap-3 sm:grid-cols-2">
-                                <div className="space-y-1.5">
-                                  <Label className="text-xs font-medium text-slate-700">Valore (kg)</Label>
-                                  <Input
-                                    name="value"
-                                    type="number"
-                                    step="0.5"
-                                    min={0}
-                                    value={metric.value}
-                                    onChange={event => updateMetric(index, event)}
-                                    className={cn('h-9', errors[`metric-${index}-value`] && 'border-red-500')}
-                                    placeholder="Es. 120"
-                                  />
-                                  {errors[`metric-${index}-value`] && (
-                                    <p className="text-[11px] text-red-500">{errors[`metric-${index}-value`]}</p>
-                                  )}
-                                </div>
-                                <div className="space-y-1.5">
-                                  <Label className="text-xs font-medium text-slate-700">RPE (1-10)</Label>
-                                  <Input
-                                    name="intensity"
-                                    type="number"
-                                    min={1}
-                                    max={10}
-                                    step={1}
-                                    value={metric.intensity}
-                                    onChange={event => updateMetric(index, event)}
-                                    className="h-9"
-                                  />
-                                  <p className="text-[11px] text-slate-500">
-                                    {intensityNumber <= 3
-                                      ? 'Scarico o ritmo blando'
-                                      : intensityNumber <= 6
-                                      ? 'Intensità controllata'
-                                      : intensityNumber <= 8
-                                      ? 'Spinta elevata'
-                                      : 'Massimo sforzo'}
-                                  </p>
-                                </div>
-                              </div>
-                            ) : (
-                              // Per test/gara: Distanza, Tempo, Recupero, RPE
-                              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                                <div className="space-y-1.5">
-                                  <Label className="text-xs font-medium text-slate-700">Distanza (m)</Label>
-                                  <Input
-                                    name="distance_m"
-                                    type="number"
-                                    min={0}
-                                    value={metric.distance_m}
-                                    onChange={event => updateMetric(index, event)}
-                                    className={cn('h-9', errors[`metric-${index}-distance_m`] && 'border-red-500')}
-                                  />
-                                  {errors[`metric-${index}-distance_m`] && (
-                                    <p className="text-[11px] text-red-500">{errors[`metric-${index}-distance_m`]}</p>
-                                  )}
-                                </div>
-                                <div className="space-y-1.5">
-                                  <Label className="text-xs font-medium text-slate-700">Tempo (s)</Label>
-                                  <Input
-                                    name="time_s"
-                                    type="number"
-                                    step="0.01"
-                                    min={0}
-                                    value={metric.time_s}
-                                    onChange={event => updateMetric(index, event)}
-                                    className={cn('h-9', errors[`metric-${index}-time_s`] && 'border-red-500')}
-                                  />
-                                  {errors[`metric-${index}-time_s`] && (
-                                    <p className="text-[11px] text-red-500">{errors[`metric-${index}-time_s`]}</p>
-                                  )}
-                                </div>
-                                <div className="space-y-1.5">
-                                  <Label className="text-xs font-medium text-slate-700">Recupero (min)</Label>
-                                  <Input
-                                    name="recovery_post_s"
-                                    type="number"
-                                    min={0}
-                                    step="0.1"
-                                    value={metric.recovery_post_s}
-                                    onChange={event => updateMetric(index, event)}
-                                    placeholder="Es. 7"
-                                    className="h-9"
-                                  />
-                                </div>
-                                <div className="space-y-1.5">
-                                  <Label className="text-xs font-medium text-slate-700">RPE (1-10)</Label>
-                                  <Input
-                                    name="intensity"
-                                    type="number"
-                                    min={1}
-                                    max={10}
-                                    step={1}
-                                    value={metric.intensity}
-                                    onChange={event => updateMetric(index, event)}
-                                    className="h-9"
-                                  />
-                                  <p className="text-[11px] text-slate-500">
-                                    {intensityNumber <= 3
-                                      ? 'Scarico o ritmo blando'
-                                      : intensityNumber <= 6
-                                      ? 'Intensità controllata'
-                                      : intensityNumber <= 8
-                                      ? 'Spinta elevata'
-                                      : 'Massimo sforzo'}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="space-y-1">
-                              <Label className="text-xs font-semibold text-slate-600">Note</Label>
-                              <Textarea
-                                name="notes"
-                                value={metric.notes}
-                                onChange={event => updateMetric(index, event)}
-                                placeholder="Sensazioni, feedback, contesto..."
-                                className="min-h-[80px]"
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="mt-4 grid gap-4 md:grid-cols-3">
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Data</Label>
-                                <Input
-                                  type="date"
-                                  name="date"
-                                  value={metric.date}
-                                  onChange={event => updateMetric(index, event)}
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Nome metrica</Label>
-                                <Input
-                                  name="metric_name"
-                                  value={metric.metric_name}
-                                  onChange={event => updateMetric(index, event)}
-                                  placeholder="Es. Peso corporeo, Test 30m"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Categoria</Label>
-                                <div className="flex flex-wrap gap-2">
-                                  {metricCategories.map(category => {
-                                    const Icon = metricCategoryIcons[category.value] ?? Activity;
-                                    const isActive = metric.category === category.value;
-                                    return (
-                                      <button
-                                        key={category.value}
-                                        type="button"
-                                        onClick={() => handleMetricCategorySelect(index, category.value)}
-                                        className={cn(
-                                          'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium transition',
-                                          isActive
-                                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                                            : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
-                                        )}
-                                        aria-pressed={isActive}
-                                      >
-                                        <Icon className="h-3.5 w-3.5" />
-                                        {category.label}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                                <p className="text-[11px] text-slate-500">
-                                  {metricCategories.find(cat => cat.value === metric.category)?.description ??
-                                    'Abbina rapidamente la metrica all\'allenamento'}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="mt-4 grid gap-4 md:grid-cols-4">
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">
-                                  {sessionForm.type === 'palestra' ? 'Esercizio' : 'Target / Test'}
-                                </Label>
-                                {sessionForm.type === 'palestra' ? (
-                                  <select
-                                    name="metric_target"
-                                    value={metric.metric_target}
-                                    onChange={event => updateMetric(index, event)}
-                                    className="flex h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white transition-colors placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                  >
-                                    {massimaliExercises.map(exercise => (
-                                      <option key={exercise} value={exercise}>
-                                        {exercise}
-                                      </option>
-                                    ))}
-                                  </select>
-                                ) : (
-                                  <Input
-                                    name="metric_target"
-                                    value={metric.metric_target}
-                                    onChange={event => updateMetric(index, event)}
-                                    placeholder="Es. 60m indoor"
-                                  />
-                                )}
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Valore</Label>
-                                <Input
-                                  name="value"
-                                  type="number"
-                                  step="0.01"
-                                  value={metric.value}
-                                  onChange={event => updateMetric(index, event)}
-                                  className={cn(errors[`metric-${index}-value`] && 'border-red-500')}
-                                />
-                                {errors[`metric-${index}-value`] && (
-                                  <p className="text-[11px] text-red-500">{errors[`metric-${index}-value`]}</p>
-                                )}
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold text-slate-600">Unità</Label>
-                                <Input
-                                  name="unit"
-                                  value={metric.unit}
-                                  onChange={event => updateMetric(index, event)}
-                                  placeholder="kg, s, cm..."
-                                  readOnly={sessionForm.type === 'palestra' || sessionForm.type === 'test' || sessionForm.type === 'gara'}
-                                  className={cn(
-                                    (sessionForm.type === 'palestra' || sessionForm.type === 'test' || sessionForm.type === 'gara') && 
-                                    'bg-slate-50 cursor-not-allowed'
-                                  )}
-                                />
-                              </div>
-                              <div className="space-y-1 md:col-span-2">
-                                <Label className="text-xs font-semibold text-slate-600">Note</Label>
-                                <Textarea
-                                  name="notes"
-                                  value={metric.notes}
-                                  onChange={event => updateMetric(index, event)}
-                                  placeholder="Sensazioni, contesto del test..."
-                                />
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={addMetric}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl border-dashed border-slate-300 py-3 text-slate-600 hover:border-sky-300 hover:bg-sky-50"
-                  >
-                    <PlusCircle className="h-4 w-4" />
-                    {isMetricSession ? 'Aggiungi un’altra prova' : 'Aggiungi un’altra metrica'}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          )}
-        </div>
-      </div>
-
-      <div className="sticky bottom-4 z-10 flex justify-end">
-        <Button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="flex items-center gap-2 rounded-full px-6 py-3 text-base shadow-lg"
-        >
-          {loading && <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2} />}
-          Salva allenamento
-        </Button>
-      </div>
-
-      {/* Draft Restore Dialog */}
+    <>
       <DraftRestoreDialog
         isOpen={showDraftDialog}
         onRestore={handleRestoreDraft}
         onDiscard={handleDiscardDraft}
-        draftDate={lastSaved ?? undefined}
+        lastSaved={lastSaved}
       />
-
-      {/* Keyboard Shortcuts Help */}
-      <ShortcutsHelp shortcuts={shortcuts} />
-
       <ConfirmDialog
-        open={blockToDelete != null}
-        title="Eliminare il blocco?"
-        description={
-          blockToDelete
-            ? `Confermando rimuoverai il collegamento con ${blockToDelete.label}.`
-            : undefined
-        }
-        confirmLabel="Elimina"
-        cancelLabel="Annulla"
-        tone="danger"
-        processing={blockToDelete ? blockActionLoading === blockToDelete.id : false}
-        onCancel={() => setBlockToDelete(null)}
+        isOpen={!!blockToDelete}
+        onClose={() => setBlockToDelete(null)}
         onConfirm={confirmDeleteBlock}
+        title="Conferma eliminazione"
+        description={`Sei sicuro di voler eliminare ${blockToDelete?.label}? Questa azione non può essere annullata.`}
+        confirmText="Elimina"
+        cancelText="Annulla"
       />
-    </motion.div>
+
+      <motion.div
+        key="registro-page"
+        initial="hidden"
+        animate="visible"
+        exit="hidden"
+        variants={pageTransition}
+        className="container mx-auto px-4 py-8"
+      >
+        <PageHeader 
+          title="Registro Allenamenti"
+          subtitle="Aggiungi una nuova sessione di allenamento in pista"
+          icon={Play}
+          actions={
+            <div className="flex items-center gap-2">
+              <AutoSaveIndicator status={isSaving ? 'saving' : lastSaved ? 'saved' : 'idle'} lastSaved={lastSaved} />
+              <ShortcutsHelp shortcuts={shortcuts} />
+              <Button onClick={() => void handleSubmit()} disabled={loading} size="lg" className="bg-primary/90 hover:bg-primary text-primary-foreground">
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                Salva sessione
+              </Button>
+            </div>
+          }
+        />
+
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 lg:gap-12">
+          {/* Desktop Step Indicator (Sidebar) */}
+          <aside className="hidden lg:block lg:col-span-3">
+            <div className="sticky top-24">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Progresso</h3>
+              <DesktopStepIndicator 
+                steps={stepProgress} 
+                onStepClick={handleScrollToSection} 
+              />
+              <Card className="mt-8 bg-card/80 backdrop-blur-sm border-primary/20">
+                <CardHeader>
+                  <CardTitle className="text-base">Riepilogo Sessione</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {summaryStats.map(({ icon: Icon, label, value }) => (
+                    <div key={label} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Icon className="h-4 w-4" />
+                        <span>{label}</span>
+                      </div>
+                      <span className="font-medium text-foreground">{value}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </aside>
+
+          {/* Main Content */}
+          <main className="lg:col-span-9 space-y-8">
+            {/* Mobile Step Indicator */}
+            <div className="lg:hidden">
+              <MobileStepIndicator 
+                steps={stepProgress} 
+                progress={progressValue}
+                onStepClick={handleScrollToSection}
+              />
+            </div>
+
+            {/* Sezione Dettagli Sessione */}
+            <motion.div ref={sectionRefs.details} variants={staggerItem}>
+              <Card className="bg-card/80 backdrop-blur-sm border-primary/20 overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-primary/10 p-2 rounded-lg">
+                      <Calendar className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle>Dettagli Sessione</CardTitle>
+                      <p className="text-sm text-muted-foreground">Informazioni base sulla seduta odierna.</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="date">Data</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={sessionForm.date}
+                      onChange={e => {
+                        setSessionForm(prev => ({ ...prev, date: e.target.value }));
+                        clearError('date');
+                      }}
+                      className={cn(errors.date && 'border-destructive')}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Tipo di sessione</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {sessionTypes.slice(0, 4).map(type => (
+                        <Button
+                          key={type.value}
+                          variant={sessionForm.type === type.value ? 'default' : 'outline'}
+                          onClick={() => handleQuickTypeSelect(type.value)}
+                          className="w-full justify-start text-left"
+                        >
+                          <span className="mr-2">{type.emoji}</span>
+                          {type.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="location">Luogo</Label>
+                    <div className="flex gap-2">
+                      {locationOptions.map(opt => (
+                        <Button
+                          key={opt.value}
+                          variant={
+                            (!usingCustomLocation && sessionForm.location === opt.label) || (usingCustomLocation && opt.value === 'custom')
+                              ? 'default'
+                              : 'outline'
+                          }
+                          onClick={() => handleLocationSelect(opt.value)}
+                        >
+                          {locationIcons[opt.value] && <locationIcons[opt.value] className="mr-2 h-4 w-4" />}
+                          {opt.label}
+                        </Button>
+                      ))}
+                    </div>
+                    {usingCustomLocation && (
+                      <Input
+                        type="text"
+                        placeholder="Specifica il luogo..."
+                        value={customLocation}
+                        onChange={e => handleCustomLocationChange(e.target.value)}
+                        className={cn('mt-2', errors.location && 'border-destructive')}
+                      />
+                    )}
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="notes">Note sulla sessione</Label>
+                    <Textarea
+                      id="notes"
+                      placeholder="Sensazioni, focus, condizioni meteo..."
+                      value={sessionForm.notes}
+                      onChange={e => setSessionForm(prev => ({ ...prev, notes: e.target.value }))
+                      }
+                      rows={3}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Sezione Esercizi o Metriche */}
+            <AnimatePresence mode="wait">
+              {isMetricSession ? (
+                <motion.div
+                  key="metrics-section"
+                  ref={sectionRefs.metrics}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-8"
+                >
+                  <Card className="bg-card/80 backdrop-blur-sm border-primary/20 overflow-hidden">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-primary/10 p-2 rounded-lg">
+                          <Target className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle>Metriche & Test</CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            Registra i risultati di test, gare o massimali.
+                          </p>
+                        </div>
+                      </div>
+                      <Button onClick={addMetric} variant="outline" size="sm">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Aggiungi Prova
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-6">
+                      {metrics.map((metric, index) => (
+                        <div key={index} className="p-4 rounded-lg border bg-background/50 relative">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 h-7 w-7"
+                            onClick={() => removeMetric(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="space-y-2 md:col-span-2">
+                              <Label htmlFor={`metric-name-${index}`}>Nome Prova</Label>
+                              <Input
+                                id={`metric-name-${index}`}
+                                name="metric_name"
+                                value={metric.metric_name}
+                                onChange={e => updateMetric(index, e)}
+                                placeholder="Es. Test 30m"
+                              />
+                            </div>
+                            {sessionForm.type === 'palestra' ? (
+                              <>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`metric-value-${index}`}>Peso (kg)</Label>
+                                  <Input
+                                    id={`metric-value-${index}`}
+                                    name="value"
+                                    type="number"
+                                    value={metric.value}
+                                    onChange={e => updateMetric(index, e)}
+                                    placeholder="Es. 100"
+                                    className={cn(errors[`metric-${index}-value`] && 'border-destructive')}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`metric-intensity-${index}`}>Intensità (1-10)</Label>
+                                  <Input
+                                    id={`metric-intensity-${index}`}
+                                    name="intensity"
+                                    type="number"
+                                    min="1" max="10"
+                                    value={metric.intensity}
+                                    onChange={e => updateMetric(index, e)}
+                                  />
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`metric-distance-${index}`}>Distanza (m)</Label>
+                                  <Input
+                                    id={`metric-distance-${index}`}
+                                    name="distance_m"
+                                    type="number"
+                                    value={metric.distance_m}
+                                    onChange={e => updateMetric(index, e)}
+                                    placeholder="Es. 100"
+                                    className={cn(errors[`metric-${index}-distance_m`] && 'border-destructive')}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`metric-time-${index}`}>Tempo (s)</Label>
+                                  <Input
+                                    id={`metric-time-${index}`}
+                                    name="time_s"
+                                    type="number"
+                                    step="0.01"
+                                    value={metric.time_s}
+                                    onChange={e => updateMetric(index, e)}
+                                    placeholder="Es. 10.52"
+                                    className={cn(errors[`metric-${index}-time_s`] && 'border-destructive')}
+                                  />
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="exercises-section"
+                  ref={sectionRefs.exercises}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-8"
+                >
+                  {exerciseBlocks.map((block, blockIndex) => (
+                    <Card key={block.id} className="bg-card/80 backdrop-blur-sm border-primary/20 overflow-hidden">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-primary/10 p-2 rounded-lg">
+                              <Dumbbell className="h-6 w-6 text-primary" />
+                            </div>
+                            <Input
+                              value={block.name}
+                              onChange={e => handleExerciseBlockChange(blockIndex, 'name', e.target.value)}
+                              className="text-lg font-semibold bg-transparent border-none focus-visible:ring-1 focus-visible:ring-primary"
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button onClick={() => handleDuplicateExerciseBlock(blockIndex)} variant="ghost" size="sm"><ListPlus className="mr-2 h-4 w-4" />Duplica</Button>
+                            <Button onClick={() => handleRemoveExerciseBlock(blockIndex)} variant="destructive" size="sm"><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-6 space-y-6">
+                        {block.exercises.map((exercise, exerciseIndex) => (
+                          <div key={exerciseIndex} className="p-4 rounded-lg border bg-background/50 space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                              <div className="space-y-2 md:col-span-2">
+                                <Label htmlFor={`ex-name-${block.id}-${exerciseIndex}`}>Nome Esercizio</Label>
+                                <Input
+                                  id={`ex-name-${block.id}-${exerciseIndex}`}
+                                  value={exercise.name}
+                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'name', e.target.value)}
+                                  placeholder="Es. Ripetute 150m"
+                                  className={cn(errors[`exercise-${block.id}-${exerciseIndex}-name`] && 'border-destructive')}
+                                />
+                              </div>
+                              <div className="space-y-2 md:col-span-2">
+                                <Label>Disciplina</Label>
+                                <div className="flex flex-wrap gap-2">
+                                  {disciplineTypes.map(type => (
+                                    <Button
+                                      key={type.value}
+                                      variant={exercise.discipline_type === type.value ? 'default' : 'outline'}
+                                      size="sm"
+                                      onClick={() => handleDisciplineSelect(block.id, exerciseIndex, type.value)}
+                                    >
+                                      {type.label}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor={`ex-distance-${block.id}-${exerciseIndex}`}>Distanza (m)</Label>
+                                <Input
+                                  id={`ex-distance-${block.id}-${exerciseIndex}`}
+                                  type="number"
+                                  value={exercise.distance_m}
+                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'distance_m', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor={`ex-sets-${block.id}-${exerciseIndex}`}>Serie</Label>
+                                <Input
+                                  id={`ex-sets-${block.id}-${exerciseIndex}`}
+                                  type="number"
+                                  value={exercise.sets}
+                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'sets', e.target.value)}
+                                  className={cn(errors[`exercise-${block.id}-${exerciseIndex}-sets`] && 'border-destructive')}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor={`ex-reps-${block.id}-${exerciseIndex}`}>Ripetizioni</Label>
+                                <Input
+                                  id={`ex-reps-${block.id}-${exerciseIndex}`}
+                                  type="number"
+                                  value={exercise.repetitions}
+                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'repetitions', e.target.value)}
+                                  className={cn(errors[`exercise-${block.id}-${exerciseIndex}-repetitions`] && 'border-destructive')}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor={`ex-rest-reps-${block.id}-${exerciseIndex}`}>Recupero tra Rip. (s)</Label>
+                                <Input
+                                  id={`ex-rest-reps-${block.id}-${exerciseIndex}`}
+                                  type="number"
+                                  value={exercise.rest_between_reps_s}
+                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'rest_between_reps_s', e.target.value)}
+                                />
+                              </div>
+                              <div className="md:col-span-4">
+                                <Label>Intensità (1-10)</Label>
+                                <Input 
+                                  type="range" 
+                                  min="1" max="10" 
+                                  value={exercise.intensity}
+                                  onChange={e => handleExerciseChange(blockIndex, exerciseIndex, 'intensity', e.target.value)}
+                                  className="w-full"
+                                />
+                                <div className="text-center text-sm text-muted-foreground mt-1">
+                                  {getIntensityLabel(exercise.intensity).label}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        <Button onClick={() => handleAddExercise(blockIndex)} variant="outline" className="w-full">
+                          <PlusCircle className="mr-2 h-4 w-4" /> Aggiungi Esercizio
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                   <Button onClick={handleAddExerciseBlock} variant="secondary" className="w-full">
+                      <FolderPlus className="mr-2 h-4 w-4" /> Aggiungi Blocco di Esercizi
+                    </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </main>
+        </div>
+      </motion.div>
+    </>
   );
 }

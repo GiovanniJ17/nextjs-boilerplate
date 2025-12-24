@@ -4,67 +4,48 @@
 
 @layer base {
   :root {
-    /* Force Dark Mode Variables by default */
-    --background: 222 47% 11%; /* Deep Navy Blue #0f172a */
-    --foreground: 210 40% 98%; /* White */
-
-    --card: 217 33% 17%; /* Lighter Navy #1e293b */
-    --card-foreground: 210 40% 98%;
-
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 217 91% 60%; /* Bright Blue */
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 215 25% 27%; /* Slate 700 */
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 215 25% 27%;
-    --muted-foreground: 215 20.2% 75%; /* Lighter gray for better readability */
-
-    --accent: 217 91% 60%;
-    --accent-foreground: 210 40% 98%;
-
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 10%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 330 81% 60%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 215 25% 27%; /* Visible borders */
-    --input: 215 25% 20%; /* Darker input background */
-    --ring: 224.3 76.3% 48%;
-
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 330 81% 60%;
     --radius: 1rem;
   }
 
-  /* Keep .dark class for compatibility but map to same values */
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 217 91% 60%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 215 25% 27%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 215 25% 27%;
-    --muted-foreground: 215 20.2% 75%;
-
-    --accent: 217 91% 60%;
-    --accent-foreground: 210 40% 98%;
-
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 10%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 330 81% 60%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 215 25% 27%;
-    --input: 215 25% 20%;
-    --ring: 224.3 76.3% 48%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 330 81% 60%;
   }
 }
 
@@ -74,6 +55,9 @@
   }
   body {
     @apply bg-background text-foreground;
+    background: radial-gradient(circle at top left, hsl(var(--primary)), transparent 40%),
+                radial-gradient(circle at bottom right, hsl(240 10% 10%), transparent 40%),
+                hsl(var(--background));
   }
 }
 
