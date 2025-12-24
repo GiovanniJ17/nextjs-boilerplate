@@ -1173,7 +1173,7 @@ export default function RegistroPage() {
         const clamped = Math.max(1, Math.min(10, parsedValue ?? 0));
         exerciseToUpdate.intensity = String(clamped);
       } else {
-        (exerciseToUpdate as Record<string, string | ExerciseResultForm[]>)[field] = value;
+        (exerciseToUpdate as Record<string, string | ExerciseResultForm[] | undefined>)[field] = String(value);
       }
 
       return updatedBlocks;
