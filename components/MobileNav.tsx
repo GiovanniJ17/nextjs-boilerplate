@@ -60,14 +60,6 @@ export function MobileNav() {
     </nav>
   );
 }
-                  active && "font-semibold"
-                )}
-              >
-                {tab.label}
-              </span>
-            </Link>
-          );
-        })}
       </div>
     </nav>
   );
