@@ -35,7 +35,7 @@ export function MobileStepIndicator({
 
   return (
     <div className={cn(
-      'md:hidden sticky top-0 z-30 bg-[rgba(255,255,255,0.02)] border-b dark:border-slate-700 shadow-sm',
+      'md:hidden sticky top-0 z-30 bg-[rgba(255,255,255,0.02)] border-b dark:border-default/70 shadow-sm',
       className
     )}>
       {/* Progress Bar */}

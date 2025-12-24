@@ -66,11 +66,11 @@ export const theme = {
  */
 export const getActiveClass = (isActive: boolean) => {
   if (isActive) {
-    return 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm';
+    return 'border-sky-500 bg-[rgba(255,255,255,0.03)] text-sky-300 shadow-sm';
   }
-  return 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50';
+  return 'border-default bg-[rgba(255,255,255,0.02)] text-muted hover:border-slate-600 hover:bg-[rgba(255,255,255,0.03)]';
 };
 
 export const getHoverClass = () => {
-  return 'hover:border-sky-300 hover:bg-sky-50 hover:text-sky-600';
+  return 'hover:border-slate-600 hover:bg-[rgba(255,255,255,0.03)] hover:text-sky-300';
 };

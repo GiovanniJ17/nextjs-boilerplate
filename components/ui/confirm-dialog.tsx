@@ -41,12 +41,12 @@ export function ConfirmDialog({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm">
-      <div className="w-full max-w-md scale-100 animate-fade-up rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-2xl">
-        <div className="space-y-3 text-center">
-          <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(2,6,23,0.8)] backdrop-blur-md">
+      <div className="w-full max-w-md scale-100 animate-fade-up rounded-3xl border border-default bg-[rgba(15,23,42,0.92)] p-6 shadow-2xl">
+        <div className="space-y-3 text-center text-default">
+          <h2 className="text-lg font-semibold text-default">{title}</h2>
           {description ? (
-            <p className="text-sm text-slate-600">{description}</p>
+            <p className="text-sm text-muted">{description}</p>
           ) : null}
         </div>
         <div className="mt-6 flex items-center justify-center gap-3">

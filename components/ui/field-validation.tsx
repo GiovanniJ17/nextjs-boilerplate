@@ -57,7 +57,7 @@ export function ValidatedInputWrapper({
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label className="text-sm font-medium text-slate-700 flex items-center gap-1">
+        <label className="text-sm font-medium text-muted flex items-center gap-1">
           {label}
           {required && <span className="text-red-500">*</span>}
         </label>
@@ -104,7 +104,7 @@ export function CharacterCounter({ current, max, className }: CharacterCounterPr
   return (
     <div className={cn(
       'text-xs transition-colors',
-      isAtLimit ? 'text-red-600 font-medium' : isNearLimit ? 'text-amber-600' : 'text-slate-500',
+      isAtLimit ? 'text-red-600 font-medium' : isNearLimit ? 'text-amber-600' : 'text-muted',
       className
     )}>
       {current} / {max}

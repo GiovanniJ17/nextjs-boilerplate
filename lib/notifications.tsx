@@ -37,7 +37,7 @@ const variantStyles: Record<Variant, { icon: typeof CheckCircle2; wrapper: strin
 function showToast(variant: Variant, title: string, options?: NotificationOptions) {
   const { description, duration = 4000 } = options ?? {};
   const styles = variantStyles[variant];
-  const id = toast.custom(
+      const id = toast.custom(
     t => {
       const Icon = styles.icon;
       return (
@@ -51,12 +51,12 @@ function showToast(variant: Variant, title: string, options?: NotificationOption
             </span>
             <div className="flex-1 space-y-1">
               <p className="text-sm font-semibold leading-none">{title}</p>
-              {description ? <p className="text-xs text-slate-600/80">{description}</p> : null}
+              {description ? <p className="text-xs text-muted/80">{description}</p> : null}
             </div>
-            <button
-              type="button"
-              onClick={() => toast.dismiss(t)}
-              className="rounded-full bg-white/60 px-2 py-1 text-[10px] font-semibold uppercase text-slate-500 transition hover:bg-white hover:text-slate-700"
+              <button
+                type="button"
+                onClick={() => toast.dismiss(t)}
+                className="rounded-full bg-[rgba(255,255,255,0.04)] px-2 py-1 text-[10px] font-semibold uppercase text-muted transition hover:bg-[rgba(255,255,255,0.06)] hover:text-default"
             >
               Chiudi
             </button>

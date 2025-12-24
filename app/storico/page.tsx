@@ -674,7 +674,7 @@ export default function StoricoPage() {
           </div>
 
           <motion.div 
-            className="rounded-2xl bg-white/20 backdrop-blur-sm px-4 py-2.5 md:px-5 md:py-3"
+            className="rounded-2xl bg-[rgba(255,255,255,0.03)] backdrop-blur-sm px-4 py-2.5 md:px-5 md:py-3"
             variants={scaleIn}
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
@@ -694,9 +694,9 @@ export default function StoricoPage() {
           {heroStats.map(stat => {
             const Icon = stat.icon;
             return (
-              <motion.div 
+                <motion.div 
                 key={stat.label} 
-                className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2 md:px-4 md:py-3"
+                className="rounded-xl bg-[rgba(255,255,255,0.02)] backdrop-blur-sm px-3 py-2 md:px-4 md:py-3"
                 variants={staggerItem}
                 whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.25)' }}
                 transition={{ duration: 0.2 }}
@@ -756,7 +756,7 @@ export default function StoricoPage() {
             
             {/* Drawer */}
             <motion.div
-              className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white shadow-2xl md:inset-x-auto md:right-4 md:bottom-4 md:w-[500px] md:max-h-[calc(100vh-2rem)] md:rounded-3xl"
+              className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-[rgba(255,255,255,0.02)] shadow-2xl md:inset-x-auto md:right-4 md:bottom-4 md:w-[500px] md:max-h-[calc(100vh-2rem)] md:rounded-3xl"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
@@ -765,7 +765,7 @@ export default function StoricoPage() {
               <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-700 bg-[rgba(255,255,255,0.02)] px-5 py-4">
                 <div className="flex items-center gap-2.5">
                   <Filter className="h-5 w-5 text-sky-600" />
-                  <h2 className="text-lg font-bold text-slate-800">Filtri e Ricerca</h2>
+                  <h2 className="text-lg font-bold text-default">Filtri e Ricerca</h2>
                   {(search || typeFilter || blockFilter || fromDate || toDate) && (
                     <span className="rounded-full bg-sky-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
                       {[search, typeFilter, blockFilter, fromDate, toDate].filter(Boolean).length} attivi
@@ -774,7 +774,7 @@ export default function StoricoPage() {
                 </div>
                 <button
                   onClick={() => setFiltersExpanded(false)}
-                  className="rounded-full p-2 text-slate-500 transition-colors hover:bg-white hover:text-slate-700"
+                  className="rounded-full p-2 text-muted transition-colors hover:bg-[rgba(255,255,255,0.03)] hover:text-default"
                 >
                   <ChevronDown className="h-5 w-5" />
                 </button>
@@ -789,7 +789,7 @@ export default function StoricoPage() {
               <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Periodo</h3>
             </div>
             
-            <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
               {smartRangeOptions.map(option => {
                 const isActive = activeSmartRange === option.key;
                 return (
@@ -800,8 +800,8 @@ export default function StoricoPage() {
                     className={cn(
                       'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                       isActive
-                        ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50'
+                        ? 'border-sky-500 bg-[rgba(255,255,255,0.03)] text-sky-300 shadow-sm'
+                        : 'border-default bg-[rgba(255,255,255,0.02)] text-muted hover:border-slate-600 hover:bg-[rgba(255,255,255,0.03)]'
                     )}
                   >
                     {option.label}
@@ -832,18 +832,18 @@ export default function StoricoPage() {
             </div>
           </div>
 
-          <div className="border-t border-slate-200"></div>
+          <div className="border-t border-default"></div>
 
           {/* FILTRI Section */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-slate-500" />
-              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Filtri</h3>
+              <Filter className="h-4 w-4 text-muted" />
+              <h3 className="text-sm font-semibold text-default uppercase tracking-wide">Filtri</h3>
             </div>
 
             {/* Tipo sessione */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-slate-600">Tipo sessione</Label>
+              <Label className="text-xs font-medium text-muted">Tipo sessione</Label>
               <div className="flex flex-wrap gap-1.5">
                 {sessionTypeOptions.map(option => {
                   const isActive = typeFilter === option.value;
@@ -855,8 +855,8 @@ export default function StoricoPage() {
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isActive
-                          ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50'
+                          ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
+                          : 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
                       )}
                     >
                       {option.label}
@@ -868,7 +868,7 @@ export default function StoricoPage() {
 
             {/* Blocco */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-slate-600">Blocco allenamento</Label>
+              <Label className="text-xs font-medium text-muted">Blocco allenamento</Label>
               <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
@@ -876,8 +876,8 @@ export default function StoricoPage() {
                   className={cn(
                     'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                     !blockFilter
-                      ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50'
+                      ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
+                      : 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
                   )}
                 >
                   Tutti
@@ -892,8 +892,8 @@ export default function StoricoPage() {
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isSelected
-                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
+                          ? 'border-emerald-400/60 bg-[rgba(16,185,129,0.12)] text-default shadow-sm'
+                          : 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
                       )}
                     >
                       {block.name ?? 'Senza nome'}
@@ -904,18 +904,18 @@ export default function StoricoPage() {
             </div>
           </div>
 
-          <div className="border-t border-slate-200"></div>
+          <div className="border-t border-default"></div>
 
           {/* RICERCA Section */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-slate-500" />
-              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Ricerca</h3>
+              <Search className="h-4 w-4 text-muted" />
+              <h3 className="text-sm font-semibold text-default uppercase tracking-wide">Ricerca</h3>
             </div>
 
             <div className="space-y-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
                 <Input
                   value={search}
                   onChange={event => setSearch(event.target.value)}
@@ -925,7 +925,7 @@ export default function StoricoPage() {
               </div>
               
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-xs font-medium text-slate-500 mr-1">Rapide:</span>
+                <span className="text-xs font-medium text-muted mr-1">Rapide:</span>
                 {quickSearches.map(quick => {
                   const isActive = activeQuickSearch === quick.query;
                   return (
@@ -936,8 +936,8 @@ export default function StoricoPage() {
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isActive
-                          ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-500 hover:border-sky-200 hover:text-sky-600'
+                          ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
+                          : 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
                       )}
                     >
                       {quick.label}
@@ -967,14 +967,14 @@ export default function StoricoPage() {
       </AnimatePresence>
 
       <motion.div variants={fadeInUp}>
-      <Card className="border-slate-200 shadow-sm" id="storico-sessions-list">
+      <Card className="shadow-sm" id="storico-sessions-list">
         <CardHeader className="space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
+            <CardTitle className="flex items-center gap-2 text-lg text-default">
               <FolderKanban className="h-5 w-5 text-sky-600" strokeWidth={2} /> Storico sessioni
             </CardTitle>
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-500">Vista</span>
+              <span className="text-muted">Vista</span>
               {[
                 { value: 'list' as const, label: 'Compatta' },
                 { value: 'timeline' as const, label: 'Timeline' },
@@ -988,8 +988,8 @@ export default function StoricoPage() {
                     className={cn(
                       'rounded-full border px-3 py-1 font-medium transition',
                       isActive
-                        ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-500 hover:border-sky-200 hover:text-sky-600'
+                        ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
+                        : 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
                     )}
                     aria-pressed={isActive}
                   >
@@ -1001,16 +1001,16 @@ export default function StoricoPage() {
           </div>
           
           {/* Riga risultati, ordinamento e items per pagina */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-slate-200 pt-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-default pt-3">
             {/* Counter risultati */}
-            <div className="text-sm text-slate-600">
+            <div className="text-sm text-muted">
               {sortedSessions.length === sessions.length ? (
                 <span>
-                  Mostrando <strong className="text-slate-800">{sortedSessions.length}</strong> {sortedSessions.length === 1 ? 'sessione' : 'sessioni'}
+                  Mostrando <strong className="text-default">{sortedSessions.length}</strong> {sortedSessions.length === 1 ? 'sessione' : 'sessioni'}
                 </span>
               ) : (
                 <span>
-                  Mostrando <strong className="text-sky-600">{sortedSessions.length}</strong> di <strong className="text-slate-800">{sessions.length}</strong> sessioni
+                  Mostrando <strong className="text-accent">{sortedSessions.length}</strong> di <strong className="text-default">{sessions.length}</strong> sessioni
                 </span>
               )}
             </div>
@@ -1018,7 +1018,7 @@ export default function StoricoPage() {
             <div className="flex flex-wrap items-center gap-3">
               {/* Ordinamento */}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500">Ordina per:</span>
+                <span className="text-xs text-muted">Ordina per:</span>
                 <div className="flex gap-1">
                   {[
                     { value: 'date' as const, label: 'Data' },
@@ -1034,8 +1034,8 @@ export default function StoricoPage() {
                         className={cn(
                           'rounded-full border px-2.5 py-1 text-xs font-medium transition',
                           isActive
-                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-500 hover:border-sky-200 hover:text-sky-600'
+                            ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
+                            : 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
                         )}
                       >
                         {option.label}
@@ -1045,7 +1045,7 @@ export default function StoricoPage() {
                   <button
                     type="button"
                     onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-                    className="rounded-full border border-slate-200 bg-white px-2 py-1 text-slate-500 hover:border-sky-200 hover:text-sky-600 transition"
+                    className="rounded-full border border-default bg-[rgba(255,255,255,0.03)] px-2 py-1 text-muted hover:border-[rgba(255,255,255,0.14)] hover:text-default transition"
                     title={sortOrder === 'desc' ? 'Discendente' : 'Ascendente'}
                   >
                     {sortOrder === 'desc' ? '↓' : '↑'}
@@ -1055,14 +1055,14 @@ export default function StoricoPage() {
 
               {/* Items per pagina */}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500">Per pagina:</span>
+                <span className="text-xs text-muted">Per pagina:</span>
                 <select
                   value={itemsPerPage}
                   onChange={(e) => {
                     setItemsPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 hover:border-slate-300 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                  className="rounded-full border border-default bg-[rgba(255,255,255,0.03)] px-3 py-1 text-xs font-medium text-default hover:border-[rgba(255,255,255,0.14)] focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -1077,17 +1077,17 @@ export default function StoricoPage() {
           {loading ? (
             <SessionsSkeleton />
           ) : sortedSessions.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 py-12 px-6 text-center">
+            <div className="rounded-2xl border border-dashed border-default bg-[rgba(255,255,255,0.03)] py-12 px-6 text-center text-muted">
               <div className="mx-auto max-w-md space-y-3">
                 <div className="flex justify-center">
-                  <div className="rounded-full bg-slate-200 p-3">
-                    <Search className="h-6 w-6 text-slate-400" />
+                  <div className="rounded-full bg-[rgba(255,255,255,0.06)] p-3">
+                    <Search className="h-6 w-6 text-muted" />
                   </div>
                 </div>
-                <h3 className="text-base font-semibold text-slate-700">
+                <h3 className="text-base font-semibold text-default">
                   {debouncedSearch ? 'Nessun risultato per la ricerca' : 'Nessuna sessione trovata'}
                 </h3>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted">
                   {debouncedSearch ? (
                     <>
                       Non ci sono sessioni che corrispondono a <strong className="text-slate-700">'{debouncedSearch}'</strong>.

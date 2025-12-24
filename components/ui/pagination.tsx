@@ -61,17 +61,17 @@ export function Pagination({
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       {/* Info items */}
       {itemsPerPage && totalItems && (
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted">
           Mostrando{' '}
-          <span className="font-semibold text-slate-900">
+          <span className="font-semibold text-default">
             {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)}
           </span>
           {' - '}
-          <span className="font-semibold text-slate-900">
+          <span className="font-semibold text-default">
             {Math.min(currentPage * itemsPerPage, totalItems)}
           </span>
           {' di '}
-          <span className="font-semibold text-slate-900">{totalItems}</span>
+          <span className="font-semibold text-default">{totalItems}</span>
           {' risultati'}
         </p>
       )}
@@ -109,7 +109,7 @@ export function Pagination({
               return (
                 <span
                   key={`ellipsis-${index}`}
-                  className="flex h-9 w-9 items-center justify-center text-slate-400"
+                  className="flex h-9 w-9 items-center justify-center text-muted"
                 >
                   ···
                 </span>
@@ -132,7 +132,7 @@ export function Pagination({
 
         {/* Mobile: Current page indicator */}
         <div className="flex sm:hidden items-center justify-center min-w-[80px]">
-          <span className="text-sm font-medium text-slate-700">
+          <span className="text-sm font-medium text-default">
             {currentPage} / {totalPages}
           </span>
         </div>

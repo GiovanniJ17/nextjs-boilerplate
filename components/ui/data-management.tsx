@@ -72,17 +72,17 @@ export function DataManagement({ onDataChange }: DataManagementProps = {}) {
       <button
         onClick={handleBackup}
         disabled={isBackingUp}
-        className="flex flex-col items-center gap-2 rounded-lg border border-slate-200 bg-white p-4 transition-all hover:border-sky-300 hover:shadow-md disabled:opacity-50"
+        className="flex flex-col items-center gap-2 rounded-lg border border-default bg-card p-4 transition-all hover:border-sky-300 hover:shadow-md disabled:opacity-50 surface-animated"
       >
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-100">
-          <Database className="h-6 w-6 text-sky-600" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.03)]">
+          <Database className="h-6 w-6 text-accent" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-semibold text-slate-900">Backup Dati</p>
-          <p className="text-xs text-slate-600">Salva tutto (JSON)</p>
+          <p className="text-sm font-semibold text-default">Backup Dati</p>
+          <p className="text-xs text-muted">Salva tutto (JSON)</p>
         </div>
         {isBackingUp && (
-          <div className="h-1 w-full animate-pulse rounded-full bg-sky-200" />
+          <div className="h-1 w-full animate-pulse rounded-full bg-[rgba(255,255,255,0.03)]" />
         )}
       </button>
 
@@ -90,17 +90,17 @@ export function DataManagement({ onDataChange }: DataManagementProps = {}) {
       <button
         onClick={handleExport}
         disabled={isExporting}
-        className="flex flex-col items-center gap-2 rounded-lg border border-slate-200 bg-white p-4 transition-all hover:border-green-300 hover:shadow-md disabled:opacity-50"
+        className="flex flex-col items-center gap-2 rounded-lg border border-default bg-card p-4 transition-all hover:border-green-300 hover:shadow-md disabled:opacity-50 surface-animated"
       >
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-          <Download className="h-6 w-6 text-green-600" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.03)]">
+          <Download className="h-6 w-6 text-accent" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-semibold text-slate-900">Export Excel</p>
-          <p className="text-xs text-slate-600">3 fogli con stats</p>
+          <p className="text-sm font-semibold text-default">Export Excel</p>
+          <p className="text-xs text-muted">3 fogli con stats</p>
         </div>
         {isExporting && (
-          <div className="h-1 w-full animate-pulse rounded-full bg-green-200" />
+          <div className="h-1 w-full animate-pulse rounded-full bg-[rgba(255,255,255,0.03)]" />
         )}
       </button>
 
@@ -108,17 +108,17 @@ export function DataManagement({ onDataChange }: DataManagementProps = {}) {
       <button
         onClick={handleRestoreClick}
         disabled={isRestoring}
-        className="flex flex-col items-center gap-2 rounded-lg border border-slate-200 bg-white p-4 transition-all hover:border-orange-300 hover:shadow-md disabled:opacity-50"
+        className="flex flex-col items-center gap-2 rounded-lg border border-default bg-card p-4 transition-all hover:border-orange-300 hover:shadow-md disabled:opacity-50 surface-animated"
       >
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
-          <Upload className="h-6 w-6 text-sky-600" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.03)]">
+          <Upload className="h-6 w-6 text-accent" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-semibold text-slate-900">Ripristina</p>
-          <p className="text-xs text-slate-600">Da file JSON</p>
+          <p className="text-sm font-semibold text-default">Ripristina</p>
+          <p className="text-xs text-muted">Da file JSON</p>
         </div>
         {isRestoring && (
-          <div className="h-1 w-full animate-pulse rounded-full bg-orange-200" />
+          <div className="h-1 w-full animate-pulse rounded-full bg-[rgba(255,255,255,0.03)]" />
         )}
       </button>
 

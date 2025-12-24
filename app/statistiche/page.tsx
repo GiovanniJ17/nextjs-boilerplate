@@ -1464,7 +1464,7 @@ export default function StatistichePage() {
           </div>
 
           <motion.div 
-            className="rounded-2xl bg-white/20 backdrop-blur-sm px-4 py-2.5 md:px-5 md:py-3"
+            className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-sm px-4 py-2.5 md:px-5 md:py-3"
             variants={scaleIn}
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
@@ -1489,9 +1489,9 @@ export default function StatistichePage() {
             return (
               <motion.div 
                 key={stat.label} 
-                className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2 md:px-4 md:py-3"
+                className="rounded-xl border border-white/10 bg-white/10 backdrop-blur-sm px-3 py-2 md:px-4 md:py-3"
                 variants={staggerItem}
-                whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.25)' }}
+                whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
                 transition={{ duration: 0.2 }}
               >
                 <div className="flex items-start justify-between mb-1">
@@ -1515,7 +1515,7 @@ export default function StatistichePage() {
               transition={{ duration: 0.3 }}
             >
             {topType && (
-              <div className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2.5 md:px-4 md:py-3 text-sm text-white">
+              <div className="rounded-xl border border-white/10 bg-white/10 backdrop-blur-sm px-3 py-2.5 md:px-4 md:py-3 text-sm text-white">
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-1.5 md:gap-2 font-semibold text-xs md:text-sm">
                     <Target className="h-3.5 w-3.5 md:h-4 md:w-4" /> Focus tipologia
@@ -1533,7 +1533,7 @@ export default function StatistichePage() {
               </div>
             )}
             {headlinePb && (
-              <div className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2.5 md:px-4 md:py-3 text-sm text-white">
+              <div className="rounded-xl border border-white/10 bg-white/10 backdrop-blur-sm px-3 py-2.5 md:px-4 md:py-3 text-sm text-white">
                 <div className="inline-flex items-center gap-1.5 md:gap-2 font-semibold text-xs md:text-sm mb-1.5 md:mb-2">
                   <Medal className="h-3.5 w-3.5 md:h-4 md:w-4" /> Ultimo PB
                 </div>
@@ -1590,16 +1590,16 @@ export default function StatistichePage() {
             
             {/* Drawer */}
             <motion.div
-              className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white shadow-2xl md:inset-x-auto md:right-4 md:bottom-4 md:w-[500px] md:max-h-[calc(100vh-2rem)] md:rounded-3xl"
+              className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-3xl border border-default/80 bg-card text-default shadow-2xl md:inset-x-auto md:right-4 md:bottom-4 md:w-[500px] md:max-h-[calc(100vh-2rem)] md:rounded-3xl"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
             >
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-700 bg-[rgba(255,255,255,0.02)] px-5 py-4">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-default/70 bg-[rgba(8,11,20,0.9)] px-5 py-4">
                 <div className="flex items-center gap-2.5">
-                  <Filter className="h-5 w-5 text-sky-600" />
-                  <h2 className="text-lg font-bold text-slate-800">Filtri Statistiche</h2>
+                  <Filter className="h-5 w-5 text-sky-400" />
+                  <h2 className="text-lg font-bold text-default">Filtri Statistiche</h2>
                   {(fromDate || toDate || typeFilter || blockFilter || distanceFilter !== 'all') && (
                     <span className="rounded-full bg-sky-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
                       {[fromDate, toDate, typeFilter, blockFilter, distanceFilter !== 'all'].filter(Boolean).length} attivi
@@ -1608,7 +1608,7 @@ export default function StatistichePage() {
                 </div>
                 <button
                   onClick={() => setFiltersExpanded(false)}
-                  className="rounded-full p-2 text-slate-500 transition-colors hover:bg-white hover:text-slate-700"
+                  className="rounded-full p-2 text-muted transition-colors hover:bg-white/10 hover:text-default"
                 >
                   <ChevronDown className="h-5 w-5" />
                 </button>
@@ -1619,8 +1619,8 @@ export default function StatistichePage() {
           {/* PERIODO Section */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-slate-500" />
-              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Periodo</h3>
+              <Calendar className="h-4 w-4 text-muted" />
+              <h3 className="text-sm font-semibold text-default uppercase tracking-wide">Periodo</h3>
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
@@ -1634,8 +1634,8 @@ export default function StatistichePage() {
                     className={cn(
                       'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                       isActive
-                        ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50'
+                        ? 'border-sky-400/80 bg-[rgba(56,189,248,0.14)] text-default shadow-sm'
+                        : 'border-default bg-card/60 text-muted hover:border-sky-400/80 hover:bg-[rgba(56,189,248,0.08)] hover:text-default'
                     )}
                   >
                     {preset.label}
@@ -1646,7 +1646,7 @@ export default function StatistichePage() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <Label className="text-xs font-medium text-slate-700 mb-1.5 block">Da</Label>
+                <Label className="text-xs font-medium text-muted mb-1.5 block">Da</Label>
                 <Input 
                   type="date" 
                   value={fromDate} 
@@ -1655,7 +1655,7 @@ export default function StatistichePage() {
                 />
               </div>
               <div>
-                <Label className="text-xs font-medium text-slate-700 mb-1.5 block">A</Label>
+                <Label className="text-xs font-medium text-muted mb-1.5 block">A</Label>
                 <Input 
                   type="date" 
                   value={toDate} 
@@ -1666,18 +1666,18 @@ export default function StatistichePage() {
             </div>
           </div>
 
-          <div className="border-t border-slate-200"></div>
+          <div className="border-t border-default/70"></div>
 
           {/* FILTRI Section */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-slate-500" />
-              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Filtri</h3>
+              <Filter className="h-4 w-4 text-muted" />
+              <h3 className="text-sm font-semibold text-default uppercase tracking-wide">Filtri</h3>
             </div>
 
             {/* Tipo sessione */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-slate-600">Tipo sessione</Label>
+              <Label className="text-xs font-medium text-muted">Tipo sessione</Label>
               <div className="flex flex-wrap gap-1.5">
                 {sessionTypeFilters.map(option => {
                   const isActive = typeFilter === option.value;
@@ -1689,8 +1689,8 @@ export default function StatistichePage() {
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isActive
-                          ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50'
+                          ? 'border-sky-400/80 bg-[rgba(56,189,248,0.14)] text-default shadow-sm'
+                          : 'border-default bg-card/60 text-muted hover:border-sky-400/80 hover:bg-[rgba(56,189,248,0.08)] hover:text-default'
                       )}
                     >
                       {option.label}
@@ -1702,7 +1702,7 @@ export default function StatistichePage() {
               
             {/* Blocco */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-slate-600">Blocco allenamento</Label>
+              <Label className="text-xs font-medium text-muted">Blocco allenamento</Label>
               <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
@@ -1710,8 +1710,8 @@ export default function StatistichePage() {
                   className={cn(
                     'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                     blockFilter
-                      ? 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50'
-                      : 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                      ? 'border-default bg-card/60 text-muted hover:border-sky-400/80 hover:bg-[rgba(56,189,248,0.08)] hover:text-default'
+                      : 'border-sky-400/80 bg-[rgba(56,189,248,0.14)] text-default shadow-sm'
                   )}
                 >
                   Tutti
@@ -1726,8 +1726,8 @@ export default function StatistichePage() {
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isActive
-                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50'
+                          ? 'border-emerald-400/80 bg-[rgba(16,185,129,0.16)] text-default shadow-sm'
+                          : 'border-default bg-card/60 text-muted hover:border-emerald-400/70 hover:bg-[rgba(16,185,129,0.12)] hover:text-default'
                       )}
                     >
                       {block.name ?? 'Senza nome'}
@@ -1739,7 +1739,7 @@ export default function StatistichePage() {
 
             {/* Distanza */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-slate-600">Categoria distanza</Label>
+              <Label className="text-xs font-medium text-muted">Categoria distanza</Label>
               <div className="flex flex-wrap gap-1.5">
                 {distanceOptions.map(option => {
                   const isActive = distanceFilter === option.value;
@@ -1751,8 +1751,8 @@ export default function StatistichePage() {
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                         isActive
-                          ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:bg-sky-50/50'
+                          ? 'border-sky-400/80 bg-[rgba(56,189,248,0.14)] text-default shadow-sm'
+                          : 'border-default bg-card/60 text-muted hover:border-sky-400/80 hover:bg-[rgba(56,189,248,0.08)] hover:text-default'
                       )}
                     >
                       {option.label}
@@ -1783,12 +1783,12 @@ export default function StatistichePage() {
 
       {/* DATA MANAGEMENT SECTION */}
       <motion.div variants={fadeInUp}>
-      <Card className="border-slate-200 shadow-sm">
+      <Card className="border-default bg-card shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-slate-800">
-            <Download className="h-5 w-5 text-sky-600" /> Gestione Dati
+          <CardTitle className="flex items-center gap-2 text-base text-default">
+            <Download className="h-5 w-5 text-sky-400" /> Gestione Dati
           </CardTitle>
-          <p className="text-xs text-slate-600 mt-1">
+          <p className="text-xs text-muted mt-1">
             Esporta, backup e ripristina i tuoi allenamenti
           </p>
         </CardHeader>
@@ -1800,22 +1800,22 @@ export default function StatistichePage() {
 
       <motion.div 
         variants={fadeInUp}
-        className="sticky top-0 z-10 bg-slate-50 pb-2 pt-2"
+        className="sticky top-0 z-10 bg-[rgba(15,23,42,0.9)] pb-2 pt-2 backdrop-blur"
       >
-      <Card className="border-slate-200 shadow-lg">
+      <Card className="shadow-lg">
         <CardHeader className="pb-2.5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-slate-800">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-default">
               <TrendingUp className="h-5 w-5 text-sky-600" strokeWidth={2} /> Andamento
             </CardTitle>
             {stats && (
-              <div className="text-sm text-slate-600">
+              <div className="text-sm text-muted">
                 {stats.totalSessions > 0 ? (
                   <span>
-                    Analizzando <strong className="text-sky-600">{stats.totalSessions}</strong> {stats.totalSessions === 1 ? 'sessione' : 'sessioni'}
+                    Analizzando <strong className="text-accent">{stats.totalSessions}</strong> {stats.totalSessions === 1 ? 'sessione' : 'sessioni'}
                   </span>
                 ) : (
-                  <span className="text-amber-600">
+                  <span className="text-amber-400">
                     <AlertTriangle className="inline h-4 w-4 mr-1" />
                     Nessuna sessione nel periodo selezionato
                   </span>
@@ -1829,24 +1829,24 @@ export default function StatistichePage() {
           {stats && (stats.smartInsights?.length > 0 || stats.alerts?.length > 0) && (
             <motion.div 
               variants={fadeInUp}
-              className="flex items-center gap-2 rounded-lg bg-[rgba(255,255,255,0.02)] border border-slate-700 px-3 py-2 text-xs"
+              className="flex items-center gap-2 rounded-lg bg-[rgba(255,255,255,0.02)] border border-default px-3 py-2 text-xs"
             >
               <Sparkles className="h-4 w-4 text-sky-600 flex-shrink-0" />
-              <span className="text-sky-900">
+              <span className="text-default">
                 <strong className="font-semibold">{((stats.smartInsights?.length || 0) + (stats.alerts?.length || 0))} nuovi insights</strong> disponibili nella sezione Insights & Consigli
               </span>
             </motion.div>
           )}
 
           {/* Tabs semplificati - versione mobile con emoji, desktop con testo */}
-          <div className="flex gap-1.5 sm:gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-xs sm:text-sm overflow-x-auto justify-center">
+          <div className="flex gap-1.5 sm:gap-2 rounded-full border border-default bg-[rgba(255,255,255,0.02)] p-1 text-xs sm:text-sm overflow-x-auto justify-center">
             <button
               type="button"
               onClick={() => setActiveTab('base')}
               className={`rounded-full px-3 sm:px-4 py-1.5 transition whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'base'
-                  ? 'bg-sky-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-white'
+                  ? 'bg-[rgba(56,189,248,0.16)] text-default shadow-sm'
+                  : 'text-muted hover:bg-[rgba(255,255,255,0.05)]'
               }`}
             >
               <span className="sm:hidden">📊</span>
@@ -1857,8 +1857,8 @@ export default function StatistichePage() {
               onClick={() => setActiveTab('graphs')}
               className={`rounded-full px-3 sm:px-4 py-1.5 transition whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'graphs'
-                  ? 'bg-sky-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-white'
+                  ? 'bg-[rgba(56,189,248,0.16)] text-default shadow-sm'
+                  : 'text-muted hover:bg-[rgba(255,255,255,0.05)]'
               }`}
             >
               <span className="sm:hidden">📈</span>
@@ -1869,8 +1869,8 @@ export default function StatistichePage() {
               onClick={() => setActiveTab('advanced')}
               className={`rounded-full px-3 sm:px-4 py-1.5 transition whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'advanced'
-                  ? 'bg-sky-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-white'
+                  ? 'bg-[rgba(56,189,248,0.16)] text-default shadow-sm'
+                  : 'text-muted hover:bg-[rgba(255,255,255,0.05)]'
               }`}
             >
               <span className="sm:hidden">🔬</span>
@@ -1881,8 +1881,8 @@ export default function StatistichePage() {
               onClick={() => setActiveTab('insights')}
               className={`rounded-full px-3 sm:px-4 py-1.5 transition whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'insights'
-                  ? 'bg-sky-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-white'
+                  ? 'bg-[rgba(56,189,248,0.16)] text-default shadow-sm'
+                  : 'text-muted hover:bg-[rgba(255,255,255,0.05)]'
               }`}
             >
               <span className="sm:hidden">✨</span>
@@ -1891,11 +1891,11 @@ export default function StatistichePage() {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center gap-3 py-16 text-sm text-slate-500">
+            <div className="flex items-center justify-center gap-3 py-16 text-sm text-muted">
               <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2} /> Calcolo statistiche...
             </div>
           ) : !stats ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 py-12 text-center text-sm text-slate-500">
+            <div className="rounded-2xl border border-dashed border-default bg-[rgba(255,255,255,0.03)] py-12 text-center text-sm text-muted">
               Nessun dato disponibile per i filtri selezionati.
             </div>
           ) : (
@@ -1908,14 +1908,14 @@ export default function StatistichePage() {
                       value={formatNumber(stats.totalSessions)}
                       subtitle="Allenamenti registrati"
                       icon={<Activity className="h-5 w-5" strokeWidth={2} />}
-                      accent="bg-sky-100 text-sky-600"
+                      accent="bg-[rgba(56,189,248,0.16)] text-sky-100"
                     />
                     <SummaryCard
                       title="Distanza totale"
                       value={`${formatNumber(stats.totalDistance)} m`}
                       subtitle="Somma di tutte le ripetute"
                       icon={<BarChart3 className="h-5 w-5" strokeWidth={2} />}
-                      accent="bg-blue-100 text-blue-600"
+                      accent="bg-[rgba(59,130,246,0.16)] text-blue-100"
                     />
                     <SummaryCard
                       title="Tempo migliore"
@@ -1926,32 +1926,32 @@ export default function StatistichePage() {
                           : 'Registra tempi per visualizzare il PB'
                       }
                       icon={<Medal className="h-5 w-5" strokeWidth={2} />}
-                      accent="bg-amber-100 text-amber-600"
+                      accent="bg-[rgba(251,191,36,0.18)] text-amber-100"
                     />
                     <SummaryCard
                       title="Tempo medio"
                       value={stats.avgTime ? `${stats.avgTime.toFixed(2)} s` : 'N/D'}
                       subtitle="Media delle prove cronometrate"
                       icon={<Target className="h-5 w-5" strokeWidth={2} />}
-                      accent="bg-sky-100 text-sky-600"
+                      accent="bg-[rgba(56,189,248,0.16)] text-sky-100"
                     />
                   </div>
 
                   <div className="grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
+                    <div className="rounded-2xl border border-default bg-card p-4 shadow-sm">
+                      <div className="flex items-center justify-between text-sm font-semibold text-default">
                         <span>Distribuzione per tipologia</span>
                         <button
                           type="button"
                           onClick={() => setTypeFilter('')}
-                          className="text-xs font-medium text-slate-400 transition-colors hover:text-slate-600"
+                          className="text-xs font-medium text-muted transition-colors hover:text-default"
                         >
                           Azzera filtro
                         </button>
                       </div>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {stats.typeBreakdown.length === 0 ? (
-                          <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] text-slate-500">
+                          <span className="rounded-full bg-[rgba(255,255,255,0.05)] px-3 py-1 text-[11px] text-muted">
                             Nessuna sessione registrata
                           </span>
                         ) : (
@@ -1965,38 +1965,38 @@ export default function StatistichePage() {
                                 className={cn(
                                   'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium transition',
                                   isActive
-                                    ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                                    : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-sky-200'
+                                    ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
+                                    : 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:border-[rgba(255,255,255,0.14)]'
                                 )}
                                 aria-pressed={isActive}
                               >
                                 <span className="capitalize">{item.label}</span>
-                                <span className="text-slate-400">{formatNumber(item.value)}</span>
+                                <span className="text-muted">{formatNumber(item.value)}</span>
                               </button>
                             );
                           })
                         )}
                       </div>
-                      <p className="mt-3 text-[11px] text-slate-500">
+                      <p className="mt-3 text-[11px] text-muted">
                         Tocca una tipologia per aggiornare le statistiche in tempo reale.
                       </p>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                    <div className="rounded-2xl border border-default bg-card p-4 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-sm font-semibold text-default">
                         <Medal className="h-4 w-4 text-amber-500" /> Personal Best per distanza
                       </h3>
-                      <div className="mt-3 space-y-2 text-xs text-slate-600">
+                      <div className="mt-3 space-y-2 text-xs text-muted">
                         {stats.pbByDistance.length === 0 ? (
-                          <p className="rounded-2xl bg-slate-50 px-3 py-2">Registra nuovi tempi per popolare la tabella.</p>
+                          <p className="rounded-2xl bg-[rgba(255,255,255,0.05)] px-3 py-2">Registra nuovi tempi per popolare la tabella.</p>
                         ) : (
                           stats.pbByDistance.map(item => (
                             <div
                               key={item.distance}
-                              className="flex items-center justify-between rounded-2xl bg-amber-50/70 px-3 py-2"
+                              className="flex items-center justify-between rounded-2xl bg-[rgba(251,191,36,0.12)] px-3 py-2"
                             >
                               <span>{item.distance} m</span>
-                              <span className="font-semibold text-amber-700">{item.time.toFixed(2)} s</span>
+                              <span className="font-semibold text-default">{item.time.toFixed(2)} s</span>
                             </div>
                           ))
                         )}
@@ -2016,14 +2016,14 @@ export default function StatistichePage() {
                           key={idx}
                           className={cn(
                             'flex items-start gap-3 rounded-2xl border p-4 text-sm',
-                            alert.type === 'warning' && 'border-amber-200 bg-amber-50 text-amber-900',
-                            alert.type === 'success' && 'border-emerald-200 bg-emerald-50 text-emerald-900',
-                            alert.type === 'info' && 'border-sky-200 bg-sky-50 text-sky-900'
+                            alert.type === 'warning' && 'border-amber-400/60 bg-[rgba(251,191,36,0.1)] text-default',
+                            alert.type === 'success' && 'border-emerald-400/60 bg-[rgba(16,185,129,0.1)] text-default',
+                            alert.type === 'info' && 'border-sky-400/60 bg-[rgba(56,189,248,0.1)] text-default'
                           )}
                         >
-                          {alert.type === 'warning' && <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" strokeWidth={2} />}
-                          {alert.type === 'success' && <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-emerald-600" strokeWidth={2} />}
-                          {alert.type === 'info' && <Sparkles className="h-5 w-5 flex-shrink-0 text-sky-600" strokeWidth={2} />}
+                          {alert.type === 'warning' && <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-400" strokeWidth={2} />}
+                          {alert.type === 'success' && <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-emerald-400" strokeWidth={2} />}
+                          {alert.type === 'info' && <Sparkles className="h-5 w-5 flex-shrink-0 text-sky-400" strokeWidth={2} />}
                           <p>{alert.message}</p>
                         </div>
                       ))}
@@ -2031,24 +2031,25 @@ export default function StatistichePage() {
                   )}
 
                   {/* Grafico Volume Settimanale */}
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
-                      <BarChart3 className="h-5 w-5 text-sky-600" strokeWidth={2} />
+                  <div className="rounded-2xl border border-default bg-card p-4 shadow-sm">
+                    <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-default">
+                      <BarChart3 className="h-5 w-5 text-sky-400" strokeWidth={2} />
                       Volume Settimanale
                     </h3>
                     {stats.weeklyVolume.length > 0 ? (
                       <ResponsiveContainer width="100%" height={350}>
                         <RechartsBarChart data={stats.weeklyVolume}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                          <XAxis dataKey="week" tick={{ fontSize: 12 }} stroke="#64748b" />
-                          <YAxis tick={{ fontSize: 12 }} stroke="#64748b" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                          <XAxis dataKey="week" tick={{ fontSize: 12 }} stroke="#94a3b8" />
+                          <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" />
                           <Tooltip
                             contentStyle={{
-                              backgroundColor: '#fff',
-                              border: '2px solid #e2e8f0',
+                              backgroundColor: '#0b1324',
+                              border: '1px solid #1f2937',
                               borderRadius: '12px',
                               fontSize: '13px',
                               padding: '12px',
+                              color: '#e2e8f0',
                             }}
                             formatter={(value: any, name: string) => {
                               if (name === 'volume') return [`${(Number(value) / 1000).toFixed(1)} km`, 'Volume'];
@@ -2056,7 +2057,7 @@ export default function StatistichePage() {
                               return [value, name];
                             }}
                           />
-                          <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '15px' }} />
+                          <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '15px', color: '#e2e8f0' }} />
                           <defs>
                             <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.8}/>
@@ -2078,7 +2079,7 @@ export default function StatistichePage() {
                         </RechartsBarChart>
                       </ResponsiveContainer>
                     ) : (
-                      <p className="py-12 text-center text-sm text-slate-500">
+                      <p className="py-12 text-center text-sm text-muted">
                         Non ci sono dati sufficienti per visualizzare il grafico
                       </p>
                     )}
@@ -2086,8 +2087,8 @@ export default function StatistichePage() {
 
                   {/* Grafico Distribuzione Intensità */}
                   <div className="grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                    <div className="rounded-2xl border border-default bg-card p-4 shadow-sm">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-default">
                         <Zap className="h-5 w-5 text-cyan-600" strokeWidth={2} />
                         Distribuzione Intensità
                       </h3>
@@ -2136,15 +2137,15 @@ export default function StatistichePage() {
                           </PieChart>
                         </ResponsiveContainer>
                       ) : (
-                        <p className="py-12 text-center text-sm text-slate-500">
+                        <p className="py-12 text-center text-sm text-muted">
                           Registra l'intensità delle sessioni per visualizzare la distribuzione
                         </p>
                       )}
                     </div>
 
                     {/* Performance per giorno della settimana */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                    <div className="rounded-2xl border border-default bg-card p-4 shadow-sm">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-default">
                         <Calendar className="h-5 w-5 text-sky-600" strokeWidth={2} />
                         Performance per Giorno
                       </h3>
@@ -2167,7 +2168,7 @@ export default function StatistichePage() {
                           </RechartsBarChart>
                         </ResponsiveContainer>
                       ) : (
-                        <p className="py-12 text-center text-sm text-slate-500">
+                        <p className="py-12 text-center text-sm text-muted">
                           Aggiungi più sessioni per analizzare i pattern settimanali
                         </p>
                       )}
@@ -2176,9 +2177,9 @@ export default function StatistichePage() {
 
                   {/* Grafici progressione tempi per distanza */}
                   {Object.keys(stats.timeProgressionByDistance).length > 0 && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
-                        <TrendingUp className="h-5 w-5 text-emerald-600" strokeWidth={2} />
+                    <div className="rounded-2xl border border-default bg-card p-4 shadow-sm">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-default">
+                        <TrendingUp className="h-5 w-5 text-emerald-400" strokeWidth={2} />
                         Progressione Tempi per Distanza
                       </h3>
                       <div className="grid gap-4 lg:grid-cols-2">
@@ -2186,33 +2187,34 @@ export default function StatistichePage() {
                           .slice(0, 4)
                           .map(([distance, progression]) => (
                             <div key={distance}>
-                              <p className="mb-2 text-sm font-semibold text-slate-700">{distance}m</p>
+                              <p className="mb-2 text-sm font-semibold text-default">{distance}m</p>
                               {progression.length > 1 ? (
                                 <ResponsiveContainer width="100%" height={200}>
                                   <AreaChart data={progression}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
                                     <XAxis
                                       dataKey="date"
                                       tick={{ fontSize: 10 }}
-                                      stroke="#64748b"
+                                      stroke="#94a3b8"
                                       tickFormatter={(value) => new Date(value).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
                                     />
-                                    <YAxis tick={{ fontSize: 12 }} stroke="#64748b" domain={['dataMin - 0.5', 'dataMax + 0.5']} />
+                                    <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" domain={['dataMin - 0.5', 'dataMax + 0.5']} />
                                     <Tooltip
                                       contentStyle={{
-                                        backgroundColor: '#fff',
-                                        border: '1px solid #e2e8f0',
+                                        backgroundColor: '#0b1324',
+                                        border: '1px solid #1f2937',
                                         borderRadius: '12px',
                                         fontSize: '12px',
+                                        color: '#e2e8f0',
                                       }}
                                       labelFormatter={(value) => new Date(value).toLocaleDateString('it-IT')}
                                       formatter={(value: any) => [`${value.toFixed(2)} s`, 'Tempo']}
                                     />
-                                    <Area type="monotone" dataKey="time" stroke="#10b981" fill="#d1fae5" />
+                                    <Area type="monotone" dataKey="time" stroke="#10b981" fill="rgba(16,185,129,0.18)" />
                                   </AreaChart>
                                 </ResponsiveContainer>
                               ) : (
-                                <p className="py-8 text-center text-xs text-slate-500">
+                                <p className="py-8 text-center text-xs text-muted">
                                   Servono almeno 2 performance per visualizzare il trend
                                 </p>
                               )}
@@ -2226,8 +2228,8 @@ export default function StatistichePage() {
                   
                   {/* Grafico RPE Distribution */}
                   {stats.rpeDistribution.length > 0 && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                    <div className="rounded-2xl border border-default bg-card p-5 shadow-sm">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-default">
                         <Gauge className="h-5 w-5 text-amber-600" strokeWidth={2} />
                         Distribuzione RPE (Sforzo Percepito)
                       </h3>
@@ -2276,8 +2278,8 @@ export default function StatistichePage() {
                       </ResponsiveContainer>
                       {stats.avgRPE && (
                         <div className="mt-4 text-center">
-                          <p className="text-sm text-slate-600">RPE Medio</p>
-                          <p className="text-3xl font-bold text-amber-700">{stats.avgRPE.toFixed(1)}/10</p>
+                          <p className="text-sm text-muted">RPE Medio</p>
+                          <p className="text-3xl font-bold text-default">{stats.avgRPE.toFixed(1)}/10</p>
                         </div>
                       )}
                     </div>
@@ -2285,23 +2287,23 @@ export default function StatistichePage() {
 
                   {/* Grafico Training Load (Acute:Chronic Ratio) */}
                   {stats.trainingLoad.length > 0 && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-slate-800">
+                    <div className="rounded-2xl border border-default bg-card p-5 shadow-sm">
+                      <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-default">
                         <Activity className="h-5 w-5 text-cyan-600" strokeWidth={2} />
                         Carico Allenamento (A:C Ratio)
                       </h3>
                       <div className="mb-4 grid grid-cols-3 gap-2 text-center text-xs">
-                        <div className="rounded-lg bg-emerald-50 p-2 border border-emerald-200">
-                          <p className="font-semibold text-emerald-700">0.8 - 1.3</p>
-                          <p className="text-emerald-600">Zona Ottimale</p>
+                        <div className="rounded-lg bg-[rgba(16,185,129,0.12)] p-2 border border-emerald-400/60">
+                          <p className="font-semibold text-default">0.8 - 1.3</p>
+                          <p className="text-muted">Zona Ottimale</p>
                         </div>
-                        <div className="rounded-lg bg-amber-50 p-2 border border-amber-200">
-                          <p className="font-semibold text-amber-700">1.3 - 1.5</p>
-                          <p className="text-amber-600">Zona Moderata</p>
+                        <div className="rounded-lg bg-[rgba(251,191,36,0.12)] p-2 border border-amber-400/60">
+                          <p className="font-semibold text-default">1.3 - 1.5</p>
+                          <p className="text-muted">Zona Moderata</p>
                         </div>
-                        <div className="rounded-lg bg-rose-50 p-2 border border-rose-200">
-                          <p className="font-semibold text-rose-700">&gt; 1.5</p>
-                          <p className="text-rose-600">Rischio Infortuni</p>
+                        <div className="rounded-lg bg-[rgba(248,113,113,0.12)] p-2 border border-rose-400/60">
+                          <p className="font-semibold text-default">&gt; 1.5</p>
+                          <p className="text-muted">Rischio Infortuni</p>
                         </div>
                       </div>
                       <ResponsiveContainer width="100%" height={300}>
@@ -2377,9 +2379,9 @@ export default function StatistichePage() {
 
                   {/* Grafico Performance Trends Multi-Distanza */}
                   {stats.performanceTrends.length > 0 && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
-                        <LineChartIcon className="h-5 w-5 text-sky-600" strokeWidth={2} />
+                    <div className="rounded-2xl border border-default bg-card p-5 shadow-sm">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-default">
+                        <LineChartIcon className="h-5 w-5 text-sky-400" strokeWidth={2} />
                         Trend Performance per Distanza
                       </h3>
                       <div className="space-y-4">
@@ -2393,35 +2395,35 @@ export default function StatistichePage() {
                             <div key={idx} className="space-y-2">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-semibold text-slate-800">{trend.distance}m</span>
+                                  <span className="font-semibold text-default">{trend.distance}m</span>
                                   {trend.trend === 'improving' && (
-                                    <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                                      <TrendingUp className="h-3 w-3" />
+                                    <span className="flex items-center gap-1 rounded-full bg-[rgba(16,185,129,0.14)] px-2 py-0.5 text-xs font-semibold text-default">
+                                      <TrendingUp className="h-3 w-3 text-emerald-400" />
                                       Miglioramento
                                     </span>
                                   )}
                                   {trend.trend === 'declining' && (
-                                    <span className="flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
-                                      <TrendingDown className="h-3 w-3" />
+                                    <span className="flex items-center gap-1 rounded-full bg-[rgba(248,113,113,0.14)] px-2 py-0.5 text-xs font-semibold text-default">
+                                      <TrendingDown className="h-3 w-3 text-rose-400" />
                                       In calo
                                     </span>
                                   )}
                                   {trend.trend === 'stable' && (
-                                    <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
-                                      <Minus className="h-3 w-3" />
+                                    <span className="flex items-center gap-1 rounded-full bg-[rgba(148,163,184,0.15)] px-2 py-0.5 text-xs font-semibold text-default">
+                                      <Minus className="h-3 w-3 text-muted" />
                                       Stabile
                                     </span>
                                   )}
                                 </div>
                                 <span className={cn(
                                   "text-sm font-bold",
-                                  trend.trend === 'improving' ? "text-emerald-700" :
-                                  trend.trend === 'declining' ? "text-rose-700" : "text-slate-700"
+                                  trend.trend === 'improving' ? "text-emerald-300" :
+                                  trend.trend === 'declining' ? "text-rose-400" : "text-muted"
                                 )}>
                                   {trend.changePercentage > 0 ? '+' : ''}{trend.changePercentage.toFixed(1)}%
                                 </span>
                               </div>
-                              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                              <div className="h-2 w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.06)]">
                                 <div
                                   className="h-full rounded-full transition-all duration-500"
                                   style={{ 
@@ -2430,7 +2432,7 @@ export default function StatistichePage() {
                                   }}
                                 />
                               </div>
-                              <div className="flex justify-between text-xs text-slate-500">
+                              <div className="flex justify-between text-xs text-muted">
                                 <span>Recente: {trend.recentAvg.toFixed(2)}s</span>
                                 <span>Precedente: {trend.previousAvg.toFixed(2)}s</span>
                               </div>
@@ -2443,23 +2445,23 @@ export default function StatistichePage() {
 
                   {/* Grafico Progressi Mensili Combinato */}
                   {stats.monthlyProgress.length > 0 && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-slate-800">
-                        <Calendar className="h-5 w-5 text-blue-600" strokeWidth={2} />
+                    <div className="rounded-2xl border border-default bg-card p-5 shadow-sm">
+                      <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-default">
+                        <Calendar className="h-5 w-5 text-blue-400" strokeWidth={2} />
                         Progressi Mensili
                       </h3>
                       <div className="mb-3 flex flex-wrap gap-3 justify-center text-xs">
                         <div className="flex items-center gap-2">
                           <div className="h-3 w-3 rounded-full bg-blue-500"></div>
-                          <span className="text-slate-600">Distanza</span>
+                          <span className="text-muted">Distanza</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="h-3 w-3 rounded-full bg-sky-500"></div>
-                          <span className="text-slate-600">Sessioni</span>
+                          <span className="text-muted">Sessioni</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-                          <span className="text-slate-600">Velocità Media</span>
+                          <span className="text-muted">Velocità Media</span>
                         </div>
                       </div>
                       <ResponsiveContainer width="100%" height={300}>
@@ -2467,30 +2469,31 @@ export default function StatistichePage() {
                           data={stats.monthlyProgress.slice(-12)}
                           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                         >
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
                           <XAxis 
                             dataKey="month" 
                             tick={{ fontSize: 11 }}
-                            stroke="#64748b"
+                            stroke="#94a3b8"
                           />
                           <YAxis 
                             yAxisId="left"
                             tick={{ fontSize: 12 }} 
-                            stroke="#64748b"
+                            stroke="#94a3b8"
                           />
                           <YAxis 
                             yAxisId="right"
                             orientation="right"
                             tick={{ fontSize: 12 }} 
-                            stroke="#64748b"
+                            stroke="#94a3b8"
                           />
                           <Tooltip
                             contentStyle={{
-                              backgroundColor: '#fff',
-                              border: '2px solid #e2e8f0',
+                              backgroundColor: '#0b1324',
+                              border: '1px solid #1f2937',
                               borderRadius: '12px',
                               fontSize: '13px',
                               padding: '12px',
+                              color: '#e2e8f0',
                             }}
                             formatter={(value: any, name: string) => {
                               if (name === 'Distanza') return [`${(Number(value) / 1000).toFixed(1)} km`, 'Distanza'];
@@ -2535,9 +2538,9 @@ export default function StatistichePage() {
                       {stats.monthlyProgress.slice(-2).length > 0 && (
                         <div className={`mt-6 grid gap-3 ${stats.monthlyProgress.slice(-2).length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
                           {stats.monthlyProgress.slice(-2).map((month, idx) => (
-                            <div key={idx} className="rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 border border-slate-200">
-                              <p className="font-bold text-slate-800 mb-2 text-base">{month.month}</p>
-                              <div className="space-y-1.5 text-sm text-slate-600">
+                            <div key={idx} className="rounded-xl border border-default bg-[rgba(255,255,255,0.03)] p-4">
+                              <p className="font-bold text-default mb-2 text-base">{month.month}</p>
+                              <div className="space-y-1.5 text-sm text-muted">
                                 <div className="flex items-center gap-2">
                                   <span className="text-lg">📊</span>
                                   <span>{month.sessions} sessioni</span>
@@ -2555,7 +2558,7 @@ export default function StatistichePage() {
                                 {month.pbs > 0 && (
                                   <div className="flex items-center gap-2">
                                     <span className="text-lg">⭐</span>
-                                    <span className="font-semibold text-amber-600">{month.pbs} PB</span>
+                                    <span className="font-semibold text-amber-400">{month.pbs} PB</span>
                                   </div>
                                 )}
                               </div>
@@ -2577,61 +2580,61 @@ export default function StatistichePage() {
                       value={stats.avgSpeed ? `${stats.avgSpeed.toFixed(2)} m/s` : 'N/D'}
                       subtitle={stats.avgSpeed ? `≈ ${(stats.avgSpeed * 3.6).toFixed(1)} km/h` : 'Registra tempi per calcolare'}
                       icon={<Zap className="h-5 w-5" strokeWidth={2} />}
-                      accent="bg-amber-100 text-amber-600"
+                      accent="bg-[rgba(251,191,36,0.18)] text-amber-100"
                     />
                     <SummaryCard
                       title="Densità allenamento"
                       value={`${stats.trainingDensity.toFixed(1)} giorni/settimana`}
                       subtitle="Frequenza media giorni allenamento"
                       icon={<Calendar className="h-5 w-5" strokeWidth={2} />}
-                      accent="bg-sky-100 text-sky-600"
+                      accent="bg-[rgba(56,189,248,0.16)] text-sky-100"
                     />
                     <SummaryCard
                       title="Carico di lavoro"
                       value={formatNumber(Math.round(stats.workload))}
                       subtitle="Volume × Intensità"
                       icon={<Activity className="h-5 w-5" strokeWidth={2} />}
-                      accent="bg-cyan-100 text-cyan-600"
+                      accent="bg-[rgba(34,211,238,0.16)] text-cyan-100"
                     />
                     <SummaryCard
                       title="Recupero ottimale"
                       value={stats.optimalRecovery ? `${Math.round(stats.optimalRecovery)} s` : 'N/D'}
                       subtitle="Medio nelle migliori performance"
                       icon={<Clock className="h-5 w-5" strokeWidth={2} />}
-                      accent="bg-emerald-100 text-emerald-600"
+                      accent="bg-[rgba(16,185,129,0.16)] text-emerald-100"
                     />
                   </div>
 
                   {/* Trend di miglioramento */}
                   {stats.improvementTrend !== null && (
-                    <div className="rounded-3xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 p-5 shadow-sm">
+                    <div className="rounded-3xl border-2 border-emerald-500/60 bg-[rgba(16,185,129,0.1)] p-5 shadow-sm">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="flex items-center gap-2 text-lg font-semibold text-emerald-900">
-                            <TrendingUp className="h-5 w-5 text-emerald-600" strokeWidth={2} />
+                          <h3 className="flex items-center gap-2 text-lg font-semibold text-default">
+                            <TrendingUp className="h-5 w-5 text-emerald-300" strokeWidth={2} />
                             Trend di Miglioramento
                           </h3>
-                          <p className="mt-2 text-sm text-emerald-700">
+                          <p className="mt-2 text-sm text-muted">
                             Analisi dell'andamento delle tue performance recenti
                           </p>
                         </div>
                         <div className="flex flex-col items-end">
                           <div className="flex items-center gap-2">
                             {stats.improvementTrend > 0 ? (
-                              <ArrowUpRight className="h-8 w-8 text-emerald-600" />
+                              <ArrowUpRight className="h-8 w-8 text-emerald-300" />
                             ) : stats.improvementTrend < 0 ? (
-                              <ArrowDownRight className="h-8 w-8 text-rose-600" />
+                              <ArrowDownRight className="h-8 w-8 text-rose-400" />
                             ) : (
-                              <Minus className="h-8 w-8 text-slate-600" />
+                              <Minus className="h-8 w-8 text-muted" />
                             )}
                             <span className={cn(
                               "text-3xl font-bold",
-                              stats.improvementTrend > 0 ? "text-emerald-700" : stats.improvementTrend < 0 ? "text-rose-700" : "text-slate-700"
+                              stats.improvementTrend > 0 ? "text-emerald-200" : stats.improvementTrend < 0 ? "text-rose-300" : "text-muted"
                             )}>
                               {Math.abs(stats.improvementTrend).toFixed(1)}%
                             </span>
                           </div>
-                          <p className="text-xs text-emerald-600">
+                          <p className="text-xs text-emerald-300">
                             {stats.improvementTrend > 0 ? 'Miglioramento' : stats.improvementTrend < 0 ? 'Peggioramento' : 'Stabile'}
                           </p>
                         </div>
@@ -2641,99 +2644,99 @@ export default function StatistichePage() {
 
                   {/* Confronto con periodo precedente */}
                   {stats.comparisonPreviousPeriod && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800">
-                        <BarChart className="h-5 w-5 text-sky-600" strokeWidth={2} />
+                    <div className="rounded-2xl border border-default bg-card p-4 shadow-sm">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-default">
+                        <BarChart className="h-5 w-5 text-sky-400" strokeWidth={2} />
                         Confronto con Periodo Precedente
                       </h3>
                       <div className="grid gap-4 md:grid-cols-3">
-                        <div className="rounded-2xl bg-slate-50 p-4">
-                          <p className="text-xs font-semibold text-slate-600">Sessioni</p>
+                        <div className="rounded-2xl border border-default bg-[rgba(255,255,255,0.03)] p-4">
+                          <p className="text-xs font-semibold text-muted">Sessioni</p>
                           <div className="mt-2 flex items-end gap-2">
-                            <p className="text-2xl font-bold text-slate-800">{stats.totalSessions}</p>
+                            <p className="text-2xl font-bold text-default">{stats.totalSessions}</p>
                             <div className="flex items-center gap-1 text-xs">
                               {stats.totalSessions > stats.comparisonPreviousPeriod.sessions ? (
                                 <>
-                                  <ArrowUpRight className="h-4 w-4 text-emerald-600" />
-                                  <span className="font-semibold text-emerald-600">
+                                  <ArrowUpRight className="h-4 w-4 text-emerald-300" />
+                                  <span className="font-semibold text-emerald-200">
                                     +{stats.totalSessions - stats.comparisonPreviousPeriod.sessions}
                                   </span>
                                 </>
                               ) : stats.totalSessions < stats.comparisonPreviousPeriod.sessions ? (
                                 <>
-                                  <ArrowDownRight className="h-4 w-4 text-rose-600" />
-                                  <span className="font-semibold text-rose-600">
+                                  <ArrowDownRight className="h-4 w-4 text-rose-400" />
+                                  <span className="font-semibold text-rose-300">
                                     {stats.totalSessions - stats.comparisonPreviousPeriod.sessions}
                                   </span>
                                 </>
                               ) : (
-                                <span className="text-slate-500">Invariato</span>
+                                <span className="text-muted">Invariato</span>
                               )}
                             </div>
                           </div>
-                          <p className="mt-1 text-[11px] text-slate-500">
+                          <p className="mt-1 text-[11px] text-muted">
                             Precedente: {stats.comparisonPreviousPeriod.sessions}
                           </p>
                         </div>
 
-                        <div className="rounded-2xl bg-slate-50 p-4">
-                          <p className="text-xs font-semibold text-slate-600">Volume (m)</p>
+                        <div className="rounded-2xl border border-default bg-[rgba(255,255,255,0.03)] p-4">
+                          <p className="text-xs font-semibold text-muted">Volume (m)</p>
                           <div className="mt-2 flex items-end gap-2">
-                            <p className="text-2xl font-bold text-slate-800">{formatNumber(stats.totalDistance)}</p>
+                            <p className="text-2xl font-bold text-default">{formatNumber(stats.totalDistance)}</p>
                             <div className="flex items-center gap-1 text-xs">
                               {stats.totalDistance > stats.comparisonPreviousPeriod.volume ? (
                                 <>
-                                  <ArrowUpRight className="h-4 w-4 text-emerald-600" />
-                                  <span className="font-semibold text-emerald-600">
+                                  <ArrowUpRight className="h-4 w-4 text-emerald-300" />
+                                  <span className="font-semibold text-emerald-200">
                                     {(((stats.totalDistance - stats.comparisonPreviousPeriod.volume) / stats.comparisonPreviousPeriod.volume) * 100).toFixed(0)}%
                                   </span>
                                 </>
                               ) : stats.totalDistance < stats.comparisonPreviousPeriod.volume ? (
                                 <>
-                                  <ArrowDownRight className="h-4 w-4 text-rose-600" />
-                                  <span className="font-semibold text-rose-600">
+                                  <ArrowDownRight className="h-4 w-4 text-rose-400" />
+                                  <span className="font-semibold text-rose-300">
                                     {(((stats.totalDistance - stats.comparisonPreviousPeriod.volume) / stats.comparisonPreviousPeriod.volume) * 100).toFixed(0)}%
                                   </span>
                                 </>
                               ) : (
-                                <span className="text-slate-500">Invariato</span>
+                                <span className="text-muted">Invariato</span>
                               )}
                             </div>
                           </div>
-                          <p className="mt-1 text-[11px] text-slate-500">
+                          <p className="mt-1 text-[11px] text-muted">
                             Precedente: {formatNumber(stats.comparisonPreviousPeriod.volume)}
                           </p>
                         </div>
 
-                        <div className="rounded-2xl bg-slate-50 p-4">
-                          <p className="text-xs font-semibold text-slate-600">Intensità media</p>
+                        <div className="rounded-2xl border border-default bg-[rgba(255,255,255,0.03)] p-4">
+                          <p className="text-xs font-semibold text-muted">Intensità media</p>
                           <div className="mt-2 flex items-end gap-2">
-                            <p className="text-2xl font-bold text-slate-800">
+                            <p className="text-2xl font-bold text-default">
                               {stats.avgIntensity ? stats.avgIntensity.toFixed(1) : 'N/D'}
                             </p>
                             {stats.avgIntensity && (
                               <div className="flex items-center gap-1 text-xs">
                                 {stats.avgIntensity > stats.comparisonPreviousPeriod.avgIntensity ? (
                                   <>
-                                    <ArrowUpRight className="h-4 w-4 text-amber-600" />
-                                    <span className="font-semibold text-amber-600">
+                                    <ArrowUpRight className="h-4 w-4 text-amber-300" />
+                                    <span className="font-semibold text-amber-200">
                                       +{(stats.avgIntensity - stats.comparisonPreviousPeriod.avgIntensity).toFixed(1)}
                                     </span>
                                   </>
                                 ) : stats.avgIntensity < stats.comparisonPreviousPeriod.avgIntensity ? (
                                   <>
-                                    <ArrowDownRight className="h-4 w-4 text-sky-600" />
-                                    <span className="font-semibold text-sky-600">
+                                    <ArrowDownRight className="h-4 w-4 text-sky-300" />
+                                    <span className="font-semibold text-sky-200">
                                       {(stats.avgIntensity - stats.comparisonPreviousPeriod.avgIntensity).toFixed(1)}
                                     </span>
                                   </>
                                 ) : (
-                                  <span className="text-slate-500">Invariato</span>
+                                  <span className="text-muted">Invariato</span>
                                 )}
                               </div>
                             )}
                           </div>
-                          <p className="mt-1 text-[11px] text-slate-500">
+                          <p className="mt-1 text-[11px] text-muted">
                             Precedente: {stats.comparisonPreviousPeriod.avgIntensity.toFixed(1)}
                           </p>
                         </div>
@@ -2743,36 +2746,36 @@ export default function StatistichePage() {
 
                   {/* Altre metriche avanzate */}
                   <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <h3 className="text-sm font-semibold text-slate-700">Distribuzione Intensità</h3>
+                    <div className="rounded-2xl border border-default bg-card p-4 shadow-sm">
+                      <h3 className="text-sm font-semibold text-default">Distribuzione Intensità</h3>
                       <div className="mt-3 space-y-2">
                         {stats.intensityDistribution.map((item, idx) => (
-                          <div key={idx} className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2 text-xs">
+                          <div key={idx} className="flex items-center justify-between rounded-2xl border border-default/70 bg-[rgba(255,255,255,0.04)] px-3 py-2 text-xs text-muted">
                             <span>{item.range}</span>
-                            <span className="font-semibold">{item.count} sessioni</span>
+                            <span className="font-semibold text-default">{item.count} sessioni</span>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <h3 className="text-sm font-semibold text-slate-700">Riepilogo Avanzato</h3>
-                      <ul className="mt-3 space-y-2 text-xs text-slate-600">
-                        <li className="flex items-center justify-between rounded-2xl bg-sky-50 px-3 py-2">
+                    <div className="rounded-2xl border border-default bg-card p-4 shadow-sm">
+                      <h3 className="text-sm font-semibold text-default">Riepilogo Avanzato</h3>
+                      <ul className="mt-3 space-y-2 text-xs text-muted">
+                        <li className="flex items-center justify-between rounded-2xl border border-sky-400/60 bg-[rgba(56,189,248,0.12)] px-3 py-2">
                           <span>Sessioni alta intensità</span>
-                          <span className="font-semibold text-sky-700">{stats.highIntensitySessions}</span>
+                          <span className="font-semibold text-default">{stats.highIntensitySessions}</span>
                         </li>
-                        <li className="flex items-center justify-between rounded-2xl bg-emerald-50 px-3 py-2">
+                        <li className="flex items-center justify-between rounded-2xl border border-emerald-400/60 bg-[rgba(16,185,129,0.12)] px-3 py-2">
                           <span>Sessioni bassa intensità</span>
-                          <span className="font-semibold text-emerald-700">{stats.lowIntensitySessions}</span>
+                          <span className="font-semibold text-default">{stats.lowIntensitySessions}</span>
                         </li>
-                        <li className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2">
+                        <li className="flex items-center justify-between rounded-2xl border border-default/70 bg-[rgba(255,255,255,0.04)] px-3 py-2">
                           <span>Recupero medio</span>
-                          <span className="font-semibold">{stats.restAverage ? `${Math.round(stats.restAverage)}s` : 'N/D'}</span>
+                          <span className="font-semibold text-default">{stats.restAverage ? `${Math.round(stats.restAverage)}s` : 'N/D'}</span>
                         </li>
-                        <li className="flex items-center justify-between rounded-2xl bg-cyan-50 px-3 py-2">
+                        <li className="flex items-center justify-between rounded-2xl border border-cyan-400/60 bg-[rgba(34,211,238,0.12)] px-3 py-2">
                           <span>Metriche totali</span>
-                          <span className="font-semibold text-cyan-700">{stats.metricsCount}</span>
+                          <span className="font-semibold text-default">{stats.metricsCount}</span>
                         </li>
                       </ul>
                     </div>
@@ -2781,14 +2784,14 @@ export default function StatistichePage() {
                   {/* NUOVE SEZIONI - ANALISI AVANZATE */}
                   
                   {/* Export Toolbar */}
-                  <div className="rounded-2xl border-2 border-slate-700 bg-[rgba(255,255,255,0.02)] p-5 shadow-sm">
+                  <div className="rounded-2xl border-2 border-default bg-[rgba(255,255,255,0.03)] p-5 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                       <div>
-                        <h3 className="flex items-center gap-2 text-lg font-semibold text-sky-900">
-                          <Download className="h-5 w-5 text-sky-600" strokeWidth={2} />
+                        <h3 className="flex items-center gap-2 text-lg font-semibold text-default">
+                          <Download className="h-5 w-5 text-sky-400" strokeWidth={2} />
                           Esporta Statistiche
                         </h3>
-                        <p className="mt-1 text-sm text-sky-700">
+                        <p className="mt-1 text-sm text-muted">
                           Salva i tuoi dati per analisi esterne o documentazione
                         </p>
                       </div>
@@ -2796,7 +2799,7 @@ export default function StatistichePage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-sky-300 bg-white hover:bg-sky-50"
+                          className="border-sky-500/70 bg-card text-default hover:bg-[rgba(56,189,248,0.1)]"
                           onClick={() => {
                             if (stats) exportStatisticsToCSV(stats);
                           }}
@@ -2807,7 +2810,7 @@ export default function StatistichePage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-sky-300 bg-white hover:bg-sky-50"
+                          className="border-sky-500/70 bg-card text-default hover:bg-[rgba(56,189,248,0.1)]"
                           onClick={() => {
                             if (stats) generatePDFReport(stats, 'Report Statistiche');
                           }}
@@ -2821,27 +2824,27 @@ export default function StatistichePage() {
 
                   {/* RPE Distribution */}
                   {stats.rpeDistribution.length > 0 && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-4">
-                        <Gauge className="h-5 w-5 text-amber-600" strokeWidth={2} />
+                    <div className="rounded-2xl border border-default bg-card p-5 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-default mb-4">
+                        <Gauge className="h-5 w-5 text-amber-400" strokeWidth={2} />
                         Distribuzione RPE (Perceived Exertion)
                       </h3>
                       <div className="space-y-3">
                         {stats.rpeDistribution.map((item) => (
                           <div key={item.rpe} className="space-y-1">
                             <div className="flex items-center justify-between text-sm">
-                              <span className="font-medium text-slate-700">RPE {item.rpe}/10</span>
-                              <span className="text-xs text-slate-500">
+                              <span className="font-medium text-default">RPE {item.rpe}/10</span>
+                              <span className="text-xs text-muted">
                                 {item.count} sessioni ({item.percentage.toFixed(1)}%)
                               </span>
                             </div>
-                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.06)]">
                               <div
                                 className={cn(
                                   "h-full transition-all",
-                                  item.rpe <= 3 ? "bg-emerald-500" :
-                                  item.rpe <= 6 ? "bg-amber-500" :
-                                  item.rpe <= 8 ? "bg-amber-600" : "bg-rose-500"
+                                  item.rpe <= 3 ? "bg-emerald-400" :
+                                  item.rpe <= 6 ? "bg-amber-400" :
+                                  item.rpe <= 8 ? "bg-amber-500" : "bg-rose-400"
                                 )}
                                 style={{ width: `${item.percentage}%` }}
                               />
@@ -2849,9 +2852,9 @@ export default function StatistichePage() {
                           </div>
                         ))}
                         {stats.avgRPE && (
-                          <div className="mt-4 rounded-xl bg-amber-50 p-3 text-center">
-                            <p className="text-xs text-amber-700">RPE Medio</p>
-                            <p className="text-2xl font-bold text-amber-900">{stats.avgRPE.toFixed(1)}/10</p>
+                          <div className="mt-4 rounded-xl border border-amber-400/60 bg-[rgba(251,191,36,0.12)] p-3 text-center">
+                            <p className="text-xs text-muted">RPE Medio</p>
+                            <p className="text-2xl font-bold text-default">{stats.avgRPE.toFixed(1)}/10</p>
                           </div>
                         )}
                       </div>
@@ -2860,36 +2863,36 @@ export default function StatistichePage() {
 
                   {/* Personal Bests with Improvement Tracking */}
                   {stats.personalBests.length > 0 && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-4">
-                        <Award className="h-5 w-5 text-yellow-600" strokeWidth={2} />
+                    <div className="rounded-2xl border border-default bg-card p-5 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-default mb-4">
+                        <Award className="h-5 w-5 text-yellow-400" strokeWidth={2} />
                         Personal Bests e Progressi
                       </h3>
                       <div className="space-y-2">
                         {stats.personalBests.slice(0, 10).map((pb, idx) => (
                           <div
                             key={idx}
-                            className="flex items-center justify-between rounded-xl border border-slate-100 bg-gradient-to-r from-yellow-50 to-amber-50 p-3"
+                            className="flex items-center justify-between rounded-xl border border-default/70 bg-[rgba(251,191,36,0.1)] p-3"
                           >
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <span className="font-semibold text-slate-800">{pb.distance}m</span>
+                                <span className="font-semibold text-default">{pb.distance}m</span>
                                 {pb.improvement !== null && pb.improvement > 0 && (
-                                  <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                                    <TrendingUp className="h-3 w-3" />
+                                  <span className="flex items-center gap-1 rounded-full bg-[rgba(16,185,129,0.14)] px-2 py-0.5 text-xs font-semibold text-default">
+                                    <TrendingUp className="h-3 w-3 text-emerald-400" />
                                     +{pb.improvement.toFixed(1)}%
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-slate-500 mt-0.5">
+                              <p className="text-xs text-muted mt-0.5">
                                 {new Date(pb.date).toLocaleDateString('it-IT')}
                                 {pb.sessionType && ` • ${pb.sessionType}`}
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="text-xl font-bold text-amber-700">{pb.time.toFixed(2)}s</p>
+                              <p className="text-xl font-bold text-amber-300">{pb.time.toFixed(2)}s</p>
                               {pb.distance > 0 && (
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-muted">
                                   {((pb.distance / pb.time) * 3.6).toFixed(1)} km/h
                                 </p>
                               )}
@@ -2902,9 +2905,9 @@ export default function StatistichePage() {
 
                   {/* Training Load (Acute:Chronic Ratio) */}
                   {stats.trainingLoad.length > 0 && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-4">
-                        <Activity className="h-5 w-5 text-cyan-600" strokeWidth={2} />
+                    <div className="rounded-2xl border border-default bg-card p-5 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-default mb-4">
+                        <Activity className="h-5 w-5 text-cyan-400" strokeWidth={2} />
                         Carico Allenamento (A:C Ratio)
                       </h3>
                       <div className="space-y-3">
@@ -2915,36 +2918,36 @@ export default function StatistichePage() {
                           return (
                             <div key={idx} className="space-y-1">
                               <div className="flex items-center justify-between text-sm">
-                                <span className="text-slate-700">
+                                <span className="text-muted">
                                   {new Date(item.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
                                 </span>
                                 <div className="flex items-center gap-2">
                                   <span className={cn(
                                     "rounded-full px-2 py-0.5 text-xs font-semibold",
-                                    isRiskZone ? "bg-rose-100 text-rose-700" :
-                                    isOptimal ? "bg-emerald-100 text-emerald-700" :
-                                    "bg-amber-100 text-amber-700"
+                                    isRiskZone ? "bg-[rgba(248,113,113,0.16)] text-default" :
+                                    isOptimal ? "bg-[rgba(16,185,129,0.16)] text-default" :
+                                    "bg-[rgba(251,191,36,0.16)] text-default"
                                   )}>
                                     {item.ratio.toFixed(2)}
                                   </span>
-                                  {isRiskZone && <Shield className="h-4 w-4 text-rose-500" />}
+                                  {isRiskZone && <Shield className="h-4 w-4 text-rose-400" />}
                                 </div>
                               </div>
                             </div>
                           );
                         })}
                         <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
-                          <div className="rounded-lg bg-emerald-50 p-2">
-                            <p className="font-semibold text-emerald-700">0.8 - 1.3</p>
-                            <p className="text-emerald-600">Ottimale</p>
+                          <div className="rounded-lg border border-emerald-400/60 bg-[rgba(16,185,129,0.12)] p-2">
+                            <p className="font-semibold text-default">0.8 - 1.3</p>
+                            <p className="text-muted">Ottimale</p>
                           </div>
-                          <div className="rounded-lg bg-amber-50 p-2">
-                            <p className="font-semibold text-amber-700">1.3 - 1.5</p>
-                            <p className="text-amber-600">Moderato</p>
+                          <div className="rounded-lg border border-amber-400/60 bg-[rgba(251,191,36,0.12)] p-2">
+                            <p className="font-semibold text-default">1.3 - 1.5</p>
+                            <p className="text-muted">Moderato</p>
                           </div>
-                          <div className="rounded-lg bg-rose-50 p-2">
-                            <p className="font-semibold text-rose-700">&gt; 1.5</p>
-                            <p className="text-rose-600">Rischio</p>
+                          <div className="rounded-lg border border-rose-400/60 bg-[rgba(248,113,113,0.12)] p-2">
+                            <p className="font-semibold text-default">&gt; 1.5</p>
+                            <p className="text-muted">Rischio</p>
                           </div>
                         </div>
                       </div>
@@ -2953,9 +2956,9 @@ export default function StatistichePage() {
 
                   {/* Performance Trends */}
                   {stats.performanceTrends.length > 0 && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-4">
-                        <LineChartIcon className="h-5 w-5 text-sky-600" strokeWidth={2} />
+                    <div className="rounded-2xl border border-default bg-card p-5 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-default mb-4">
+                        <LineChartIcon className="h-5 w-5 text-sky-400" strokeWidth={2} />
                         Trend di Performance per Distanza
                       </h3>
                       <div className="space-y-3">
@@ -2964,28 +2967,28 @@ export default function StatistichePage() {
                             key={idx}
                             className={cn(
                               "rounded-xl border p-3",
-                              trend.trend === 'improving' ? "border-emerald-200 bg-emerald-50" :
-                              trend.trend === 'declining' ? "border-rose-200 bg-rose-50" :
-                              "border-slate-200 bg-slate-50"
+                              trend.trend === 'improving' ? "border-emerald-400/60 bg-[rgba(16,185,129,0.12)]" :
+                              trend.trend === 'declining' ? "border-rose-400/60 bg-[rgba(248,113,113,0.12)]" :
+                              "border-default bg-[rgba(255,255,255,0.03)]"
                             )}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <span className="font-semibold text-slate-800">{trend.distance}m</span>
+                                <span className="font-semibold text-default">{trend.distance}m</span>
                                 {trend.trend === 'improving' && (
-                                  <span className="flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                                  <span className="flex items-center gap-1 text-xs font-semibold text-emerald-300">
                                     <TrendingUp className="h-3 w-3" />
                                     Miglioramento
                                   </span>
                                 )}
                                 {trend.trend === 'declining' && (
-                                  <span className="flex items-center gap-1 text-xs font-semibold text-rose-700">
+                                  <span className="flex items-center gap-1 text-xs font-semibold text-rose-300">
                                     <TrendingDown className="h-3 w-3" />
                                     In calo
                                   </span>
                                 )}
                                 {trend.trend === 'stable' && (
-                                  <span className="flex items-center gap-1 text-xs font-semibold text-slate-700">
+                                  <span className="flex items-center gap-1 text-xs font-semibold text-muted">
                                     <Minus className="h-3 w-3" />
                                     Stabile
                                   </span>
@@ -2993,14 +2996,14 @@ export default function StatistichePage() {
                               </div>
                               <span className={cn(
                                 "text-sm font-bold",
-                                trend.trend === 'improving' ? "text-emerald-700" :
-                                trend.trend === 'declining' ? "text-rose-700" :
-                                "text-slate-700"
+                                trend.trend === 'improving' ? "text-emerald-300" :
+                                trend.trend === 'declining' ? "text-rose-300" :
+                                "text-muted"
                               )}>
                                 {trend.changePercentage > 0 ? '+' : ''}{trend.changePercentage.toFixed(1)}%
                               </span>
                             </div>
-                            <div className="mt-2 flex items-center gap-4 text-xs text-slate-600">
+                            <div className="mt-2 flex items-center gap-4 text-xs text-muted">
                               <span>Media recente: {trend.recentAvg.toFixed(2)}s</span>
                               <span>Media precedente: {trend.previousAvg.toFixed(2)}s</span>
                             </div>
@@ -3012,35 +3015,35 @@ export default function StatistichePage() {
 
                   {/* Monthly Progress */}
                   {stats.monthlyProgress.length > 0 && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-4">
-                        <Calendar className="h-5 w-5 text-blue-600" strokeWidth={2} />
+                    <div className="rounded-2xl border border-default bg-card p-5 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-default mb-4">
+                        <Calendar className="h-5 w-5 text-blue-400" strokeWidth={2} />
                         Progressi Mensili
                       </h3>
                       <div className="space-y-2">
                         {stats.monthlyProgress.slice(-6).map((month, idx) => (
-                          <div key={idx} className="rounded-xl bg-slate-50 p-3">
+                          <div key={idx} className="rounded-xl border border-default bg-[rgba(255,255,255,0.03)] p-3">
                             <div className="flex items-center justify-between mb-2">
-                              <span className="font-semibold text-slate-800">{month.month}</span>
+                              <span className="font-semibold text-default">{month.month}</span>
                               {month.pbs > 0 && (
-                                <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-700">
-                                  <Star className="h-3 w-3" />
+                                <span className="flex items-center gap-1 rounded-full bg-[rgba(251,191,36,0.16)] px-2 py-0.5 text-xs font-semibold text-default">
+                                  <Star className="h-3 w-3 text-amber-300" />
                                   {month.pbs} PB
                                 </span>
                               )}
                             </div>
-                            <div className="grid grid-cols-3 gap-2 text-xs text-slate-600">
+                            <div className="grid grid-cols-3 gap-2 text-xs text-muted">
                               <div>
-                                <p className="text-slate-500">Sessioni</p>
-                                <p className="font-semibold text-slate-700">{month.sessions}</p>
+                                <p className="text-muted">Sessioni</p>
+                                <p className="font-semibold text-default">{month.sessions}</p>
                               </div>
                               <div>
-                                <p className="text-slate-500">Distanza</p>
-                                <p className="font-semibold text-slate-700">{(month.distance / 1000).toFixed(1)} km</p>
+                                <p className="text-muted">Distanza</p>
+                                <p className="font-semibold text-default">{(month.distance / 1000).toFixed(1)} km</p>
                               </div>
                               <div>
-                                <p className="text-slate-500">Vel. media</p>
-                                <p className="font-semibold text-slate-700">
+                                <p className="text-muted">Vel. media</p>
+                                <p className="font-semibold text-default">
                                   {month.avgSpeed ? `${(month.avgSpeed * 3.6).toFixed(1)} km/h` : 'N/D'}
                                 </p>
                               </div>
@@ -3057,9 +3060,9 @@ export default function StatistichePage() {
                 <div className="space-y-4">
                   {/* Smart Insights */}
                   {stats.smartInsights.length > 0 && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-4">
-                        <Sparkles className="h-5 w-5 text-sky-600" strokeWidth={2} />
+                    <div className="rounded-2xl border border-default bg-card p-5 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-default mb-4">
+                        <Sparkles className="h-5 w-5 text-sky-400" strokeWidth={2} />
                         Smart Insights & Raccomandazioni
                       </h3>
                       <div className="space-y-3">
@@ -3067,59 +3070,45 @@ export default function StatistichePage() {
                           <div
                             key={idx}
                             className={cn(
-                              "rounded-xl border-l-4 p-4",
-                              insight.severity === 'high' ? "border-rose-500 bg-rose-50" :
-                              insight.severity === 'medium' ? "border-amber-500 bg-amber-50" :
-                              "border-emerald-500 bg-emerald-50"
+                              "rounded-xl border p-4",
+                              insight.severity === 'high' ? "border-rose-400/70 bg-[rgba(248,113,113,0.12)]" :
+                              insight.severity === 'medium' ? "border-amber-400/70 bg-[rgba(251,191,36,0.12)]" :
+                              "border-emerald-400/70 bg-[rgba(16,185,129,0.12)]"
                             )}
                           >
                             <div className="flex flex-col gap-3">
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex items-center gap-2">
-                                  {insight.severity === 'high' && <AlertTriangle className="h-4 w-4 text-rose-600 flex-shrink-0" />}
-                                  {insight.severity === 'medium' && <Info className="h-4 w-4 text-amber-600 flex-shrink-0" />}
-                                  {insight.severity === 'low' && <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />}
-                                  <h4 className={cn(
-                                    "font-semibold text-sm",
-                                    insight.severity === 'high' ? "text-rose-900" :
-                                    insight.severity === 'medium' ? "text-amber-900" :
-                                    "text-emerald-900"
-                                  )}>
+                                  {insight.severity === 'high' && <AlertTriangle className="h-4 w-4 text-rose-400 flex-shrink-0" />}
+                                  {insight.severity === 'medium' && <Info className="h-4 w-4 text-amber-400 flex-shrink-0" />}
+                                  {insight.severity === 'low' && <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />}
+                                  <h4 className="font-semibold text-sm text-default">
                                     {insight.title}
                                   </h4>
                                 </div>
                                 <span className={cn(
                                   "rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-wide flex-shrink-0",
-                                  insight.severity === 'high' ? "bg-rose-200 text-rose-800" :
-                                  insight.severity === 'medium' ? "bg-amber-200 text-amber-800" :
-                                  "bg-emerald-200 text-emerald-800"
+                                  insight.severity === 'high' ? "bg-[rgba(248,113,113,0.2)] text-default" :
+                                  insight.severity === 'medium' ? "bg-[rgba(251,191,36,0.2)] text-default" :
+                                  "bg-[rgba(16,185,129,0.2)] text-default"
                                 )}>
                                   {insight.category}
                                 </span>
                               </div>
                               
-                              <p className={cn(
-                                "text-sm",
-                                insight.severity === 'high' ? "text-rose-700" :
-                                insight.severity === 'medium' ? "text-amber-700" :
-                                "text-emerald-700"
-                              )}>
+                              <p className="text-sm text-muted">
                                 {insight.description}
                               </p>
                               
                               <div className={cn(
                                 "rounded-lg p-3 text-sm",
-                                insight.severity === 'high' ? "bg-rose-100" :
-                                insight.severity === 'medium' ? "bg-amber-100" :
-                                "bg-emerald-100"
+                                insight.severity === 'high' ? "bg-[rgba(248,113,113,0.14)]" :
+                                insight.severity === 'medium' ? "bg-[rgba(251,191,36,0.14)]" :
+                                "bg-[rgba(16,185,129,0.14)]"
                               )}>
-                                <p className="leading-relaxed">
+                                <p className="leading-relaxed text-default">
                                   <span className="font-semibold block mb-1">Raccomandazione:</span>
-                                  <span className={cn(
-                                    insight.severity === 'high' ? "text-rose-800" :
-                                    insight.severity === 'medium' ? "text-amber-800" :
-                                    "text-emerald-800"
-                                  )}>{insight.recommendation}</span>
+                                  <span className="text-default">{insight.recommendation}</span>
                                 </p>
                               </div>
                             </div>
@@ -3131,39 +3120,39 @@ export default function StatistichePage() {
 
                   {/* Original Insights Section */}
                   <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <Medal className="h-4 w-4 text-amber-500" /> Personal Best registrati
+                    <div className="rounded-2xl border border-default bg-card p-4 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-sm font-semibold text-default">
+                        <Medal className="h-4 w-4 text-amber-400" /> Personal Best registrati
                       </h3>
-                      <ul className="mt-3 space-y-2 text-xs text-slate-600">
+                      <ul className="mt-3 space-y-2 text-xs text-muted">
                         {stats.pbByDistance.length === 0 ? (
                           <li>Nessun tempo registrato nelle ripetute selezionate</li>
                         ) : (
                           stats.pbByDistance.map(item => (
                             <li
                               key={item.distance}
-                              className="flex items-center justify-between rounded-2xl bg-amber-50/60 px-3 py-2"
+                              className="flex items-center justify-between rounded-2xl border border-amber-400/60 bg-[rgba(251,191,36,0.12)] px-3 py-2 text-default"
                             >
                               <span>{item.distance} m</span>
-                              <span className="font-semibold text-amber-700">{item.time.toFixed(2)} s</span>
+                              <span className="font-semibold text-default">{item.time.toFixed(2)} s</span>
                             </li>
                           ))
                         )}
                       </ul>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <Sparkles className="h-4 w-4 text-sky-500" /> Insight rapidi
+                    <div className="rounded-2xl border border-default bg-card p-4 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-sm font-semibold text-default">
+                        <Sparkles className="h-4 w-4 text-sky-400" /> Insight rapidi
                       </h3>
-                      <ul className="mt-3 space-y-2 text-xs text-slate-600">
+                      <ul className="mt-3 space-y-2 text-xs text-muted">
                         {stats.insights.length === 0 ? (
                           <li>Aggiungi più dati per ottenere suggerimenti personalizzati!</li>
                         ) : (
                           stats.insights.map((insight, index) => (
                             <li
                               key={index}
-                              className="rounded-2xl bg-sky-50/70 px-3 py-2 text-sky-800"
+                              className="rounded-2xl border border-sky-400/60 bg-[rgba(56,189,248,0.14)] px-3 py-2 text-default"
                             >
                               {insight}
                             </li>
@@ -3196,13 +3185,13 @@ type SummaryCardProps = {
 
 function SummaryCard({ title, value, subtitle, icon, accent }: SummaryCardProps) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-default bg-card p-4 shadow-sm">
       <div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${accent}`}>
         {icon}
         <span>{title}</span>
       </div>
-      <p className="text-3xl font-semibold text-slate-800">{value}</p>
-      <p className="mt-1 text-xs text-slate-500">{subtitle}</p>
+      <p className="text-3xl font-semibold text-default">{value}</p>
+      <p className="mt-1 text-xs text-muted">{subtitle}</p>
     </div>
   );
 }

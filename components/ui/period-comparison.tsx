@@ -86,19 +86,19 @@ export function PeriodComparison({ period1, period2, className }: PeriodComparis
   };
 
   return (
-    <Card className={cn('border-slate-200 shadow-sm', className)}>
+    <Card className={cn('border-default shadow-sm', className)}>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <span className="text-2xl">🔄</span>
-          Confronto Periodi
+          <span className="text-default">Confronto Periodi</span>
         </CardTitle>
-        <div className="flex items-center gap-3 text-sm text-slate-600 mt-2">
-          <div className="flex items-center gap-2 bg-purple-50 px-3 py-1.5 rounded-lg border border-purple-200">
-            <span className="font-semibold text-purple-700">{period1.label}</span>
+        <div className="flex items-center gap-3 text-sm text-muted mt-2">
+          <div className="flex items-center gap-2 bg-[rgba(99,102,241,0.03)] px-3 py-1.5 rounded-lg border border-[rgba(99,102,241,0.08)]">
+            <span className="font-semibold text-accent">{period1.label}</span>
           </div>
-          <ArrowRight className="h-4 w-4 text-slate-400" />
-          <div className="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-200">
-            <span className="font-semibold text-orange-700">{period2.label}</span>
+          <ArrowRight className="h-4 w-4 text-muted" />
+          <div className="flex items-center gap-2 bg-[rgba(249,115,22,0.03)] px-3 py-1.5 rounded-lg border border-[rgba(249,115,22,0.08)]">
+            <span className="font-semibold text-default">{period2.label}</span>
           </div>
         </div>
       </CardHeader>
@@ -110,18 +110,18 @@ export function PeriodComparison({ period1, period2, className }: PeriodComparis
           return (
             <div
               key={idx}
-              className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-colors"
+              className="flex items-center justify-between p-3 rounded-xl border border-default bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.03)] transition-colors"
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{comp.icon}</span>
                 <div>
-                  <div className="text-sm font-medium text-slate-700">{comp.label}</div>
+                  <div className="text-sm font-medium text-default">{comp.label}</div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted">
                       {comp.format(comp.value2)}
                     </span>
-                    <ArrowRight className="h-3 w-3 text-slate-400" />
-                    <span className="text-sm font-semibold text-slate-900">
+                    <ArrowRight className="h-3 w-3 text-muted" />
+                    <span className="text-sm font-semibold text-default">
                       {comp.format(comp.value1)}
                     </span>
                   </div>
@@ -130,9 +130,9 @@ export function PeriodComparison({ period1, period2, className }: PeriodComparis
 
               <div className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
-                trend === 'up' && 'bg-green-100 text-green-700',
-                trend === 'down' && 'bg-red-100 text-red-700',
-                trend === 'stable' && 'bg-slate-100 text-slate-600'
+                trend === 'up' && 'bg-[rgba(16,185,129,0.06)] text-green-300',
+                trend === 'down' && 'bg-[rgba(244,63,94,0.06)] text-rose-300',
+                trend === 'stable' && 'bg-[rgba(148,163,184,0.04)] text-muted'
               )}>
                 {trend === 'up' && <TrendingUp className="h-3.5 w-3.5" />}
                 {trend === 'down' && <TrendingDown className="h-3.5 w-3.5" />}
@@ -246,7 +246,7 @@ export function QuickPeriodSelector({ onSelect, className }: QuickPeriodSelector
             const { period1, period2 } = comparison.getValue();
             onSelect(period1, period2);
           }}
-          className="inline-flex items-center gap-2 rounded-lg border-2 border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition-all hover:border-purple-300 hover:bg-purple-50 hover:text-purple-700 active:scale-95"
+          className="inline-flex items-center gap-2 rounded-lg border-2 border-default bg-[rgba(255,255,255,0.02)] px-3 py-2 text-xs font-medium text-muted transition-all hover:border-sky-400/60 hover:bg-[rgba(56,189,248,0.08)] active:scale-95"
         >
           <span>🔄</span>
           {comparison.label}

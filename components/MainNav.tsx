@@ -42,8 +42,8 @@ export function MainNav() {
                       className={cn(
                         "inline-flex items-center justify-center rounded-md px-5 py-2.5 text-sm font-medium transition-all duration-200 min-h-[44px]",
                         active
-                          ? "bg-white text-sky-600 shadow-sm dark:bg-slate-800 dark:text-sky-400"
-                          : "text-slate-600 hover:bg-white/60 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700"
+                          ? "bg-[rgba(255,255,255,0.06)] text-default shadow-sm"
+                          : "text-muted hover:bg-[rgba(255,255,255,0.05)] hover:text-default"
                       )}
                     >
                       {tab.label}

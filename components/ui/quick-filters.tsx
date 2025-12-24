@@ -78,8 +78,8 @@ export function QuickFilters({ onSelectFilter, activeFilter, setActiveFilter }: 
             className={cn(
               "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
               isActive
-                ? "border-sky-500 bg-sky-50 text-sky-700 shadow-sm"
-                : "border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:bg-sky-50/50"
+                ? "border-sky-500 bg-[rgba(255,255,255,0.03)] text-sky-300 shadow-sm"
+                : "border-default bg-[rgba(255,255,255,0.02)] text-muted hover:border-sky-400/60 hover:bg-[rgba(56,189,248,0.08)]"
             )}
             title={filter.description}
           >

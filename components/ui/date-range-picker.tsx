@@ -109,7 +109,7 @@ export function DateRangePicker({
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'gap-2 justify-between w-full md:w-auto',
-          (startDate || endDate) && 'border-sky-300 bg-sky-50 text-sky-700'
+          (startDate || endDate) && 'border-sky-400/80 bg-[rgba(56,189,248,0.14)] text-default'
         )}
       >
         <span className="flex items-center gap-2">
@@ -147,7 +147,7 @@ export function DateRangePicker({
             <motion.div
               className={cn(
                 'absolute top-full left-0 right-0 md:left-auto md:right-auto mt-2 z-50',
-                'w-full md:w-80 rounded-2xl border border-slate-200 bg-white shadow-xl p-4'
+                'w-full md:w-80 rounded-2xl border border-default bg-[rgba(255,255,255,0.02)] shadow-sm p-4'
               )}
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -156,7 +156,7 @@ export function DateRangePicker({
             >
               {/* Quick Ranges */}
               <div className="mb-4">
-                <Label className="text-xs font-semibold text-slate-600 mb-2">Periodi rapidi</Label>
+                <Label className="text-xs font-semibold text-muted mb-2">Periodi rapidi</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {quickRanges.map((range) => (
                     <button
@@ -169,7 +169,7 @@ export function DateRangePicker({
                         onRangeChange(start, end);
                         setIsOpen(false);
                       }}
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 active:scale-95"
+                      className="rounded-lg border border-default bg-[rgba(255,255,255,0.02)] px-3 py-2 text-xs font-medium text-muted transition-colors hover:border-sky-400/60 hover:bg-[rgba(56,189,248,0.08)] active:scale-95"
                     >
                       {range.label}
                     </button>
@@ -178,12 +178,12 @@ export function DateRangePicker({
               </div>
 
               {/* Custom Range */}
-              <div className="space-y-3 border-t border-slate-100 pt-4">
-                <Label className="text-xs font-semibold text-slate-600">Periodo personalizzato</Label>
+              <div className="space-y-3 border-t border-default/70 pt-4">
+                <Label className="text-xs font-semibold text-muted">Periodo personalizzato</Label>
                 
                 <div className="space-y-2">
                   <div>
-                    <Label className="text-[10px] text-slate-500 mb-1">Data inizio</Label>
+                    <Label className="text-[10px] text-muted mb-1">Data inizio</Label>
                     <Input
                       type="date"
                       value={localStart}
@@ -194,7 +194,7 @@ export function DateRangePicker({
                   </div>
 
                   <div>
-                    <Label className="text-[10px] text-slate-500 mb-1">Data fine</Label>
+                    <Label className="text-[10px] text-muted mb-1">Data fine</Label>
                     <Input
                       type="date"
                       value={localEnd}

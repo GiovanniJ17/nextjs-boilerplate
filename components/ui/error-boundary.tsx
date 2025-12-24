@@ -45,10 +45,10 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="rounded-full bg-red-100 p-4 mb-4">
             <AlertTriangle className="h-8 w-8 text-red-600" strokeWidth={2} />
           </div>
-          <h2 className="text-xl font-semibold text-slate-900 mb-2">
+          <h2 className="text-xl font-semibold text-default mb-2">
             Qualcosa è andato storto
           </h2>
-          <p className="text-sm text-slate-600 mb-6 max-w-md">
+          <p className="text-sm text-muted mb-6 max-w-md">
             Si è verificato un errore imprevisto. Prova a ricaricare la pagina o contatta il supporto se il problema persiste.
           </p>
           {process.env.NODE_ENV === 'development' && this.state.error && (

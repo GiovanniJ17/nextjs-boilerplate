@@ -1743,7 +1743,7 @@ export default function RegistroPage() {
             />
             
             <motion.div 
-              className="rounded-2xl bg-white/20 backdrop-blur-sm px-4 py-2.5 md:px-5 md:py-3"
+              className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-sm px-4 py-2.5 md:px-5 md:py-3"
               variants={scaleIn}
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.2 }}
@@ -1767,9 +1767,9 @@ export default function RegistroPage() {
             return (
               <motion.div 
                 key={stat.label} 
-                className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2 md:px-4 md:py-3"
+                className="rounded-xl border border-white/10 bg-white/10 backdrop-blur-sm px-3 py-2 md:px-4 md:py-3"
                 variants={staggerItem}
-                whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.25)' }}
+                whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
                 transition={{ duration: 0.2 }}
               >
                 <div className="flex items-start justify-between mb-1">
@@ -1785,7 +1785,7 @@ export default function RegistroPage() {
         <AnimatePresence>
           {selectedBlock && (
             <motion.div 
-              className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1.5 text-sm font-medium"
+              className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 backdrop-blur-sm px-3 py-1.5 text-sm font-medium"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
@@ -1828,9 +1828,9 @@ export default function RegistroPage() {
                 onClick={() => handleScrollToSection(step.key)}
                 className={cn(
                   'flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-sm transition-all active:scale-95',
-                  step.status === 'active' && 'border-sky-300 bg-sky-50 text-sky-700 shadow-sm',
-                  step.status === 'done' && 'border-green-300 bg-green-50 text-green-700 shadow-sm',
-                  step.status === 'todo' && 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                  step.status === 'active' && 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm',
+                  step.status === 'done' && 'border-emerald-400/60 bg-[rgba(16,185,129,0.12)] text-default shadow-sm',
+                  step.status === 'todo' && 'border-default bg-[rgba(255,255,255,0.03)] text-muted hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.12)]'
                 )}
               >
                 <span className="text-base">{emoji}</span>
@@ -1845,7 +1845,7 @@ export default function RegistroPage() {
       <div className="grid gap-4">
         {/* Dettagli sessione */}
         <div ref={sectionRefs.details} className="scroll-mt-24">
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="shadow-sm">
             <CardHeader 
               className="pb-2.5 cursor-pointer md:cursor-default"
               onClick={() => setExpandedSection(prev => prev === 'details' ? prev : 'details')}
@@ -1855,7 +1855,7 @@ export default function RegistroPage() {
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-100 text-lg">
                     📝
                   </span>
-                  <span className="text-base md:text-lg font-semibold text-slate-800">Dettagli sessione</span>
+                  <span className="text-base md:text-lg font-semibold text-default">Dettagli sessione</span>
                 </span>
                 <ChevronDown 
                   className={cn(
@@ -1872,7 +1872,7 @@ export default function RegistroPage() {
             {/* Blocco + Data */}
             <div className="grid gap-4 lg:grid-cols-12">
               <div className="lg:col-span-8 space-y-1.5">
-                <Label className="text-xs font-medium text-slate-700">Blocco di allenamento</Label>
+                <Label className="text-xs font-medium text-muted">Blocco di allenamento</Label>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -1880,15 +1880,15 @@ export default function RegistroPage() {
                     className={cn(
                       'inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold transition',
                       sessionForm.block_id
-                        ? 'border-slate-200 text-slate-500 hover:border-slate-300'
-                        : 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
+                        ? 'border-default text-muted hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.04)]'
+                        : 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
                     )}
                     aria-pressed={!sessionForm.block_id}
                   >
                     Nessun blocco
                   </button>
                   {trainingBlocks.length === 0 && (
-                    <span className="inline-flex items-center rounded-2xl bg-slate-100 px-3 py-2 text-[11px] text-slate-500">
+                    <span className="inline-flex items-center rounded-2xl bg-[rgba(255,255,255,0.05)] px-3 py-2 text-[11px] text-muted">
                       Nessun blocco salvato
                     </span>
                   )}
@@ -1900,8 +1900,8 @@ export default function RegistroPage() {
                         className={cn(
                           'relative flex items-center gap-3 rounded-2xl border px-3 py-2 pr-10 text-left transition',
                           isSelected
-                            ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200'
+                            ? 'border-sky-400/60 bg-[rgba(56,189,248,0.12)] text-default shadow-sm'
+                            : 'border-default bg-[rgba(255,255,255,0.03)] text-default hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.05)]'
                         )}
                       >
                         <button
@@ -1911,13 +1911,13 @@ export default function RegistroPage() {
                           aria-pressed={isSelected}
                         >
                           <span className="text-xs font-semibold">{block.name}</span>
-                          <span className="text-[11px] text-slate-500">
+                          <span className="text-[11px] text-muted">
                             {formatDateHuman(block.start_date)} → {formatDateHuman(block.end_date)}
                           </span>
                         </button>
                         <button
                           type="button"
-                          className="absolute right-1 top-1 inline-flex items-center gap-1 rounded-full border border-transparent bg-white/80 px-2 py-1 text-[10px] font-semibold text-slate-400 transition-colors hover:border-red-200 hover:text-red-500"
+                          className="absolute right-1 top-1 inline-flex items-center gap-1 rounded-full border border-transparent bg-[rgba(255,255,255,0.06)] px-2 py-1 text-[10px] font-semibold text-muted transition-colors hover:border-red-300 hover:text-red-300"
                           onClick={() => requestDeleteBlock(block.id)}
                           disabled={blockActionLoading === block.id}
                           aria-label={`Elimina ${block.name}`}
@@ -1939,7 +1939,7 @@ export default function RegistroPage() {
                     type="button"
                     variant="outline"
                     onClick={() => setShowBlockForm(prev => !prev)}
-                    className="gap-2 rounded-full border-slate-200 h-8 text-xs px-3"
+                    className="gap-2 rounded-full h-8 text-xs px-3"
                   >
                     <PenSquare className="h-3.5 w-3.5" />
                     {showBlockForm ? 'Nascondi editor' : 'Nuovo blocco'}
@@ -1948,7 +1948,7 @@ export default function RegistroPage() {
                     type="button"
                     variant="outline"
                     onClick={() => void fetchBlocks()}
-                    className="gap-2 border-transparent bg-transparent text-xs text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-sky-600 h-8 px-3"
+                    className="gap-2 bg-transparent text-xs text-muted hover:bg-[rgba(255,255,255,0.05)] h-8 px-3"
                   >
                     {loadingBlocks ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1961,26 +1961,26 @@ export default function RegistroPage() {
               </div>
 
               <div className="lg:col-span-4 space-y-1.5">
-                <Label className="text-xs font-medium text-slate-700">Data</Label>
+                <Label className="text-xs font-medium text-muted">Data</Label>
                 <Input
                   type="date"
                   name="date"
                   value={sessionForm.date}
                   onChange={handleSessionChange}
-                  className={cn('rounded-xl bg-slate-50 h-9', errors.date && 'border-red-500')}
+                  className={cn('rounded-xl bg-[rgba(255,255,255,0.05)] h-9', errors.date && 'border-red-500')}
                 />
                 {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
               </div>
             </div>
 
             {showBlockForm && (
-              <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-3">
+              <div className="rounded-xl border border-default bg-[rgba(255,255,255,0.04)] p-3.5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-default mb-3">
                   <Target className="h-4 w-4" /> Nuovo blocco di allenamento
                 </div>
                 <div className="grid gap-3 md:grid-cols-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-slate-700">Nome</Label>
+                    <Label className="text-xs font-medium text-muted">Nome</Label>
                     <Input
                       value={blockForm.name}
                       onChange={event => setBlockForm(prev => ({ ...prev, name: event.target.value }))}
@@ -1989,7 +1989,7 @@ export default function RegistroPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-slate-700">Inizio</Label>
+                    <Label className="text-xs font-medium text-muted">Inizio</Label>
                     <Input
                       type="date"
                       value={blockForm.start_date}
@@ -1998,7 +1998,7 @@ export default function RegistroPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-slate-700">Fine</Label>
+                    <Label className="text-xs font-medium text-muted">Fine</Label>
                     <Input
                       type="date"
                       value={blockForm.end_date}
@@ -2009,7 +2009,7 @@ export default function RegistroPage() {
                 </div>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-slate-700">Obiettivo</Label>
+                    <Label className="text-xs font-medium text-muted">Obiettivo</Label>
                     <Input
                       value={blockForm.goal}
                       onChange={event => setBlockForm(prev => ({ ...prev, goal: event.target.value }))}
@@ -2018,7 +2018,7 @@ export default function RegistroPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-slate-700">Note</Label>
+                    <Label className="text-xs font-medium text-muted">Note</Label>
                     <Textarea
                       value={blockForm.notes}
                       onChange={event => setBlockForm(prev => ({ ...prev, notes: event.target.value }))}
@@ -2036,7 +2036,7 @@ export default function RegistroPage() {
               </div>
             )}
 
-            <div className="border-t border-slate-100"></div>
+            <div className="border-t border-default/70"></div>
 
             {/* Tipo di sessione */}
             <div className="space-y-2.5">
@@ -2045,13 +2045,13 @@ export default function RegistroPage() {
                   {sessionTypes.map(type => {
                     const isSelected = sessionForm.type === type.value;
                     const colorClasses = {
-                      orange: isSelected ? 'border-sky-400 bg-sky-50 text-sky-700' : 'border-slate-200 hover:border-sky-200',
-                      blue: isSelected ? 'border-blue-400 bg-blue-50 text-blue-700' : 'border-slate-200 hover:border-blue-200',
-                      amber: isSelected ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-slate-200 hover:border-amber-200',
-                      purple: isSelected ? 'border-cyan-400 bg-cyan-50 text-cyan-700' : 'border-slate-200 hover:border-cyan-200',
-                      cyan: isSelected ? 'border-cyan-400 bg-cyan-50 text-cyan-700' : 'border-slate-200 hover:border-cyan-200',
-                      green: isSelected ? 'border-green-400 bg-green-50 text-green-700' : 'border-slate-200 hover:border-green-200',
-                      slate: isSelected ? 'border-slate-400 bg-slate-50 text-slate-700' : 'border-slate-200 hover:border-slate-300',
+                      orange: isSelected ? 'border-sky-400/80 bg-[rgba(56,189,248,0.14)] text-default' : 'border-default bg-card/60 text-muted hover:border-sky-400/60',
+                      blue: isSelected ? 'border-blue-400/80 bg-[rgba(59,130,246,0.14)] text-default' : 'border-default bg-card/60 text-muted hover:border-blue-400/60',
+                      amber: isSelected ? 'border-amber-400/80 bg-[rgba(251,191,36,0.14)] text-default' : 'border-default bg-card/60 text-muted hover:border-amber-400/60',
+                      purple: isSelected ? 'border-cyan-400/80 bg-[rgba(34,211,238,0.14)] text-default' : 'border-default bg-card/60 text-muted hover:border-cyan-400/60',
+                      cyan: isSelected ? 'border-cyan-400/80 bg-[rgba(34,211,238,0.14)] text-default' : 'border-default bg-card/60 text-muted hover:border-cyan-400/60',
+                      green: isSelected ? 'border-green-400/80 bg-[rgba(34,197,94,0.14)] text-default' : 'border-default bg-card/60 text-muted hover:border-green-400/60',
+                      slate: isSelected ? 'border-slate-400/80 bg-[rgba(148,163,184,0.14)] text-default' : 'border-default bg-card/60 text-muted hover:border-slate-400/60',
                     };
                     
                     return (
@@ -2062,7 +2062,7 @@ export default function RegistroPage() {
                         className={cn(
                           'flex h-full items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-all active:scale-95',
                           colorClasses[type.color as keyof typeof colorClasses] || colorClasses.slate,
-                          !isSelected && 'bg-white text-slate-600'
+                          !isSelected && 'bg-card text-muted'
                         )}
                         aria-pressed={isSelected}
                       >
